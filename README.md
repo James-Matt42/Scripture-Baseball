@@ -4,12 +4,6 @@
 
 Scripture Baseball is an interactive web app in which players test their scriptural knowledge by playing a variety of single-player or multi-player games based on the Standard Works of The Church of Jesus Christ of Latter-day Saints. The basic game presents a random verse to the user, after which they attempt to guess the book and chapter in which that verse is found. 
 
-> [!NOTE]
-> This is a template for your startup application. You must modify this `README.md` file for each phase of your development. You only need to fill in the section for each deliverable when that deliverable is submitted in Canvas. Without completing the section for a deliverable, the TA will not know what to look for when grading your submission. Feel free to add additional information to each deliverable description, but make sure you at least have the list of rubric items and a description of what you did for each item.
-
-> [!NOTE]
-> If you are not familiar with Markdown then you should review the [documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) before continuing.
-
 ### Elevator pitch
 
 Are you a returned missionary who no longer has a physical copy of scriptures with you at all times? Do you just want to improve your scriptural knowledge? Scripture Baseball lets you master the scriptures by yourself and with friends. You can choose a specific book to practice or challenge someone else. You'll get a verse and try to remember where it's at. You can practice books you don't know as well and have fun!
@@ -64,9 +58,6 @@ I am going to use the required technologies in the following ways.
 - **WebSocket** - As players make a guess in a multi-player game, their guess is broadcasted to the other players. Websocket is also employed to notify users of when it's their turn to play.
 
 ## 🚀 Specification Deliverable
-
-> [!NOTE]
-> Fill in this sections as the submission artifact for this deliverable. You can refer to this [example](https://github.com/webprogramming260/startup-example/blob/main/README.md) for inspiration.
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
