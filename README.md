@@ -6,7 +6,9 @@ Scripture Baseball is an interactive web app in which players test their scriptu
 
 ### Elevator pitch
 
-Are you a returned missionary who no longer has a physical copy of scriptures with you at all times? Do you just want to improve your scriptural knowledge? Scripture Baseball lets you master the scriptures by yourself and with friends. You can choose a specific book to practice or challenge someone else. You'll get a verse and try to remember where it's at. You can practice books you don't know as well and have fun!
+Are you a returned missionary who used to know exactly where to find a verse? Or do you just want to build stronger scripture knowledge?
+
+Scripture Baseball helps you master the scriptures through simple, repeatable practice, on your own or with friends. Choose a book of scripture, get a verse, and see if you can identify where it comes from. Practice the books you know least, sharpen the ones you know best, or challenge your friends and put your scripture knowledge to the test.
 
 ### Design
 
@@ -61,12 +63,12 @@ I am going to use the required technologies in the following ways.
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Git commit requirement)
-- [ ] Proper use of Markdown
-- [ ] A concise and compelling elevator pitch
-- [ ] Description of key features
-- [ ] Description of how you will use each technology including your 3rd party API and use of WebSocket
-- [ ] One or more rough sketches of your application. Images must be embedded in this file using Markdown image references.
+- [x] I completed the prerequisites for this deliverable (Git commit requirement)
+- [x] Proper use of Markdown
+- [x] A concise and compelling elevator pitch
+- [x] Description of key features
+- [x] Description of how you will use each technology including your 3rd party API and use of WebSocket
+- [x] One or more rough sketches of your application. Images must be embedded in this file using Markdown image references.
 
 ## 🚀 AWS deliverable
 
