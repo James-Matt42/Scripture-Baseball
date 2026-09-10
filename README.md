@@ -28,15 +28,18 @@ Are you a returned missionary who no longer has a physical copy of scriptures wi
 
 ![In Game](assets/pictures/figma_in_game.png)
 
-Here is a simple diagram showing a multiplayer game:
+Here is a simple diagram showing a multi-player game:
 
 ![In Game Diagram](assets/pictures/scripture_baseball_multiplayer_simple_diagram.png)
 
 ### Key features
 
-- Describe your key feature
-- Describe your key feature
-- Describe your key feature
+- Secure HTTPS login
+- Ability to choose single-player and multi-player games
+- Ability to choose which books to practice
+- Multi-player displays scores and player choices in real-time
+- Scores and streaks are persistently stored
+
 
 ### Technologies
 
