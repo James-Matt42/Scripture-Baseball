@@ -16,7 +16,17 @@ Are you a returned missionary who no longer has a physical copy of scriptures wi
 
 ### Design
 
-![Design image](placeholder.png)
+#### Logged In:
+
+![Logged In](assets/pictures/figma_logged_in.png)
+
+#### Choose Your Book:
+
+![Choose Your Book](assets/pictures/figma_choose_book.png)
+
+#### In Game:
+
+![In Game](assets/pictures/figma_in_game.png)
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
