@@ -60,30 +60,8 @@ I am going to use the required technologies in the following ways.
     - Connect to a game
     - Guess a book/chapter
     - Use of Google Analytics as a third-party API to determine from what devices and in what general locations users are accessing the web app
-- **DB/Login** - Description here
-- **WebSocket** - Description here
-
-HTML - Uses correct HTML structure for application. Two HTML pages. One for login and one for voting. Hyperlinks to choice artifact.
-CSS - Application styling that looks good on different screen sizes, uses good whitespace, color choice and contrast.
-React - Provides login, choice display, applying votes, display other users votes, and use of React for routing and components.
-Service - Backend service with endpoints for:
-login
-retrieving choices
-submitting votes
-retrieving vote status
-DB/Login - Store users, choices, and votes in database. Register and login users. Credentials securely stored in database. Can't vote unless authenticated.
-WebSocket - As each user votes, their votes are broadcast to all other users.
-
-HTML - Basic structural and organizational elements
-CSS - Styling and animating
-React - Frontend code to interact with a user, represent functionality with components, and route what is displayed using JavaScript and the React web framework. React helps you to modularize your code into components that represent things like a login form, a picture card, or an interactive part of a game. The routing that React provides changes what is displayed to the user based upon the actions they take. For example, after logging in, React would change the display from the login component, to the gameplay component.
-Service - Backend server functionality for the following:
-Multiple endpoints (server function calls) that provide functionality necessary to support your application. For example, storing scores, retrieving user preferences, or generating dynamic content.
-Support for login, logout, and registering users.
-At least one call to a third party (e.g. that you didn't write) service endpoint to do something like suggest a color pallette, get a joke, get the weather, or get images. You can view a list of APIs here: https://github.com/public-apis/public-apis. You can make most services work, but the easiest ones to use don't require authentication, support CORS, and require HTTPS.
-Database: A rendering of application data that is stored in the database. For Simon, this is the high scores of all players.
-WebSocket: A rendering of data that is received from your server. This may be realtime data sent from other users (e.g. chat or scoring data), or realtime data that your service is generating (e.g. stock prices or latest high scores). For Simon, this represents every time another user creates or ends a game.
-
+- **DB/Login** - The database will store users, user information, scores, streaks, preferences, etc. in a database. Users must be logged in and authenticated to play the game.
+- **WebSocket** - As players make a guess in a multi-player game, their guess is broadcasted to the other players. Websocket is also employed to notify users of when it's their turn to play.
 
 ## 🚀 Specification Deliverable
 
