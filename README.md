@@ -51,9 +51,15 @@ I am going to use the required technologies in the following ways.
     - Single-player game
     - Multi-player game
     - Account/settings
-- **CSS** - Description here
-- **React** - Description here
-- **Service** - Description here
+- **CSS** - CSS will be used to style the webpages and make them look good on different screen sizes. It will also be used for any coloring or animation within gameplay.
+- **React** - React will be used to route the user to the various pages described above in the HTML section. It will be used to effectively modularize the code.
+- **Service** - The following services will be employed:
+    - Signup
+    - Login
+    - Open various pages while logged in
+    - Connect to a game
+    - Guess a book/chapter
+    - Use of Google Analytics as a third-party API to determine from what devices and in what general locations users are accessing the web app
 - **DB/Login** - Description here
 - **WebSocket** - Description here
 
