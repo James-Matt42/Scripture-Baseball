@@ -55,7 +55,7 @@ I am going to use the required technologies in the following ways.
     - Open various pages while logged in
     - Connect to a game
     - Guess a book/chapter
-    - Use of Google Analytics as a third-party API to determine from what devices and in what general locations users are accessing the web app
+    - Use of [Google Analytics](https://developers.google.com/analytics) as a third-party API to determine from what devices and in what general locations users are accessing the web app
 - **DB/Login** - The database will store users, user information, scores, streaks, preferences, etc. in a database. Users must be logged in and authenticated to play the game.
 - **WebSocket** - As players make a guess in a multi-player game, their guess is broadcasted to the other players. Websocket is also employed to notify users of when it's their turn to play.
 
