@@ -34,6 +34,39 @@ ssh -i path/to/key/pair ubuntu@54.147.217.235
     - Click `Create records`
     - This should create a new `A` type record
 
+### Setting up HTTPS with Caddy:
+
+[Let's Encrypt](https://letsencrypt.org/how-it-works/) is a non-profit that allows you to dynamically request and renew a certificate to use HTTPS
+
+The following is the example provided by the course of how to set up a `Caddyfile` so that it automatically uses Let's Encrypt to establish a secure connection:
+
+```
+myfunkychickens.click {
+   root * /usr/share/caddy
+   file_server
+   header Cache-Control no-store
+   header -etag
+   header -server
+}
+
+
+startup.myfunkychickens.click {
+   reverse_proxy * localhost:4000
+   header Cache-Control no-store
+   header -server
+   header -etag
+   header Access-Control-Allow-Origin *
+}
+
+simon.myfunkychickens.click {
+   reverse_proxy * localhost:3000
+   header Cache-Control no-store
+   header -server
+   header -etag
+   header Access-Control-Allow-Origin *
+}
+```
+
 ## HTML
 
 Interesting things I have learned about HTML
