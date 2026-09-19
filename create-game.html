@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Create a private multiplayer Scripture Baseball game."
+  >
+
+  <title>Create Game | Scripture Baseball</title>
+</head>
+
+<body>
+  <header>
+    <a href="index.html" aria-label="Scripture Baseball home">
+      <img
+        src="assets/images/scripture-baseball-logo.png"
+        alt="Scripture Baseball logo"
+      >
+      <span>Scripture Baseball</span>
+    </a>
+
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="play.html">Play</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="create-game.html" aria-current="page">Create Game</a>
+      <a href="join-game.html">Join Game</a>
+      <a href="progress.html">Progress</a>
+      <a href="account.html">Account</a>
+    </nav>
+
+    <p>
+      Signed in as <a href="account.html">[USERNAME]</a>
+    </p>
+  </header>
+
+  <main>
+    <header>
+      <h1>Create a Private Game</h1>
+
+      <p>
+        Choose a challenge and a few game settings, then invite your
+        friends or family to join.
+      </p>
+    </header>
+
+    <form action="game.html" method="get">
+      <section aria-labelledby="challenge-heading">
+        <h2 id="challenge-heading">Choose a challenge</h2>
+
+        <label for="challenge">Challenge</label>
+        <select id="challenge" name="challenge">
+          <option value="book-of-mormon">Book of Mormon</option>
+          <option value="doctrinal-mastery">Doctrinal Mastery</option>
+          <option value="four-gospels">Four Gospels</option>
+          <option value="new-testament">New Testament</option>
+          <option value="faith">Faith</option>
+          <option value="conference">Frequently Cited in Conference</option>
+          <option value="obscure">Obscure Scriptures</option>
+        </select>
+
+        <p>
+          <a href="challenges.html">Browse all challenges</a>
+        </p>
+      </section>
+
+      <section aria-labelledby="format-heading">
+        <h2 id="format-heading">Game format</h2>
+
+        <fieldset>
+          <legend>How will this game be played?</legend>
+
+          <div>
+            <input
+              type="radio"
+              id="format-live"
+              name="format"
+              value="live"
+              checked
+            >
+            <label for="format-live">Live private match</label>
+            <p>
+              Everyone plays together in the same room.
+            </p>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="format-async"
+              name="format"
+              value="async"
+            >
+            <label for="format-async">Friend challenge</label>
+            <p>
+              Send the same set of pitches to friends to complete later.
+            </p>
+          </div>
+        </fieldset>
+      </section>
+
+      <section aria-labelledby="difficulty-heading">
+        <h2 id="difficulty-heading">Difficulty</h2>
+
+        <fieldset>
+          <legend>Choose a difficulty level</legend>
+
+          <div>
+            <input
+              type="radio"
+              id="difficulty-beginner"
+              name="difficulty"
+              value="beginner"
+            >
+            <label for="difficulty-beginner">Beginner</label>
+            <p>
+              More answer choices and stronger hints.
+            </p>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="difficulty-standard"
+              name="difficulty"
+              value="standard"
+              checked
+            >
+            <label for="difficulty-standard">Standard</label>
+            <p>
+              Identify the book first, then the chapter.
+            </p>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="difficulty-expert"
+              name="difficulty"
+              value="expert"
+            >
+            <label for="difficulty-expert">Expert</label>
+            <p>
+              Fewer cues and more difficult passages.
+            </p>
+          </div>
+        </fieldset>
+      </section>
+
+      <section aria-labelledby="length-heading">
+        <h2 id="length-heading">Game length</h2>
+
+        <fieldset>
+          <legend>Number of pitches</legend>
+
+          <div>
+            <input
+              type="radio"
+              id="length-5"
+              name="length"
+              value="5"
+            >
+            <label for="length-5">5 pitches</label>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="length-10"
+              name="length"
+              value="10"
+              checked
+            >
+            <label for="length-10">10 pitches</label>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="length-20"
+              name="length"
+              value="20"
+            >
+            <label for="length-20">20 pitches</label>
+          </div>
+        </fieldset>
+      </section>
+
+      <section aria-labelledby="answer-settings-heading">
+        <h2 id="answer-settings-heading">Answer settings</h2>
+
+        <p>
+          Players normally identify the book first and then the chapter.
+        </p>
+
+        <div>
+          <input
+            type="checkbox"
+            id="exact-verse"
+            name="exact-verse"
+            value="yes"
+          >
+          <label for="exact-verse">
+            Also require the exact verse
+          </label>
+        </div>
+
+        <p>
+          Exact verse identification adds an additional stage and is
+          intended for players who want a harder challenge.
+        </p>
+      </section>
+
+      <section aria-labelledby="room-settings-heading">
+        <h2 id="room-settings-heading">Room settings</h2>
+
+        <div>
+          <label for="game-name">Game name</label>
+          <input
+            id="game-name"
+            name="game-name"
+            type="text"
+            placeholder="Saturday Scripture Game"
+          >
+        </div>
+
+        <div>
+          <label for="max-players">Maximum players</label>
+          <select id="max-players" name="max-players">
+            <option value="2">2 players</option>
+            <option value="4" selected>4 players</option>
+            <option value="8">8 players</option>
+            <option value="12">12 players</option>
+          </select>
+        </div>
+      </section>
+
+      <button type="submit">Create Game</button>
+    </form>
+
+    <section aria-labelledby="after-creation-heading">
+      <h2 id="after-creation-heading">After you create the game</h2>
+
+      <p>
+        A private room will be created with a short join code, invitation
+        link, and QR code that you can share with other players.
+      </p>
+
+      <p>
+        Invited players will be able to sign in or continue as a guest
+        without losing their place in the room.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Created by <span>[YOUR NAME]</span>
+    </p>
+
+    <p>
+      <a href="https://github.com/YOUR-USERNAME/YOUR-REPOSITORY">
+        View the Scripture Baseball repository on GitHub
+      </a>
+    </p>
+
+    <p>
+      Scripture Baseball is an independent, unofficial hobby project.
+    </p>
+  </footer>
+</body>
+</html>
