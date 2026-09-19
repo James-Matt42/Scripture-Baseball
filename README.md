@@ -14,19 +14,19 @@ Scripture Baseball helps you master the scriptures through simple, repeatable pr
 
 #### Logged In:
 
-![Logged In](assets/pictures/figma_logged_in.png)
+![Logged In](assets/images/figma_logged_in.png)
 
 #### Choose Your Book:
 
-![Choose Your Book](assets/pictures/figma_choose_book.png)
+![Choose Your Book](assets/images/figma_choose_book.png)
 
 #### In Game:
 
-![In Game](assets/pictures/figma_in_game.png)
+![In Game](assets/images/figma_in_game.png)
 
 Here is a simple diagram showing a multi-player game:
 
-![In Game Diagram](assets/pictures/scripture_baseball_multiplayer_simple_diagram.png)
+![In Game Diagram](assets/images/scripture_baseball_multiplayer_simple_diagram.png)
 
 ### Key features
 

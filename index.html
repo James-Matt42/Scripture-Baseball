@@ -3,25 +3,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Scripture Baseball helps players learn where scripture passages are found through retrieval practice and friendly competition."
+  >
+
   <title>Scripture Baseball</title>
 </head>
+
 <body>
   <header>
-    <a href="/" aria-label="Scripture Baseball home">Scripture Baseball</a>
+    <a href="index.html" aria-label="Scripture Baseball home">
+      <img
+        src="assets/images/logo.png"
+        alt="Scripture Baseball logo"
+        width="75"
+      >
+      <span>Scripture Baseball</span>
+    </a>
 
-    <nav aria-label="Account and game actions">
-      <a href="/join">Join Game</a>
-      <a href="/sign-in">Sign In</a>
+    <nav aria-label="Primary navigation">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="play.html">Play</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="create-game.html">Create Game</a>
+      <a href="join-game.html">Join Game</a>
+      <a href="progress.html">Progress</a>
+      <a href="account.html">Account</a>
     </nav>
   </header>
 
   <main>
+    <section aria-labelledby="welcome-heading">
+      <h1 id="welcome-heading">
+        How well do you know where your favorite verses are found?
+      </h1>
+
+      <p>
+        Test your scripture knowledge one passage at a time.
+        Try a pitch before creating an account.
+      </p>
+    </section>
+
     <section aria-labelledby="sample-heading">
-      <h1 id="sample-heading">How well do you know where your favorite verses are found?</h1>
-      <p>Try a pitch before creating an account.</p>
+      <h2 id="sample-heading">Try a pitch</h2>
 
       <article aria-labelledby="question-heading">
-        <h2 id="question-heading">Where is this found?</h2>
+        <h3 id="question-heading">Where is this found?</h3>
+
         <blockquote>
           <p>“Adam fell that men might be...”</p>
         </blockquote>
@@ -29,53 +59,164 @@
         <form>
           <fieldset>
             <legend>Choose a book</legend>
-            <button type="button">1 Nephi</button>
-            <button type="button">2 Nephi</button>
-            <button type="button">Alma</button>
-            <button type="button">Mosiah</button>
+
+            <div>
+              <input
+                type="radio"
+                id="answer-1-nephi"
+                name="book"
+                value="1-nephi"
+              >
+              <label for="answer-1-nephi">1 Nephi</label>
+            </div>
+
+            <div>
+              <input
+                type="radio"
+                id="answer-2-nephi"
+                name="book"
+                value="2-nephi"
+              >
+              <label for="answer-2-nephi">2 Nephi</label>
+            </div>
+
+            <div>
+              <input
+                type="radio"
+                id="answer-alma"
+                name="book"
+                value="alma"
+              >
+              <label for="answer-alma">Alma</label>
+            </div>
+
+            <div>
+              <input
+                type="radio"
+                id="answer-mosiah"
+                name="book"
+                value="mosiah"
+              >
+              <label for="answer-mosiah">Mosiah</label>
+            </div>
           </fieldset>
+
+          <button type="button">Submit Answer</button>
         </form>
       </article>
 
-      <!-- Shown after a guest answers a pitch. -->
-      <section aria-labelledby="feedback-heading" hidden>
-        <h2 id="feedback-heading">Correct — 2 Nephi 2:25</h2>
-        <button type="button">Next pitch</button>
-      </section>
+      <!--
+        JavaScript will eventually show feedback after the player answers.
+        The details element keeps the future state represented in the
+        HTML-only prototype without pretending that the game works yet.
+      -->
+      <details id="sample-feedback">
+        <summary>Example answer feedback</summary>
 
-      <!-- Shown after several guest pitches, without blocking continued guest play. -->
-      <section aria-labelledby="guest-summary-heading" hidden>
-        <h2 id="guest-summary-heading">You went 4 / 5.</h2>
-        <p>Create a free account to save your progress, learn which books you know best, and get personalized practice.</p>
-        <a href="/sign-up">Save my progress</a>
-        <button type="button">Keep playing as guest</button>
-      </section>
+        <section aria-labelledby="feedback-heading">
+          <h3 id="feedback-heading">Correct — 2 Nephi 2:25</h3>
+
+          <p>
+            After each pitch, the player will see the correct scripture
+            reference and useful learning feedback.
+          </p>
+
+          <button type="button">Next Pitch</button>
+        </section>
+      </details>
+
+      <!-- Shown after several guest pitches in the finished application. -->
+      <details>
+        <summary>Example guest progress</summary>
+
+        <section aria-labelledby="guest-summary-heading">
+          <h3 id="guest-summary-heading">You went 4 / 5.</h3>
+
+          <p>
+            Create a free account to save your progress, learn which books
+            you know best, and get personalized practice.
+          </p>
+
+          <a href="account.html">Save My Progress</a>
+          <button type="button">Keep Playing as Guest</button>
+        </section>
+      </details>
     </section>
 
     <section aria-labelledby="join-heading">
       <h2 id="join-heading">Join a private game</h2>
-      <p>Have an invite or room code? Join without creating an account first.</p>
 
-      <form>
+      <p>
+        Have an invite or room code? Join a private game without creating
+        an account first.
+      </p>
+
+      <form action="join-game.html" method="get">
         <label for="room-code">Room code</label>
-        <input id="room-code" name="room-code" type="text" autocomplete="off">
-        <button type="button">Join Game</button>
+
+        <input
+          id="room-code"
+          name="code"
+          type="text"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+        >
+
+        <button type="submit">Join Game</button>
       </form>
     </section>
 
     <section aria-labelledby="about-heading">
       <h2 id="about-heading">Learn by locating scripture passages</h2>
-      <p>Answer a passage, see the correct reference, and keep playing at your own pace.</p>
+
+      <p>
+        Scripture Baseball uses retrieval practice to help you learn where
+        scripture passages are found. Make an attempt, see the correct
+        reference, and keep playing at your own pace.
+      </p>
+
+      <p>
+        Practice on your own, explore different scripture challenges, or
+        play private games with friends and family.
+      </p>
+    </section>
+
+    <!--
+      Third-party service placeholder.
+      Bible API will later provide optional alternate translations for
+      Old Testament and New Testament passages.
+    -->
+    <section aria-labelledby="translations-heading">
+      <h2 id="translations-heading">Compare Bible translations</h2>
+
+      <p>
+        When a question comes from the Old or New Testament, you will be
+        able to compare the passage with another Bible translation after
+        answering.
+      </p>
+
+      <p>
+        Alternate translation data will be provided by
+        <a href="https://bible-api.com/">Bible API</a>.
+      </p>
     </section>
   </main>
 
   <footer>
-    <nav aria-label="Site information">
-      <a href="/about">About</a>
-      <a href="/privacy">Privacy</a>
-      <a href="/support">Support this project</a>
-    </nav>
-    <p>Scripture Baseball is an independent, unofficial hobby project.</p>
+    <p>
+      Created by <span>[YOUR NAME]</span>
+    </p>
+
+    <p>
+      <a href="https://github.com/YOUR-USERNAME/YOUR-REPOSITORY">
+        View the Scripture Baseball repository on GitHub
+      </a>
+    </p>
+
+    <p>
+      Scripture Baseball is an independent, unofficial hobby project.
+    </p>
   </footer>
 </body>
 </html>
