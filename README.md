@@ -83,15 +83,15 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
 - [x] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [x] **HTML pages** - I did not complete this part of the deliverable.
-- [x] **Proper HTML element usage** - I did not complete this part of the deliverable.
-- [x] **Links** - I did not complete this part of the deliverable.
-- [x] **Text** - I did not complete this part of the deliverable.
-- [x] **3rd party API placeholder** - I did not complete this part of the deliverable.
-- [x] **Images** - I did not complete this part of the deliverable.
-- [x] **Login placeholder** - I did not complete this part of the deliverable.
-- [x] **DB data placeholder** - I did not complete this part of the deliverable.
-- [x] **WebSocket placeholder** - I did not complete this part of the deliverable.
+- [x] **HTML pages** - I created 8 HTML pages.
+- [x] **Proper HTML element usage** - All the HTML follows correct usage guidelines.
+- [x] **Links** - Each of the pages links to one or more of the other pages.
+- [x] **Text** - There is textual content representing the eventual functionality of the application.
+- [x] **3rd party API placeholder** - There's a placeholder for making use of a Bible API.
+- [x] **Images** - Each page includes the Scripture Baseball logo at the top.
+- [x] **Login placeholder** - account.html is a placeholder for logging in or creating an account.
+- [x] **DB data placeholder** - progress.html demonstrates how the database will show the user statistics of how well they're doing.
+- [x] **WebSocket placeholder** - The multiplayer game in game.html represents how users' guesses will be broadcasted in real time.
 
 ## 🚀 CSS deliverable
 
