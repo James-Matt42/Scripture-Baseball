@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Join a private Scripture Baseball game as a guest or signed-in player."
+  >
+
+  <title>Join Game | Scripture Baseball</title>
+</head>
+
+<body>
+  <header>
+    <a href="index.html" aria-label="Scripture Baseball home">
+      <img
+        src="assets/images/scripture-baseball-logo.png"
+        alt="Scripture Baseball logo"
+      >
+      <span>Scripture Baseball</span>
+    </a>
+
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="play.html">Play</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="create-game.html">Create Game</a>
+      <a href="join-game.html" aria-current="page">Join Game</a>
+      <a href="progress.html">Progress</a>
+      <a href="account.html">Account</a>
+    </nav>
+  </header>
+
+  <main>
+    <header>
+      <h1>Join a Private Game</h1>
+
+      <p>
+        Enter a room code or open an invitation from someone you know.
+        You can join without creating an account first.
+      </p>
+    </header>
+
+    <section aria-labelledby="code-heading">
+      <h2 id="code-heading">Enter a room code</h2>
+
+      <form action="game.html" method="get">
+        <label for="room-code">Room code</label>
+
+        <input
+          id="room-code"
+          name="code"
+          type="text"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          placeholder="NEPHI7"
+          required
+        >
+
+        <button type="submit">Find Game</button>
+      </form>
+    </section>
+
+    <!--
+      In the finished application, this room preview will appear after a
+      valid invitation link or room code has been found.
+    -->
+    <section aria-labelledby="preview-heading">
+      <h2 id="preview-heading">Example room invitation</h2>
+
+      <article>
+        <h3>Book of Mormon Baseball</h3>
+
+        <p>
+          <strong>[HOST NAME]</strong> invited you to a private game.
+        </p>
+
+        <dl>
+          <div>
+            <dt>Challenge</dt>
+            <dd>Book of Mormon</dd>
+          </div>
+
+          <div>
+            <dt>Difficulty</dt>
+            <dd>Standard</dd>
+          </div>
+
+          <div>
+            <dt>Game length</dt>
+            <dd>10 pitches</dd>
+          </div>
+
+          <div>
+            <dt>Players</dt>
+            <dd>2 of 4 joined</dd>
+          </div>
+        </dl>
+      </article>
+    </section>
+
+    <section aria-labelledby="identity-heading">
+      <h2 id="identity-heading">How would you like to join?</h2>
+
+      <section aria-labelledby="guest-heading">
+        <h3 id="guest-heading">Continue as a guest</h3>
+
+        <p>
+          Choose a display name and join the room without creating an
+          account.
+        </p>
+
+        <form action="game.html" method="get">
+          <label for="guest-name">Display name</label>
+
+          <input
+            id="guest-name"
+            name="display-name"
+            type="text"
+            autocomplete="nickname"
+            placeholder="Your name"
+            required
+          >
+
+          <input
+            type="hidden"
+            name="code"
+            value="NEPHI7"
+          >
+
+          <button type="submit">Continue as Guest</button>
+        </form>
+      </section>
+
+      <section aria-labelledby="sign-in-heading">
+        <h3 id="sign-in-heading">Sign in</h3>
+
+        <p>
+          Sign in to keep your game result and add it to your learning
+          history.
+        </p>
+
+        <form action="game.html" method="get">
+          <div>
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <input
+            type="hidden"
+            name="code"
+            value="NEPHI7"
+          >
+
+          <button type="submit">Sign In and Join</button>
+        </form>
+
+        <p>
+          <a href="account.html">
+            Need an account? Create one without losing this room.
+          </a>
+        </p>
+      </section>
+    </section>
+
+    <section aria-labelledby="state-heading">
+      <h2 id="state-heading">Your place in the game is preserved</h2>
+
+      <p>
+        In the finished application, joining creates a temporary player
+        identity for this room. If you sign in or create an account, your
+        room membership and game activity stay attached to the same player.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://github.com/James-Matt42/Scripture-Baseball">
+        View the Scripture Baseball repository on GitHub
+      </a>
+    </p>
+
+    <p>
+      Scripture Baseball is an independent, unofficial hobby project.
+    </p>
+  </footer>
+</body>
+</html>
