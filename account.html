@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Sign in, create an account, and manage your Scripture Baseball profile."
+  >
+
+  <title>Account | Scripture Baseball</title>
+</head>
+
+<body>
+  <header>
+    <a href="index.html" aria-label="Scripture Baseball home">
+      <img
+        src="assets/images/logo.png"
+        alt="Scripture Baseball logo"
+        width="75"
+      >
+      <span>Scripture Baseball</span>
+    </a>
+
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="play.html">Play</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="create-game.html">Create Game</a>
+      <a href="join-game.html">Join Game</a>
+      <a href="progress.html">Progress</a>
+      <a href="account.html" aria-current="page">Account</a>
+    </nav>
+  </header>
+
+  <main>
+    <header>
+      <h1>Account</h1>
+
+      <p>
+        Sign in to save your learning history, continue across devices,
+        and keep your multiplayer results.
+      </p>
+    </header>
+
+    <section aria-labelledby="sign-in-heading">
+      <h2 id="sign-in-heading">Sign in</h2>
+
+      <form>
+        <div>
+          <label for="sign-in-email">Email</label>
+          <input
+            id="sign-in-email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="sign-in-password">Password</label>
+          <input
+            id="sign-in-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <button type="button">Sign In</button>
+      </form>
+    </section>
+
+    <section aria-labelledby="create-account-heading">
+      <h2 id="create-account-heading">Create an account</h2>
+
+      <p>
+        If you have already practiced or joined a game as a guest, your
+        existing activity will be carried into your new account.
+      </p>
+
+      <form>
+        <div>
+          <label for="display-name">Display name</label>
+          <input
+            id="display-name"
+            name="display-name"
+            type="text"
+            autocomplete="nickname"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="create-email">Email</label>
+          <input
+            id="create-email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="create-password">Password</label>
+          <input
+            id="create-password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="confirm-password">Confirm password</label>
+          <input
+            id="confirm-password"
+            name="confirm-password"
+            type="password"
+            autocomplete="new-password"
+            required
+          >
+        </div>
+
+        <button type="button">Create Account</button>
+      </form>
+    </section>
+
+    <!--
+      This section represents the authenticated account state that will be
+      shown after login.
+    -->
+    <section aria-labelledby="signed-in-heading">
+      <h2 id="signed-in-heading">Example signed-in account</h2>
+
+      <p>
+        Signed in as <strong>[USERNAME]</strong>
+      </p>
+
+      <dl>
+        <div>
+          <dt>Email</dt>
+          <dd>[EMAIL ADDRESS]</dd>
+        </div>
+
+        <div>
+          <dt>Member since</dt>
+          <dd>[DATE]</dd>
+        </div>
+      </dl>
+
+      <p>
+        <a href="progress.html">View your learning progress</a>
+      </p>
+
+      <button type="button">Sign Out</button>
+    </section>
+
+    <section aria-labelledby="preferences-heading">
+      <h2 id="preferences-heading">Practice preferences</h2>
+
+      <form>
+        <fieldset>
+          <legend>Default answer difficulty</legend>
+
+          <div>
+            <input
+              type="radio"
+              id="answer-book-chapter"
+              name="answer-difficulty"
+              value="book-chapter"
+              checked
+            >
+            <label for="answer-book-chapter">
+              Book and chapter
+            </label>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="answer-exact-verse"
+              name="answer-difficulty"
+              value="exact-verse"
+            >
+            <label for="answer-exact-verse">
+              Book, chapter, and exact verse
+            </label>
+          </div>
+        </fieldset>
+
+        <div>
+          <label for="preferred-volume">Preferred scripture focus</label>
+
+          <select id="preferred-volume" name="preferred-volume">
+            <option value="">No preference</option>
+            <option value="old-testament">Old Testament</option>
+            <option value="new-testament">New Testament</option>
+            <option value="book-of-mormon">Book of Mormon</option>
+            <option value="doctrine-and-covenants">
+              Doctrine and Covenants
+            </option>
+            <option value="pearl-of-great-price">
+              Pearl of Great Price
+            </option>
+          </select>
+        </div>
+
+        <button type="button">Save Preferences</button>
+      </form>
+    </section>
+
+    <section aria-labelledby="notifications-heading">
+      <h2 id="notifications-heading">Notifications</h2>
+
+      <p>
+        Reminders and multiplayer notifications will be optional and can
+        be changed at any time.
+      </p>
+
+      <form>
+        <div>
+          <input
+            type="checkbox"
+            id="practice-reminders"
+            name="practice-reminders"
+          >
+          <label for="practice-reminders">
+            Send optional practice reminders
+          </label>
+        </div>
+
+        <div>
+          <input
+            type="checkbox"
+            id="game-notifications"
+            name="game-notifications"
+            checked
+          >
+          <label for="game-notifications">
+            Notify me when a private game needs my attention
+          </label>
+        </div>
+
+        <button type="button">Save Notification Settings</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://github.com/James-Matt42/Scripture-Baseball">
+        View the Scripture Baseball repository on GitHub
+      </a>
+    </p>
+
+    <p>
+      Scripture Baseball is an independent, unofficial hobby project.
+    </p>
+  </footer>
+</body>
+</html>
