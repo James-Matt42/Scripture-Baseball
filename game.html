@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Play a private multiplayer Scripture Baseball game."
+  >
+
+  <title>Private Game | Scripture Baseball</title>
+</head>
+
+<body>
+  <header>
+    <a href="index.html" aria-label="Scripture Baseball home">
+      <img
+        src="assets/images/logo.png"
+        alt="Scripture Baseball logo"
+        width="75"
+      >
+      <span>Scripture Baseball</span>
+    </a>
+
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="play.html">Play</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="create-game.html">Create Game</a>
+      <a href="join-game.html">Join Game</a>
+      <a href="progress.html">Progress</a>
+      <a href="account.html">Account</a>
+    </nav>
+
+    <p>
+      Playing as <strong>[PLAYER NAME]</strong>
+    </p>
+  </header>
+
+  <main>
+    <header>
+      <h1>Book of Mormon Baseball</h1>
+
+      <dl>
+        <div>
+          <dt>Room code</dt>
+          <dd>NEPHI7</dd>
+        </div>
+
+        <div>
+          <dt>Host</dt>
+          <dd>[HOST NAME]</dd>
+        </div>
+
+        <div>
+          <dt>Challenge</dt>
+          <dd>Book of Mormon</dd>
+        </div>
+
+        <div>
+          <dt>Difficulty</dt>
+          <dd>Standard</dd>
+        </div>
+
+        <div>
+          <dt>Game length</dt>
+          <dd>10 pitches</dd>
+        </div>
+      </dl>
+    </header>
+
+    <!--
+      This section represents the multiplayer lobby before the host starts
+      the game. Player membership will eventually update in realtime.
+    -->
+    <section aria-labelledby="lobby-heading">
+      <h2 id="lobby-heading">Lobby</h2>
+
+      <p>3 of 4 players have joined.</p>
+
+      <ul>
+        <li>[HOST NAME] — Host</li>
+        <li>[PLAYER NAME]</li>
+        <li>[PLAYER NAME]</li>
+        <li>Waiting for player...</li>
+      </ul>
+
+      <p>
+        Player joins and departures will update here in realtime using
+        WebSocket communication with the server.
+      </p>
+
+      <button type="button">Start Game</button>
+    </section>
+
+    <section aria-labelledby="invite-heading">
+      <h2 id="invite-heading">Invite players</h2>
+
+      <p>
+        Share the room code, invitation link, or QR code with people you
+        want to play with.
+      </p>
+
+      <dl>
+        <div>
+          <dt>Room code</dt>
+          <dd>NEPHI7</dd>
+        </div>
+
+        <div>
+          <dt>Invitation link</dt>
+          <dd>
+            <a href="join-game.html?code=NEPHI7">
+              join-game.html?code=NEPHI7
+            </a>
+          </dd>
+        </div>
+      </dl>
+
+      <button type="button">Copy Invitation Link</button>
+
+      <figure>
+        <div aria-label="QR code placeholder">
+          [QR CODE]
+        </div>
+        <figcaption>
+          QR code for joining room NEPHI7
+        </figcaption>
+      </figure>
+    </section>
+
+    <!--
+      This represents how the same page may look after the host starts
+      the game. JavaScript and React will eventually switch between lobby,
+      gameplay, feedback, and results states.
+    -->
+    <section aria-labelledby="game-heading">
+      <h2 id="game-heading">Example active game</h2>
+
+      <p>Pitch 3 of 10</p>
+
+      <article aria-labelledby="pitch-heading">
+        <h3 id="pitch-heading">Where is this found?</h3>
+
+        <blockquote>
+          <p>“Adam fell that men might be...”</p>
+        </blockquote>
+
+        <section aria-labelledby="book-heading">
+          <h4 id="book-heading">1. Which book?</h4>
+
+          <form>
+            <fieldset>
+              <legend>Choose a book</legend>
+
+              <div>
+                <input
+                  type="radio"
+                  id="game-book-1-nephi"
+                  name="book"
+                  value="1-nephi"
+                >
+                <label for="game-book-1-nephi">1 Nephi</label>
+              </div>
+
+              <div>
+                <input
+                  type="radio"
+                  id="game-book-2-nephi"
+                  name="book"
+                  value="2-nephi"
+                >
+                <label for="game-book-2-nephi">2 Nephi</label>
+              </div>
+
+              <div>
+                <input
+                  type="radio"
+                  id="game-book-alma"
+                  name="book"
+                  value="alma"
+                >
+                <label for="game-book-alma">Alma</label>
+              </div>
+
+              <div>
+                <input
+                  type="radio"
+                  id="game-book-mosiah"
+                  name="book"
+                  value="mosiah"
+                >
+                <label for="game-book-mosiah">Mosiah</label>
+              </div>
+            </fieldset>
+
+            <button type="button">Submit Book</button>
+          </form>
+        </section>
+
+        <details open>
+          <summary>2. Which chapter?</summary>
+
+          <section aria-labelledby="game-chapter-heading">
+            <h4 id="game-chapter-heading">Enter the chapter</h4>
+
+            <form>
+              <label for="game-chapter-answer">Chapter</label>
+
+              <input
+                id="game-chapter-answer"
+                name="chapter"
+                type="number"
+                min="1"
+                inputmode="numeric"
+              >
+
+              <button type="button">Submit Chapter</button>
+            </form>
+          </section>
+        </details>
+      </article>
+
+      <details>
+        <summary>Example answer reveal</summary>
+
+        <section aria-labelledby="reveal-heading">
+          <h3 id="reveal-heading">
+            Correct reference: 2 Nephi 2:25
+          </h3>
+
+          <p>
+            Each player will receive the correct reference and personal
+            feedback after answering.
+          </p>
+
+          <button type="button">Continue</button>
+        </section>
+      </details>
+    </section>
+
+    <section aria-labelledby="score-heading">
+      <h2 id="score-heading">Current game standings</h2>
+
+      <table>
+        <caption>
+          Example scores for players in this private game
+        </caption>
+
+        <thead>
+          <tr>
+            <th scope="col">Player</th>
+            <th scope="col">Correct books</th>
+            <th scope="col">Correct chapters</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>[PLAYER NAME]</td>
+            <td>3</td>
+            <td>2</td>
+          </tr>
+
+          <tr>
+            <td>[PLAYER NAME]</td>
+            <td>2</td>
+            <td>2</td>
+          </tr>
+
+          <tr>
+            <td>[PLAYER NAME]</td>
+            <td>2</td>
+            <td>1</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        The final scoring presentation may include lightweight baseball
+        elements, while book and chapter performance remain clearly
+        understandable.
+      </p>
+    </section>
+
+    <!--
+      WebSocket data placeholder required for the HTML deliverable.
+      These events will eventually be pushed from the backend to connected
+      players without requiring them to refresh the page.
+    -->
+    <section aria-labelledby="activity-heading">
+      <h2 id="activity-heading">Live game activity</h2>
+
+      <p>
+        Realtime room events will appear here as they are received from
+        the server.
+      </p>
+
+      <ul>
+        <li>[PLAYER NAME] joined the room.</li>
+        <li>[PLAYER NAME] is ready.</li>
+        <li>The host started the game.</li>
+        <li>All players submitted Pitch 2.</li>
+      </ul>
+
+      <p>
+        <strong>Technology placeholder:</strong>
+        This activity feed and multiplayer game state will be updated
+        using WebSocket communication.
+      </p>
+    </section>
+
+    <details>
+      <summary>Example game results</summary>
+
+      <section aria-labelledby="results-heading">
+        <h2 id="results-heading">Game complete</h2>
+
+        <p>You answered 8 of 10 books correctly.</p>
+        <p>You answered 6 of 10 chapters correctly.</p>
+
+        <h3>Passages to review</h3>
+
+        <ul>
+          <li>Alma 32:21</li>
+          <li>Helaman 5:12</li>
+        </ul>
+
+        <p>
+          Signed-in players will have their attempts and learning history
+          saved to the database.
+        </p>
+
+        <a href="play.html">Practice Missed Passages</a>
+        <a href="create-game.html">Create Another Game</a>
+        <a href="progress.html">View Progress</a>
+      </section>
+    </details>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://github.com/James-Matt42/Scripture-Baseball">
+        View the Scripture Baseball repository on GitHub
+      </a>
+    </p>
+
+    <p>
+      Scripture Baseball is an independent, unofficial hobby project.
+    </p>
+  </footer>
+</body>
+</html>
