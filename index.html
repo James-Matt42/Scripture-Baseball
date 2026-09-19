@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scripture Baseball</title>
+</head>
+<body>
+  <header>
+    <a href="/" aria-label="Scripture Baseball home">Scripture Baseball</a>
+
+    <nav aria-label="Account and game actions">
+      <a href="/join">Join Game</a>
+      <a href="/sign-in">Sign In</a>
+    </nav>
+  </header>
+
+  <main>
+    <section aria-labelledby="sample-heading">
+      <h1 id="sample-heading">How well do you know where your favorite verses are found?</h1>
+      <p>Try a pitch before creating an account.</p>
+
+      <article aria-labelledby="question-heading">
+        <h2 id="question-heading">Where is this found?</h2>
+        <blockquote>
+          <p>“Adam fell that men might be...”</p>
+        </blockquote>
+
+        <form>
+          <fieldset>
+            <legend>Choose a book</legend>
+            <button type="button">1 Nephi</button>
+            <button type="button">2 Nephi</button>
+            <button type="button">Alma</button>
+            <button type="button">Mosiah</button>
+          </fieldset>
+        </form>
+      </article>
+
+      <!-- Shown after a guest answers a pitch. -->
+      <section aria-labelledby="feedback-heading" hidden>
+        <h2 id="feedback-heading">Correct — 2 Nephi 2:25</h2>
+        <button type="button">Next pitch</button>
+      </section>
+
+      <!-- Shown after several guest pitches, without blocking continued guest play. -->
+      <section aria-labelledby="guest-summary-heading" hidden>
+        <h2 id="guest-summary-heading">You went 4 / 5.</h2>
+        <p>Create a free account to save your progress, learn which books you know best, and get personalized practice.</p>
+        <a href="/sign-up">Save my progress</a>
+        <button type="button">Keep playing as guest</button>
+      </section>
+    </section>
+
+    <section aria-labelledby="join-heading">
+      <h2 id="join-heading">Join a private game</h2>
+      <p>Have an invite or room code? Join without creating an account first.</p>
+
+      <form>
+        <label for="room-code">Room code</label>
+        <input id="room-code" name="room-code" type="text" autocomplete="off">
+        <button type="button">Join Game</button>
+      </form>
+    </section>
+
+    <section aria-labelledby="about-heading">
+      <h2 id="about-heading">Learn by locating scripture passages</h2>
+      <p>Answer a passage, see the correct reference, and keep playing at your own pace.</p>
+    </section>
+  </main>
+
+  <footer>
+    <nav aria-label="Site information">
+      <a href="/about">About</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/support">Support this project</a>
+    </nav>
+    <p>Scripture Baseball is an independent, unofficial hobby project.</p>
+  </footer>
+</body>
+</html>
