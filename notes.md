@@ -69,7 +69,10 @@ simon.myfunkychickens.click {
 
 ## HTML
 
-Interesting things I have learned about HTML
+- You can use inline structural elements, such as **bolding** and *italics* to modify text
+- You can make use of HTTP methods such as GET and POST through forms
+- You can embed SVG graphics to create visualizations
+- The Document Object Model (DOM) determines how the HTML is parsed and and displayed to the user
 
 ## React
 
