@@ -1,3 +1,6 @@
 *.pem
 simon-html/
 simon-html/*
+node_modules/
+package-lock.json
+package.json
