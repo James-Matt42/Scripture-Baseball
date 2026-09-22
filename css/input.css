@@ -1,1 +1,84 @@
 @import "tailwindcss";
+
+
+/* =====================================
+   Scripture Baseball Design System
+   Commit 2: brand tokens and reusable styles
+   ===================================== */
+
+@theme {
+    --color-scripture-green: #14532d;
+    --color-scripture-green-light: #dcfce7;
+
+    --color-parchment: #fffbeb;
+    --color-paper: #ffffff;
+
+    --color-baseball-gold: #ca8a04;
+    --color-baseball-red: #b91c1c;
+
+    --color-ink: #1c1917;
+    --color-muted: #78716c;
+}
+
+
+/* Base document styles */
+
+html {
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    margin: 0;
+    color: var(--color-ink);
+    font-family: "Inter", sans-serif;
+}
+
+
+h1,
+h2,
+h3,
+.scripture-text {
+    font-family: "Merriweather", serif;
+}
+
+
+/* Reusable Scripture Baseball components */
+
+.sb-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.sb-card {
+    @apply rounded-xl bg-white p-6 shadow-md;
+}
+
+.sb-section {
+    @apply py-8 md:py-12;
+}
+
+.sb-button-primary {
+    @apply rounded-lg px-6 py-3 font-semibold text-white transition;
+    background-color: var(--color-scripture-green);
+}
+
+.sb-button-primary:hover {
+    filter: brightness(90%);
+}
+
+.sb-badge {
+    @apply rounded-full px-3 py-1 text-sm font-semibold;
+    background-color: var(--color-baseball-gold);
+}
+
+
+/* Rubric selector examples and future page hooks */
+
+#homepage-demo {
+    background-color: var(--color-parchment);
+}
