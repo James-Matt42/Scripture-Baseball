@@ -82,3 +82,45 @@ h3,
 #homepage-demo {
     background-color: var(--color-parchment);
 }
+
+
+/* =====================================
+   Global application shell
+===================================== */
+
+body {
+    @apply min-h-screen bg-amber-50 text-stone-900;
+}
+
+.sb-header {
+    @apply flex flex-col gap-4 border-b border-stone-200 bg-white px-4 py-4 shadow-sm md:flex-row md:items-center md:justify-between;
+}
+
+.sb-brand {
+    @apply flex items-center gap-3 font-bold text-green-900;
+}
+
+.sb-brand img {
+    @apply rounded-full;
+}
+
+.sb-nav {
+    @apply flex flex-wrap gap-2 text-sm font-medium;
+}
+
+.sb-nav a {
+    @apply rounded-lg px-3 py-2 text-stone-700 transition;
+}
+
+.sb-nav a:hover,
+.sb-nav a[aria-current="page"] {
+    @apply bg-green-100 text-green-900;
+}
+
+.sb-main {
+    @apply sb-container;
+}
+
+.sb-footer {
+    @apply mt-12 border-t border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-600;
+}
