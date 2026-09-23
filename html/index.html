@@ -39,7 +39,7 @@
   </header>
 
   <main class="sb-main">
-    <section aria-labelledby="welcome-heading">
+    <section class="sb-hero" id="homepage-demo" aria-labelledby="welcome-heading">
       <h1 id="welcome-heading">
         How well do you know where your favorite verses are found?
       </h1>
@@ -50,13 +50,13 @@
       </p>
     </section>
 
-    <section aria-labelledby="sample-heading">
+    <section class="sb-section" aria-labelledby="sample-heading">
       <h2 id="sample-heading">Try a pitch</h2>
 
-      <article aria-labelledby="question-heading">
+      <article class="sb-pitch-card" aria-labelledby="question-heading">
         <h3 id="question-heading">Where is this found?</h3>
 
-        <blockquote>
+        <blockquote class="scripture-text">
           <p>“Adam fell that men might be...”</p>
         </blockquote>
 
@@ -64,48 +64,48 @@
           <fieldset>
             <legend>Choose a book</legend>
 
-            <div>
+            <div class="sb-answer-list">
               <input
                 type="radio"
                 id="answer-1-nephi"
                 name="book"
                 value="1-nephi"
               >
-              <label for="answer-1-nephi">1 Nephi</label>
+              <label class="sb-answer-label" for="answer-1-nephi">1 Nephi</label>
             </div>
 
-            <div>
+            <div class="sb-answer-list">
               <input
                 type="radio"
                 id="answer-2-nephi"
                 name="book"
                 value="2-nephi"
               >
-              <label for="answer-2-nephi">2 Nephi</label>
+              <label class="sb-answer-label" for="answer-2-nephi">2 Nephi</label>
             </div>
 
-            <div>
+            <div class="sb-answer-list">
               <input
                 type="radio"
                 id="answer-alma"
                 name="book"
                 value="alma"
               >
-              <label for="answer-alma">Alma</label>
+              <label class="sb-answer-label" for="answer-alma">Alma</label>
             </div>
 
-            <div>
+            <div class="sb-answer-list">
               <input
                 type="radio"
                 id="answer-mosiah"
                 name="book"
                 value="mosiah"
               >
-              <label for="answer-mosiah">Mosiah</label>
+              <label class="sb-answer-label" for="answer-mosiah">Mosiah</label>
             </div>
           </fieldset>
 
-          <button type="button">Submit Answer</button>
+          <button class="sb-button-primary" type="button">Submit Answer</button>
         </form>
         <details>
           <summary>Example next stage</summary>
@@ -127,7 +127,7 @@
                 inputmode="numeric"
               >
 
-              <button type="button">Submit Chapter</button>
+              <button class="sb-button-primary" type="button">Submit Chapter</button>
             </form>
           </section>
         </details>
@@ -149,7 +149,7 @@
             reference and useful learning feedback.
           </p>
 
-          <button type="button">Next Pitch</button>
+          <button class="sb-button-primary" type="button">Next Pitch</button>
         </section>
       </details>
 
@@ -171,7 +171,7 @@
       </details>
     </section>
 
-    <section aria-labelledby="join-heading">
+    <section class="sb-cta-section" aria-labelledby="join-heading">
       <h2 id="join-heading">Join a private game</h2>
 
       <p>
@@ -191,7 +191,7 @@
           spellcheck="false"
         >
 
-        <button type="submit">Join Game</button>
+        <button class="sb-button-primary" type="submit">Join Game</button>
       </form>
     </section>
 
