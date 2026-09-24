@@ -48,12 +48,12 @@
       </p>
     </header>
 
-    <section aria-labelledby="sign-in-heading">
+    <section class="sb-form-group" aria-labelledby="sign-in-heading">
       <h2 id="sign-in-heading">Sign in</h2>
 
       <form>
         <div>
-          <label for="sign-in-email">Email</label>
+          <label class="sb-form-label" for="sign-in-email">Email</label>
           <input
             id="sign-in-email"
             name="email"
@@ -64,7 +64,7 @@
         </div>
 
         <div>
-          <label for="sign-in-password">Password</label>
+          <label class="sb-form-label" for="sign-in-password">Password</label>
           <input
             id="sign-in-password"
             name="password"
@@ -78,7 +78,7 @@
       </form>
     </section>
 
-    <section aria-labelledby="create-account-heading">
+    <section class="sb-form-group" aria-labelledby="create-account-heading">
       <h2 id="create-account-heading">Create an account</h2>
 
       <p>
@@ -88,7 +88,7 @@
 
       <form>
         <div>
-          <label for="display-name">Display name</label>
+          <label class="sb-form-label" for="display-name">Display name</label>
           <input
             id="display-name"
             name="display-name"
@@ -99,7 +99,7 @@
         </div>
 
         <div>
-          <label for="create-email">Email</label>
+          <label class="sb-form-label" for="create-email">Email</label>
           <input
             id="create-email"
             name="email"
@@ -110,7 +110,7 @@
         </div>
 
         <div>
-          <label for="create-password">Password</label>
+          <label class="sb-form-label" for="create-password">Password</label>
           <input
             id="create-password"
             name="password"
@@ -121,7 +121,7 @@
         </div>
 
         <div>
-          <label for="confirm-password">Confirm password</label>
+          <label class="sb-form-label" for="confirm-password">Confirm password</label>
           <input
             id="confirm-password"
             name="confirm-password"
@@ -139,7 +139,7 @@
       This section represents the authenticated account state that will be
       shown after login.
     -->
-    <section aria-labelledby="signed-in-heading">
+    <section class="sb-form-group" aria-labelledby="signed-in-heading">
       <h2 id="signed-in-heading">Example signed-in account</h2>
 
       <p>
@@ -165,11 +165,11 @@
       <button type="button">Sign Out</button>
     </section>
 
-    <section aria-labelledby="preferences-heading">
+    <section class="sb-form-group" aria-labelledby="preferences-heading">
       <h2 id="preferences-heading">Practice preferences</h2>
 
       <form>
-        <fieldset>
+        <fieldset class="sb-option-group">
           <legend>Default answer difficulty</legend>
 
           <div>
@@ -180,7 +180,7 @@
               value="book-chapter"
               checked
             >
-            <label for="answer-book-chapter">
+            <label class="sb-form-label" for="answer-book-chapter">
               Book and chapter
             </label>
           </div>
@@ -192,16 +192,16 @@
               name="answer-difficulty"
               value="exact-verse"
             >
-            <label for="answer-exact-verse">
+            <label class="sb-form-label" for="answer-exact-verse">
               Book, chapter, and exact verse
             </label>
           </div>
         </fieldset>
 
         <div>
-          <label for="preferred-volume">Preferred scripture focus</label>
+          <label class="sb-form-label" for="preferred-volume">Preferred scripture focus</label>
 
-          <select id="preferred-volume" name="preferred-volume">
+          <select class="sb-form-input" id="preferred-volume" name="preferred-volume">
             <option value="">No preference</option>
             <option value="old-testament">Old Testament</option>
             <option value="new-testament">New Testament</option>
@@ -219,7 +219,7 @@
       </form>
     </section>
 
-    <section aria-labelledby="notifications-heading">
+    <section class="sb-form-group" aria-labelledby="notifications-heading">
       <h2 id="notifications-heading">Notifications</h2>
 
       <p>
@@ -234,7 +234,7 @@
             id="practice-reminders"
             name="practice-reminders"
           >
-          <label for="practice-reminders">
+          <label class="sb-form-label" for="practice-reminders">
             Send optional practice reminders
           </label>
         </div>
@@ -246,7 +246,7 @@
             name="game-notifications"
             checked
           >
-          <label for="game-notifications">
+          <label class="sb-form-label" for="game-notifications">
             Notify me when a private game needs my attention
           </label>
         </div>

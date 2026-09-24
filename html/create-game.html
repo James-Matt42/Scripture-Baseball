@@ -52,12 +52,12 @@
       </p>
     </header>
 
-    <form action="game.html" method="get">
-      <section aria-labelledby="challenge-heading">
+    <form class="sb-form-card" action="game.html" method="get">
+      <section class="sb-form-group" aria-labelledby="challenge-heading">
         <h2 id="challenge-heading">Choose a challenge</h2>
 
-        <label for="challenge">Challenge</label>
-        <select id="challenge" name="challenge">
+        <label class="sb-form-label" for="challenge">Challenge</label>
+        <select class="sb-form-input" id="challenge" name="challenge">
           <option value="book-of-mormon">Book of Mormon</option>
           <option value="doctrinal-mastery">Doctrinal Mastery</option>
           <option value="four-gospels">Four Gospels</option>
@@ -72,10 +72,10 @@
         </p>
       </section>
 
-      <section aria-labelledby="format-heading">
+      <section class="sb-form-group" aria-labelledby="format-heading">
         <h2 id="format-heading">Game format</h2>
 
-        <fieldset>
+        <fieldset class="sb-option-group">
           <legend>How will this game be played?</legend>
 
           <div>
@@ -86,7 +86,7 @@
               value="live"
               checked
             >
-            <label for="format-live">Live private match</label>
+            <label class="sb-form-label" for="format-live">Live private match</label>
             <p>
               Everyone plays together in the same room.
             </p>
@@ -99,7 +99,7 @@
               name="format"
               value="async"
             >
-            <label for="format-async">Friend challenge</label>
+            <label class="sb-form-label" for="format-async">Friend challenge</label>
             <p>
               Send the same set of pitches to friends to complete later.
             </p>
@@ -107,10 +107,10 @@
         </fieldset>
       </section>
 
-      <section aria-labelledby="difficulty-heading">
+      <section class="sb-form-group" aria-labelledby="difficulty-heading">
         <h2 id="difficulty-heading">Difficulty</h2>
 
-        <fieldset>
+        <fieldset class="sb-option-group">
           <legend>Choose a difficulty level</legend>
 
           <div>
@@ -120,7 +120,7 @@
               name="difficulty"
               value="beginner"
             >
-            <label for="difficulty-beginner">Beginner</label>
+            <label class="sb-form-label" for="difficulty-beginner">Beginner</label>
             <p>
               More answer choices and stronger hints.
             </p>
@@ -134,7 +134,7 @@
               value="standard"
               checked
             >
-            <label for="difficulty-standard">Standard</label>
+            <label class="sb-form-label" for="difficulty-standard">Standard</label>
             <p>
               Identify the book first, then the chapter.
             </p>
@@ -147,7 +147,7 @@
               name="difficulty"
               value="expert"
             >
-            <label for="difficulty-expert">Expert</label>
+            <label class="sb-form-label" for="difficulty-expert">Expert</label>
             <p>
               Fewer cues and more difficult passages.
             </p>
@@ -155,10 +155,10 @@
         </fieldset>
       </section>
 
-      <section aria-labelledby="length-heading">
+      <section class="sb-form-group" aria-labelledby="length-heading">
         <h2 id="length-heading">Game length</h2>
 
-        <fieldset>
+        <fieldset class="sb-option-group">
           <legend>Number of pitches</legend>
 
           <div>
@@ -168,7 +168,7 @@
               name="length"
               value="5"
             >
-            <label for="length-5">5 pitches</label>
+            <label class="sb-form-label" for="length-5">5 pitches</label>
           </div>
 
           <div>
@@ -179,7 +179,7 @@
               value="10"
               checked
             >
-            <label for="length-10">10 pitches</label>
+            <label class="sb-form-label" for="length-10">10 pitches</label>
           </div>
 
           <div>
@@ -189,12 +189,12 @@
               name="length"
               value="20"
             >
-            <label for="length-20">20 pitches</label>
+            <label class="sb-form-label" for="length-20">20 pitches</label>
           </div>
         </fieldset>
       </section>
 
-      <section aria-labelledby="answer-settings-heading">
+      <section class="sb-form-group" aria-labelledby="answer-settings-heading">
         <h2 id="answer-settings-heading">Answer settings</h2>
 
         <p>
@@ -208,7 +208,7 @@
             name="exact-verse"
             value="yes"
           >
-          <label for="exact-verse">
+          <label class="sb-form-label" for="exact-verse">
             Also require the exact verse
           </label>
         </div>
@@ -219,11 +219,11 @@
         </p>
       </section>
 
-      <section aria-labelledby="room-settings-heading">
+      <section class="sb-form-group" aria-labelledby="room-settings-heading">
         <h2 id="room-settings-heading">Room settings</h2>
 
         <div>
-          <label for="game-name">Game name</label>
+          <label class="sb-form-label" for="game-name">Game name</label>
           <input
             id="game-name"
             name="game-name"
@@ -233,8 +233,8 @@
         </div>
 
         <div>
-          <label for="max-players">Maximum players</label>
-          <select id="max-players" name="max-players">
+          <label class="sb-form-label" for="max-players">Maximum players</label>
+          <select class="sb-form-input" id="max-players" name="max-players">
             <option value="2">2 players</option>
             <option value="4" selected>4 players</option>
             <option value="8">8 players</option>
@@ -246,7 +246,7 @@
       <button type="submit">Create Game</button>
     </form>
 
-    <section aria-labelledby="after-creation-heading">
+    <section class="sb-form-group" aria-labelledby="after-creation-heading">
       <h2 id="after-creation-heading">After you create the game</h2>
 
       <p>
