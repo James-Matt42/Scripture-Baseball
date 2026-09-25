@@ -231,3 +231,40 @@ body {
 .sb-option-group {
     @apply rounded-lg bg-amber-50 p-4;
 }
+
+
+/* =====================================
+   Commit 7: Progress dashboard components
+===================================== */
+
+.sb-progress-grid {
+    @apply grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4;
+}
+
+.sb-progress-card {
+    @apply rounded-xl bg-white p-5 text-center shadow-md;
+}
+
+.sb-mastery-grid {
+    @apply grid grid-cols-1 gap-6 md:grid-cols-3;
+}
+
+.sb-achievement-card {
+    @apply rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm;
+}
+
+.sb-progress-table {
+    @apply w-full overflow-hidden rounded-xl bg-white shadow-md;
+}
+
+.sb-progress-table th {
+    @apply bg-green-900 px-4 py-3 text-left text-white;
+}
+
+.sb-progress-table td {
+    @apply border-b border-stone-200 px-4 py-3;
+}
+
+.sb-progress-link {
+    @apply font-semibold text-green-800 hover:text-green-950;
+}
