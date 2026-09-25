@@ -313,3 +313,37 @@ body {
         @apply p-4;
     }
 }
+
+
+/* =====================================
+   Commit 9: CSS rubric compliance polish
+===================================== */
+
+/* Additional explicit element selector */
+button {
+    font-family: "Inter", sans-serif;
+}
+
+/* Additional class selector for reusable emphasis */
+.sb-highlight {
+    @apply rounded-lg px-3 py-1 font-semibold;
+    background-color: var(--color-scripture-green-light);
+    color: var(--color-scripture-green);
+}
+
+/* Additional ID selector example */
+#progress-summary {
+    scroll-margin-top: 2rem;
+}
+
+/* Additional pseudo selector example */
+.sb-game-choice:focus-within {
+    @apply ring-2 ring-green-300;
+}
+
+/* Ensure media content never causes horizontal overflow */
+img,
+svg {
+    max-width: 100%;
+    height: auto;
+}
