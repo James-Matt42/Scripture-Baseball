@@ -347,3 +347,44 @@ svg {
     max-width: 100%;
     height: auto;
 }
+
+
+/* =====================================
+   Homepage answer selection refinement
+===================================== */
+
+@layer components {
+
+    .sb-question-fieldset {
+        @apply grid gap-4 rounded-xl border border-amber-200 bg-white p-6;
+    }
+
+    .sb-answer-option {
+        @apply relative;
+    }
+
+    .sb-answer-option input {
+        @apply absolute opacity-0;
+    }
+
+    .sb-answer-button {
+        @apply block cursor-pointer rounded-xl border border-stone-200 bg-white p-4 text-base font-semibold text-stone-700 shadow-sm transition;
+    }
+
+    .sb-answer-button:hover {
+        @apply -translate-y-0.5 border-green-700 bg-green-50 text-green-900 shadow-md;
+    }
+
+    .sb-answer-option input:focus + .sb-answer-button {
+        @apply ring-2 ring-green-300;
+    }
+
+    .sb-answer-option input:checked + .sb-answer-button {
+        @apply border-green-800 bg-green-100 text-green-950;
+    }
+
+    .sb-chapter-input {
+        @apply max-w-xs;
+    }
+
+}
