@@ -66,6 +66,7 @@
     --color-parchment: #fffbeb;
     --color-baseball-gold: #ca8a04;
     --color-ink: #1c1917;
+    --color-muted: #78716c;
   }
 }
 @layer base {
@@ -1183,6 +1184,185 @@ img, svg {
   }
   .sb-button-primary, button.sb-button-primary {
     color: white;
+  }
+  .sb-button-primary, button.sb-button-primary, .sb-button-primary:hover, button.sb-button-primary:hover {
+    background-color: var(--color-scripture-green);
+    color: white;
+  }
+  .sb-button-secondary {
+    background-color: white;
+    color: var(--color-scripture-green);
+  }
+  .sb-card-grid, .sb-challenge-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: calc(var(--spacing) * 6);
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .sb-challenge-card {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sb-challenge-card h3 {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-green-950);
+  }
+  .sb-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: calc(var(--spacing) * 6);
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    align-items: stretch;
+  }
+  .sb-progress-card {
+    height: 100%;
+  }
+  .sb-answer-button {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  input, select, textarea {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #a8a29e;
+  }
+  button:not(.sb-answer-button):not(.sb-button-secondary):not(.sb-button-primary) {
+    background-color: var(--color-scripture-green);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding-inline: calc(var(--spacing) * 5);
+    padding-block: calc(var(--spacing) * 3);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .sb-main {
+    width: min(100%, 1200px);
+  }
+  .sb-card-grid, .sb-challenge-grid {
+    align-items: stretch;
+  }
+  .sb-challenge-card {
+    min-height: 220px;
+    overflow: hidden;
+  }
+  .sb-challenge-card p {
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+  .sb-progress-grid {
+    align-items: stretch;
+    grid-auto-rows: 1fr;
+  }
+  .sb-progress-card, .sb-achievement-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .sb-option-group {
+    display: grid;
+    gap: 0.75rem;
+  }
+  input[type="radio"] + label {
+    margin: 0;
+  }
+  @media (max-width: 640px) {
+    .sb-main {
+      width: 100%;
+    }
+    .sb-header {
+      gap: 0.75rem;
+    }
+    .sb-nav {
+      justify-content: center;
+    }
+    .sb-card, .sb-progress-card, .sb-challenge-card {
+      padding: 1rem;
+    }
+    .sb-button-primary, .sb-button-secondary {
+      width: 100%;
+    }
+  }
+  .sb-button-primary, button.sb-button-primary, input[type="submit"].sb-button-primary {
+    color: #ffffff !important;
+    background-color: var(--color-scripture-green) !important;
+  }
+  .sb-button-secondary, button.sb-button-secondary {
+    color: var(--color-scripture-green) !important;
+    background-color: #ffffff !important;
+    border: 1px solid var(--color-scripture-green);
+  }
+  .sb-challenge-section {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
+    margin-bottom: 2rem;
+  }
+  .sb-challenge-section > h2, .sb-progress-grid > h2, .sb-mastery-grid > h2 {
+    grid-column: 1 / -1;
+  }
+  .sb-challenge-card {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .sb-challenge-card a {
+    margin-top: auto;
+  }
+  .sb-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+  .sb-progress-card {
+    min-height: 180px;
+    justify-content: center;
+  }
+  input:not([type="radio"]):not([type="checkbox"]), select, textarea {
+    background-color: #ffffff;
+    border: 1px solid #78716c;
+    border-radius: .5rem;
+    padding: .65rem .75rem;
+  }
+  .sb-answer-button {
+    color: var(--color-ink);
+    background-color: #ffffff;
+    border: 1px solid #d6d3d1;
+  }
+  input[type="radio"]:checked + .sb-answer-button {
+    color: #ffffff !important;
+    background-color: var(--color-scripture-green) !important;
+    border-color: var(--color-scripture-green);
+  }
+  @media (max-width: 900px) {
+    .sb-challenge-section, .sb-progress-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .sb-page-heading {
+    margin-bottom: calc(var(--spacing) * 6);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-white);
+    padding: calc(var(--spacing) * 6);
+    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 }
 @property --tw-border-style {
