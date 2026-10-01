@@ -63,10 +63,10 @@ export function Challenges() {
       </article>
     </section>
 
-    <!--
+    {/* <!--
       These challenges will eventually be generated from data stored for
       the signed-in user.
-    -->
+    --> */}
     <section class="sb-challenge-section" aria-labelledby="personal-heading">
       <h2 id="personal-heading">Your challenges</h2>
 
@@ -124,10 +124,10 @@ export function Challenges() {
         Use these options to narrow the challenge catalog.
       </p>
 
-      <!--
+      {/* <!--
         Filtering will become interactive when JavaScript and React are
         introduced later in the course.
-      -->
+      --> */}
       <form>
         <div>
           <label for="volume-filter">Standard work</label>
