@@ -4,11 +4,16 @@ import './app.css';
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
 // import { game } from './game/game';
 import { Account } from './account/account';
+import { Challenges } from './challenges/challenges';
+import { CreateGame } from "./create-game/create-game";
+import { Game } from './game/game';
+import { JoinGame } from './join-game/join-game';
+import { Play } from './play/play';
+import { Progress } from './progress/progress';
 
 export default function App() {
     return (
         <BrowserRouter>
-            {/* This is where all the header stuff goes */}
             <div>
             <header>
                 <nav>
@@ -26,13 +31,38 @@ export default function App() {
                             Challenges
                         </NavLink>
                         </li>
+                        <li className="nav-item">
+                        <NavLink className="nav-link" to="create-game">
+                            Create Game
+                        </NavLink>
+                        </li>
+                        <li className="nav-item">
+                        <NavLink className="nav-link" to="join-game">
+                            Join Game
+                        </NavLink>
+                        </li>
+                        <li className="nav-item">
+                        <NavLink className="nav-link" to="play">
+                            Play
+                        </NavLink>
+                        </li>
+                        <li className="nav-item">
+                        <NavLink className="nav-link" to="progress">
+                            Progress
+                        </NavLink>
+                        </li>
                     </menu>
                 </nav>
             </header>
 
             <Routes>
                 <Route path="/account" element={<Account />} />
-                {/* <Route path="/challenges" element={<Challenges />} /> */}
+                <Route path="/challenges" element={<Challenges />} />
+                <Route path="/create-game" element={<CreateGame />} />
+                <Route path="/game" element={<Game />} />
+                <Route path="/join-game" element={<JoinGame />} />
+                <Route path="/play" element={<Play />} />
+                <Route path="/progress" element={<Progress />} />
             </Routes>
 
             </div>

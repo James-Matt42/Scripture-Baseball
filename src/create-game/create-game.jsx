@@ -1,7 +1,7 @@
 import React from "react";
-import './progress.css';
+import './create-game.css';
 
-export function Progress() {
+export function CreateGame() {
     return (
   <main class="sb-main">
     <header class="sb-header">
