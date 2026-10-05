@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import './progress.css';
 
 export function Progress() {
@@ -121,7 +122,7 @@ export function Progress() {
           locating the exact chapter.
         </p>
 
-        <a className="sb-progress-link" href="play.html">Practice this area</a>
+        <Link className="sb-progress-link" to="/play">Practice this area</Link>
       </article>
 
       <article>
@@ -132,7 +133,7 @@ export function Progress() {
           from one another.
         </p>
 
-        <a className="sb-progress-link" href="play.html">Practice this area</a>
+        <Link className="sb-progress-link" to="/play">Practice this area</Link>
       </article>
     </section>
 
@@ -190,7 +191,7 @@ export function Progress() {
         <li>John 14:6</li>
       </ul>
 
-      <a className="sb-progress-link" href="challenges.html">Practice My Misses</a>
+      <Link className="sb-progress-link" to="/challenges">Practice My Misses</Link>
     </section>
 
     <section aria-labelledby="achievements-heading">

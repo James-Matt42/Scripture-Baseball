@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import './game.css';
 
 export function Game() {
@@ -76,9 +77,9 @@ export function Game() {
         <div>
           <dt>Invitation link</dt>
           <dd>
-            <a href="join-game.html?code=NEPHI7">
-              join-game.html?code=NEPHI7
-            </a>
+            <Link to="/join-game?code=NEPHI7">
+              /join-game?code=NEPHI7
+            </Link>
           </dd>
         </div>
       </dl>
@@ -297,9 +298,9 @@ export function Game() {
           saved to the database.
         </p>
 
-        <a href="play.html">Practice Missed Passages</a>
-        <a href="create-game.html">Create Another Game</a>
-        <a href="progress.html">View Progress</a>
+        <Link to="/play">Practice Missed Passages</Link>
+        <Link to="/create-game">Create Another Game</Link>
+        <Link to="/progress">View Progress</Link>
       </section>
     </details>
   </main>

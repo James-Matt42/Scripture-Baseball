@@ -1,7 +1,15 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import './create-game.css';
+import { navigateWithGetForm } from '../routing';
 
 export function CreateGame() {
+    const navigate = useNavigate();
+
+    function handleCreateGame(event) {
+      navigateWithGetForm(event, navigate, "/game");
+    }
+
     return (
   <main className="sb-main">
     <header className="sb-header">
@@ -13,7 +21,7 @@ export function CreateGame() {
       </p>
     </header>
 
-    <form className="sb-form-card" action="game.html" method="get">
+    <form className="sb-form-card" onSubmit={handleCreateGame}>
       <section className="sb-form-group" aria-labelledby="challenge-heading">
         <h2 id="challenge-heading">Choose a challenge</h2>
 
@@ -29,7 +37,7 @@ export function CreateGame() {
         </select>
 
         <p>
-          <a href="challenges.html">Browse all challenges</a>
+          <Link to="/challenges">Browse all challenges</Link>
         </p>
       </section>
 

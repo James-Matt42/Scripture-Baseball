@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import './challenges.css';
 
 export function Challenges() {
@@ -28,7 +29,7 @@ export function Challenges() {
           <strong>Practice style:</strong> Adaptive solo practice
         </p>
 
-        <a href="play.html">Play Today's Lineup</a>
+        <Link to="/play">Play Today's Lineup</Link>
       </article>
 
       <article className="sb-challenge-card">
@@ -42,8 +43,8 @@ export function Challenges() {
           <strong>Practice style:</strong> Focused challenge
         </p>
 
-        <a href="play.html">Practice Doctrinal Mastery</a>
-        <a href="create-game.html">Create a Multiplayer Game</a>
+        <Link to="/play">Practice Doctrinal Mastery</Link>
+        <Link to="/create-game">Create a Multiplayer Game</Link>
       </article>
 
       <article className="sb-challenge-card">
@@ -58,8 +59,8 @@ export function Challenges() {
           <strong>Practice style:</strong> Mixed recognition and recall
         </p>
 
-        <a href="play.html">Practice the Four Gospels</a>
-        <a href="create-game.html">Create a Multiplayer Game</a>
+        <Link to="/play">Practice the Four Gospels</Link>
+        <Link to="/create-game">Create a Multiplayer Game</Link>
       </article>
     </section>
 
@@ -82,7 +83,7 @@ export function Challenges() {
           14 passages currently available for review.
         </p>
 
-        <a href="play.html">Practice My Misses</a>
+        <Link to="/play">Practice My Misses</Link>
       </article>
 
       <article className="sb-challenge-card">
@@ -97,7 +98,7 @@ export function Challenges() {
           8 favorite passages saved.
         </p>
 
-        <a href="play.html">Practice My Favorites</a>
+        <Link to="/play">Practice My Favorites</Link>
       </article>
 
       <article className="sb-challenge-card">
@@ -113,7 +114,7 @@ export function Challenges() {
           New Testament chapters are currently your highest-priority area.
         </p>
 
-        <a href="play.html">Practice Weak Areas</a>
+        <Link to="/play">Practice Weak Areas</Link>
       </article>
     </section>
 
@@ -183,7 +184,7 @@ export function Challenges() {
           <p>
             Practice locating passages throughout the Book of Mormon.
           </p>
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
 
         <article className="sb-challenge-card">
@@ -191,7 +192,7 @@ export function Challenges() {
           <p>
             Practice locating passages throughout the New Testament.
           </p>
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
 
         <article className="sb-challenge-card">
@@ -199,7 +200,7 @@ export function Challenges() {
           <p>
             Focus your practice on passages from the book of Alma.
           </p>
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
       </section>
 
@@ -211,7 +212,7 @@ export function Challenges() {
           <p>
             Practice locating passages connected with the topic of faith.
           </p>
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
 
         <article className="sb-challenge-card">
@@ -219,7 +220,7 @@ export function Challenges() {
           <p>
             Practice locating passages connected with prayer.
           </p>
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
 
         <article className="sb-challenge-card">
@@ -228,7 +229,7 @@ export function Challenges() {
             Practice passages that appear frequently in General Conference
             citations.
           </p>
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
       </section>
 
@@ -243,7 +244,7 @@ export function Challenges() {
             contextual clues.
           </p>
 
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
 
         <article className="sb-challenge-card">
@@ -254,7 +255,7 @@ export function Challenges() {
             chapters.
           </p>
 
-          <a href="play.html">Start Challenge</a>
+          <Link to="/play">Start Challenge</Link>
         </article>
       </section>
     </section>

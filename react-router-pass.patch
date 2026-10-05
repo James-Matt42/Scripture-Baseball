@@ -1,0 +1,689 @@
+diff --git a/src/account/account.jsx b/src/account/account.jsx
+index 6978aff..f9f8ee5 100644
+--- a/src/account/account.jsx
++++ b/src/account/account.jsx
+@@ -1,4 +1,5 @@
+ import React from "react";
++import { Link } from "react-router-dom";
+ import './account.css';
+ 
+ export function Account() {
+@@ -124,7 +125,7 @@ export function Account() {
+       </dl>
+ 
+       <p>
+-        <a href="progress.html">View your learning progress</a>
++        <Link to="/progress">View your learning progress</Link>
+       </p>
+ 
+       <button className="sb-button-secondary" type="button">Sign Out</button>
+diff --git a/src/app.jsx b/src/app.jsx
+index 2636df9..210d8ba 100644
+--- a/src/app.jsx
++++ b/src/app.jsx
+@@ -1,11 +1,12 @@
+ import React from "react";
+ import './app.css';
+ 
+-import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
++import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
+ import { Account } from './account/account';
+ import { Challenges } from './challenges/challenges';
+ import { CreateGame } from "./create-game/create-game";
+ import { Game } from './game/game';
++import { Home } from './home/home';
+ import { JoinGame } from './join-game/join-game';
+ import { Play } from './play/play';
+ import { Progress } from './progress/progress';
+@@ -15,39 +16,44 @@ export default function App() {
+         <BrowserRouter>
+             <div>
+             <header>
+-                <nav>
++                <nav aria-label="Primary navigation">
+                     <div>
+-                        Scripture Baseball
++                        <Link to="/" aria-label="Scripture Baseball home">Scripture Baseball</Link>
+                     </div>
+                     <menu>
+                         <li className="nav-item">
+-                        <NavLink className="nav-link" to="account">
+-                            Account
++                        <NavLink className="nav-link" to="/" end>
++                            Home
++                        </NavLink>
++                        </li>
++                        <li className="nav-item">
++                        <NavLink className="nav-link" to="/play">
++                            Play
+                         </NavLink>
+                         </li>
+                         <li className="nav-item">
+-                        <NavLink className="nav-link" to="challenges">
++                        <NavLink className="nav-link" to="/challenges">
+                             Challenges
+                         </NavLink>
+                         </li>
+                         <li className="nav-item">
+-                        <NavLink className="nav-link" to="create-game">
++                        <NavLink className="nav-link" to="/create-game">
+                             Create Game
+                         </NavLink>
+                         </li>
+                         <li className="nav-item">
+-                        <NavLink className="nav-link" to="join-game">
++                        <NavLink className="nav-link" to="/join-game">
+                             Join Game
+                         </NavLink>
+                         </li>
+                         <li className="nav-item">
+-                        <NavLink className="nav-link" to="play">
+-                            Play
++                        <NavLink className="nav-link" to="/progress">
++                            Progress
+                         </NavLink>
+                         </li>
+                         <li className="nav-item">
+-                        <NavLink className="nav-link" to="progress">
+-                            Progress
++                        <NavLink className="nav-link" to="/account">
++                            Account
+                         </NavLink>
+                         </li>
+                     </menu>
+@@ -55,6 +61,7 @@ export default function App() {
+             </header>
+ 
+             <Routes>
++                <Route path="/" element={<Home />} />
+                 <Route path="/account" element={<Account />} />
+                 <Route path="/challenges" element={<Challenges />} />
+                 <Route path="/create-game" element={<CreateGame />} />
+@@ -67,4 +74,4 @@ export default function App() {
+             </div>
+         </BrowserRouter>
+     );
+-}
+\ No newline at end of file
++}
+diff --git a/src/challenges/challenges.jsx b/src/challenges/challenges.jsx
+index 9d6254c..cd3a1de 100644
+--- a/src/challenges/challenges.jsx
++++ b/src/challenges/challenges.jsx
+@@ -1,4 +1,5 @@
+ import React from "react";
++import { Link } from "react-router-dom";
+ import './challenges.css';
+ 
+ export function Challenges() {
+@@ -28,7 +29,7 @@ export function Challenges() {
+           <strong>Practice style:</strong> Adaptive solo practice
+         </p>
+ 
+-        <a href="play.html">Play Today's Lineup</a>
++        <Link to="/play">Play Today's Lineup</Link>
+       </article>
+ 
+       <article className="sb-challenge-card">
+@@ -42,8 +43,8 @@ export function Challenges() {
+           <strong>Practice style:</strong> Focused challenge
+         </p>
+ 
+-        <a href="play.html">Practice Doctrinal Mastery</a>
+-        <a href="create-game.html">Create a Multiplayer Game</a>
++        <Link to="/play">Practice Doctrinal Mastery</Link>
++        <Link to="/create-game">Create a Multiplayer Game</Link>
+       </article>
+ 
+       <article className="sb-challenge-card">
+@@ -58,8 +59,8 @@ export function Challenges() {
+           <strong>Practice style:</strong> Mixed recognition and recall
+         </p>
+ 
+-        <a href="play.html">Practice the Four Gospels</a>
+-        <a href="create-game.html">Create a Multiplayer Game</a>
++        <Link to="/play">Practice the Four Gospels</Link>
++        <Link to="/create-game">Create a Multiplayer Game</Link>
+       </article>
+     </section>
+ 
+@@ -82,7 +83,7 @@ export function Challenges() {
+           14 passages currently available for review.
+         </p>
+ 
+-        <a href="play.html">Practice My Misses</a>
++        <Link to="/play">Practice My Misses</Link>
+       </article>
+ 
+       <article className="sb-challenge-card">
+@@ -97,7 +98,7 @@ export function Challenges() {
+           8 favorite passages saved.
+         </p>
+ 
+-        <a href="play.html">Practice My Favorites</a>
++        <Link to="/play">Practice My Favorites</Link>
+       </article>
+ 
+       <article className="sb-challenge-card">
+@@ -113,7 +114,7 @@ export function Challenges() {
+           New Testament chapters are currently your highest-priority area.
+         </p>
+ 
+-        <a href="play.html">Practice Weak Areas</a>
++        <Link to="/play">Practice Weak Areas</Link>
+       </article>
+     </section>
+ 
+@@ -183,7 +184,7 @@ export function Challenges() {
+           <p>
+             Practice locating passages throughout the Book of Mormon.
+           </p>
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+ 
+         <article className="sb-challenge-card">
+@@ -191,7 +192,7 @@ export function Challenges() {
+           <p>
+             Practice locating passages throughout the New Testament.
+           </p>
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+ 
+         <article className="sb-challenge-card">
+@@ -199,7 +200,7 @@ export function Challenges() {
+           <p>
+             Focus your practice on passages from the book of Alma.
+           </p>
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+       </section>
+ 
+@@ -211,7 +212,7 @@ export function Challenges() {
+           <p>
+             Practice locating passages connected with the topic of faith.
+           </p>
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+ 
+         <article className="sb-challenge-card">
+@@ -219,7 +220,7 @@ export function Challenges() {
+           <p>
+             Practice locating passages connected with prayer.
+           </p>
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+ 
+         <article className="sb-challenge-card">
+@@ -228,7 +229,7 @@ export function Challenges() {
+             Practice passages that appear frequently in General Conference
+             citations.
+           </p>
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+       </section>
+ 
+@@ -243,7 +244,7 @@ export function Challenges() {
+             contextual clues.
+           </p>
+ 
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+ 
+         <article className="sb-challenge-card">
+@@ -254,7 +255,7 @@ export function Challenges() {
+             chapters.
+           </p>
+ 
+-          <a href="play.html">Start Challenge</a>
++          <Link to="/play">Start Challenge</Link>
+         </article>
+       </section>
+     </section>
+diff --git a/src/create-game/create-game.jsx b/src/create-game/create-game.jsx
+index 93fb6e3..44ceae8 100644
+--- a/src/create-game/create-game.jsx
++++ b/src/create-game/create-game.jsx
+@@ -1,7 +1,15 @@
+ import React from "react";
++import { Link, useNavigate } from "react-router-dom";
+ import './create-game.css';
++import { navigateWithGetForm } from '../routing';
+ 
+ export function CreateGame() {
++    const navigate = useNavigate();
++
++    function handleCreateGame(event) {
++      navigateWithGetForm(event, navigate, "/game");
++    }
++
+     return (
+   <main className="sb-main">
+     <header className="sb-header">
+@@ -13,7 +21,7 @@ export function CreateGame() {
+       </p>
+     </header>
+ 
+-    <form className="sb-form-card" action="game.html" method="get">
++    <form className="sb-form-card" onSubmit={handleCreateGame}>
+       <section className="sb-form-group" aria-labelledby="challenge-heading">
+         <h2 id="challenge-heading">Choose a challenge</h2>
+ 
+@@ -29,7 +37,7 @@ export function CreateGame() {
+         </select>
+ 
+         <p>
+-          <a href="challenges.html">Browse all challenges</a>
++          <Link to="/challenges">Browse all challenges</Link>
+         </p>
+       </section>
+ 
+diff --git a/src/game/game.jsx b/src/game/game.jsx
+index 0d68804..9028696 100644
+--- a/src/game/game.jsx
++++ b/src/game/game.jsx
+@@ -1,4 +1,5 @@
+ import React from "react";
++import { Link } from "react-router-dom";
+ import './game.css';
+ 
+ export function Game() {
+@@ -76,9 +77,9 @@ export function Game() {
+         <div>
+           <dt>Invitation link</dt>
+           <dd>
+-            <a href="join-game.html?code=NEPHI7">
+-              join-game.html?code=NEPHI7
+-            </a>
++            <Link to="/join-game?code=NEPHI7">
++              /join-game?code=NEPHI7
++            </Link>
+           </dd>
+         </div>
+       </dl>
+@@ -297,9 +298,9 @@ export function Game() {
+           saved to the database.
+         </p>
+ 
+-        <a href="play.html">Practice Missed Passages</a>
+-        <a href="create-game.html">Create Another Game</a>
+-        <a href="progress.html">View Progress</a>
++        <Link to="/play">Practice Missed Passages</Link>
++        <Link to="/create-game">Create Another Game</Link>
++        <Link to="/progress">View Progress</Link>
+       </section>
+     </details>
+   </main>
+diff --git a/src/home/home.jsx b/src/home/home.jsx
+new file mode 100644
+index 0000000..94c907e
+--- /dev/null
++++ b/src/home/home.jsx
+@@ -0,0 +1,207 @@
++import React from "react";
++import { Link, useNavigate } from "react-router-dom";
++import { navigateWithGetForm } from "../routing";
++
++export function Home() {
++  const navigate = useNavigate();
++
++  function handleJoinGame(event) {
++    navigateWithGetForm(event, navigate, "/join-game");
++  }
++
++  return (
++    <main className="sb-main">
++      <section className="sb-hero" id="homepage-demo" aria-labelledby="welcome-heading">
++        <h1 id="welcome-heading">
++          How well do you know where your favorite verses are found?
++        </h1>
++
++        <p>
++          Test your scripture knowledge one passage at a time.
++          Try a pitch before creating an account.
++        </p>
++      </section>
++
++      <section className="sb-section" aria-labelledby="sample-heading">
++        <h2 id="sample-heading">Try a pitch</h2>
++
++        <article className="sb-pitch-card" aria-labelledby="question-heading">
++          <h3 id="question-heading">Where is this found?</h3>
++
++          <blockquote className="scripture-text">
++            <p>“Adam fell that men might be...”</p>
++          </blockquote>
++
++          <form>
++            <fieldset className="sb-question-fieldset">
++              <legend>Choose a book</legend>
++
++              <div className="sb-answer-list sb-answer-option">
++                <input
++                  type="radio"
++                  id="answer-1-nephi"
++                  name="book"
++                  value="1-nephi"
++                />
++                <label className="sb-answer-label sb-answer-button" htmlFor="answer-1-nephi">1 Nephi</label>
++              </div>
++
++              <div className="sb-answer-list sb-answer-option">
++                <input
++                  type="radio"
++                  id="answer-2-nephi"
++                  name="book"
++                  value="2-nephi"
++                />
++                <label className="sb-answer-label sb-answer-button" htmlFor="answer-2-nephi">2 Nephi</label>
++              </div>
++
++              <div className="sb-answer-list sb-answer-option">
++                <input
++                  type="radio"
++                  id="answer-alma"
++                  name="book"
++                  value="alma"
++                />
++                <label className="sb-answer-label sb-answer-button" htmlFor="answer-alma">Alma</label>
++              </div>
++
++              <div className="sb-answer-list sb-answer-option">
++                <input
++                  type="radio"
++                  id="answer-mosiah"
++                  name="book"
++                  value="mosiah"
++                />
++                <label className="sb-answer-label sb-answer-button" htmlFor="answer-mosiah">Mosiah</label>
++              </div>
++            </fieldset>
++
++            <button className="sb-button-primary" type="button">Submit Answer</button>
++          </form>
++
++          <details>
++            <summary>Example next stage</summary>
++
++            <section aria-labelledby="chapter-heading">
++              <h3 id="chapter-heading">Which chapter?</h3>
++
++              <p>
++                Your chapter answer is recorded separately from your book answer.
++              </p>
++
++              <form>
++                <label htmlFor="chapter-answer">Chapter</label>
++                <input
++                  className="sb-form-input sb-chapter-input"
++                  id="chapter-answer"
++                  name="chapter"
++                  type="number"
++                  min="1"
++                  inputMode="numeric"
++                />
++
++                <button className="sb-button-primary" type="button">Submit Chapter</button>
++              </form>
++            </section>
++          </details>
++        </article>
++
++        {/*
++          JavaScript will eventually show feedback after the player answers.
++          The details element keeps the future state represented in the
++          prototype without pretending that the game works yet.
++        */}
++        <details id="sample-feedback">
++          <summary>Example answer feedback</summary>
++
++          <section aria-labelledby="feedback-heading">
++            <h3 id="feedback-heading">Correct — 2 Nephi 2:25</h3>
++
++            <p>
++              After each pitch, the player will see the correct scripture
++              reference and useful learning feedback.
++            </p>
++
++            <button className="sb-button-primary" type="button">Next Pitch</button>
++          </section>
++        </details>
++
++        {/* Shown after several guest pitches in the finished application. */}
++        <details>
++          <summary>Example guest progress</summary>
++
++          <section aria-labelledby="guest-summary-heading">
++            <h3 id="guest-summary-heading">You went 4 / 5.</h3>
++
++            <p>
++              Create a free account to save your progress, learn which books
++              you know best, and get personalized practice.
++            </p>
++
++            <Link to="/account">Save My Progress</Link>
++            <button type="button">Keep Playing as Guest</button>
++          </section>
++        </details>
++      </section>
++
++      <section className="sb-cta-section" aria-labelledby="join-heading">
++        <h2 id="join-heading">Join a private game</h2>
++
++        <p>
++          Have an invite or room code? Join a private game without creating
++          an account first.
++        </p>
++
++        <form onSubmit={handleJoinGame}>
++          <label htmlFor="room-code">Room code</label>
++
++          <input
++            id="room-code"
++            name="code"
++            type="text"
++            autoComplete="off"
++            autoCapitalize="characters"
++            spellCheck="false"
++          />
++
++          <button className="sb-button-primary" type="submit">Join Game</button>
++        </form>
++      </section>
++
++      <section aria-labelledby="about-heading">
++        <h2 id="about-heading">Learn by locating scripture passages</h2>
++
++        <p>
++          Scripture Baseball uses retrieval practice to help you learn where
++          scripture passages are found. Make an attempt, see the correct
++          reference, and keep playing at your own pace.
++        </p>
++
++        <p>
++          Practice on your own, explore different scripture challenges, or
++          play private games with friends and family.
++        </p>
++      </section>
++
++      {/*
++        Bible API will later provide optional alternate translations for
++        Old Testament and New Testament passages.
++      */}
++      <section aria-labelledby="translations-heading">
++        <h2 id="translations-heading">Compare Bible translations</h2>
++
++        <p>
++          When a question comes from the Old or New Testament, you will be
++          able to compare the passage with another Bible translation after
++          answering.
++        </p>
++
++        <p>
++          Alternate translation data will be provided by{" "}
++          <a href="https://bible-api.com/">Bible API</a>.
++        </p>
++      </section>
++    </main>
++  );
++}
+diff --git a/src/join-game/join-game.jsx b/src/join-game/join-game.jsx
+index b812aad..be5b7a1 100644
+--- a/src/join-game/join-game.jsx
++++ b/src/join-game/join-game.jsx
+@@ -1,7 +1,26 @@
+ import React from "react";
++import { Link, useNavigate, useSearchParams } from "react-router-dom";
+ import './join-game.css';
++import { navigateWithGetForm } from '../routing';
+ 
+ export function JoinGame() {
++    const navigate = useNavigate();
++    const [searchParams] = useSearchParams();
++    const invitationCode = searchParams.get("code") ?? "";
++    const roomCode = invitationCode || "NEPHI7";
++
++    function handleFindGame(event) {
++      navigateWithGetForm(event, navigate, "/game");
++    }
++
++    function handleGuestJoin(event) {
++      navigateWithGetForm(event, navigate, "/game");
++    }
++
++    function handleSignInJoin(event) {
++      navigateWithGetForm(event, navigate, "/game", ["code"]);
++    }
++
+     return (
+   <main className="sb-main">
+     <header className="sb-header">
+@@ -16,7 +35,7 @@ export function JoinGame() {
+     <section className="sb-form-group" aria-labelledby="code-heading">
+       <h2 id="code-heading">Enter a room code</h2>
+ 
+-      <form className="sb-form-card" action="game.html" method="get">
++      <form className="sb-form-card" onSubmit={handleFindGame}>
+         <label className="sb-form-label" htmlFor="room-code">Room code</label>
+ 
+         <input
+@@ -27,6 +46,7 @@ export function JoinGame() {
+           autoCapitalize="characters"
+           spellCheck="false"
+           placeholder="NEPHI7"
++          defaultValue={invitationCode}
+           required
+         />
+ 
+@@ -83,7 +103,7 @@ export function JoinGame() {
+           account.
+         </p>
+ 
+-        <form action="game.html" method="get">
++        <form onSubmit={handleGuestJoin}>
+           <label className="sb-form-label" htmlFor="guest-name">Display name</label>
+ 
+           <input
+@@ -98,7 +118,7 @@ export function JoinGame() {
+           <input
+             type="hidden"
+             name="code"
+-            value="NEPHI7"
++            defaultValue={roomCode}
+           />
+ 
+           <button className="sb-button-primary" type="submit">Continue as Guest</button>
+@@ -113,7 +133,7 @@ export function JoinGame() {
+           history.
+         </p>
+ 
+-        <form action="game.html" method="get">
++        <form onSubmit={handleSignInJoin}>
+           <div>
+             <label className="sb-form-label" htmlFor="email">Email</label>
+             <input
+@@ -139,16 +159,16 @@ export function JoinGame() {
+           <input
+             type="hidden"
+             name="code"
+-            value="NEPHI7"
++            defaultValue={roomCode}
+           />
+ 
+           <button className="sb-button-primary" type="submit">Sign In and Join</button>
+         </form>
+ 
+         <p>
+-          <a href="account.html">
++          <Link to={`/account?code=${encodeURIComponent(roomCode)}`}>
+             Need an account? Create one without losing this room.
+-          </a>
++          </Link>
+         </p>
+       </section>
+     </section>
+diff --git a/src/progress/progress.jsx b/src/progress/progress.jsx
+index 8d1034a..324381c 100644
+--- a/src/progress/progress.jsx
++++ b/src/progress/progress.jsx
+@@ -1,4 +1,5 @@
+ import React from "react";
++import { Link } from "react-router-dom";
+ import './progress.css';
+ 
+ export function Progress() {
+@@ -121,7 +122,7 @@ export function Progress() {
+           locating the exact chapter.
+         </p>
+ 
+-        <a className="sb-progress-link" href="play.html">Practice this area</a>
++        <Link className="sb-progress-link" to="/play">Practice this area</Link>
+       </article>
+ 
+       <article>
+@@ -132,7 +133,7 @@ export function Progress() {
+           from one another.
+         </p>
+ 
+-        <a className="sb-progress-link" href="play.html">Practice this area</a>
++        <Link className="sb-progress-link" to="/play">Practice this area</Link>
+       </article>
+     </section>
+ 
+@@ -190,7 +191,7 @@ export function Progress() {
+         <li>John 14:6</li>
+       </ul>
+ 
+-      <a className="sb-progress-link" href="challenges.html">Practice My Misses</a>
++      <Link className="sb-progress-link" to="/challenges">Practice My Misses</Link>
+     </section>
+ 
+     <section aria-labelledby="achievements-heading">
+diff --git a/src/routing.js b/src/routing.js
+new file mode 100644
+index 0000000..d5e258f
+--- /dev/null
++++ b/src/routing.js
+@@ -0,0 +1,16 @@
++export function navigateWithGetForm(event, navigate, pathname, allowedFields) {
++  event.preventDefault();
++
++  const formData = new FormData(event.currentTarget);
++  const searchParams = new URLSearchParams();
++  const allowed = allowedFields ? new Set(allowedFields) : null;
++
++  for (const [key, value] of formData.entries()) {
++    if (typeof value === "string" && (!allowed || allowed.has(key))) {
++      searchParams.append(key, value);
++    }
++  }
++
++  const search = searchParams.toString();
++  navigate(search ? `${pathname}?${search}` : pathname);
++}

@@ -1,7 +1,26 @@
 import React from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import './join-game.css';
+import { navigateWithGetForm } from '../routing';
 
 export function JoinGame() {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const invitationCode = searchParams.get("code") ?? "";
+    const roomCode = invitationCode || "NEPHI7";
+
+    function handleFindGame(event) {
+      navigateWithGetForm(event, navigate, "/game");
+    }
+
+    function handleGuestJoin(event) {
+      navigateWithGetForm(event, navigate, "/game");
+    }
+
+    function handleSignInJoin(event) {
+      navigateWithGetForm(event, navigate, "/game", ["code"]);
+    }
+
     return (
   <main className="sb-main">
     <header className="sb-header">
@@ -16,7 +35,7 @@ export function JoinGame() {
     <section className="sb-form-group" aria-labelledby="code-heading">
       <h2 id="code-heading">Enter a room code</h2>
 
-      <form className="sb-form-card" action="game.html" method="get">
+      <form className="sb-form-card" onSubmit={handleFindGame}>
         <label className="sb-form-label" htmlFor="room-code">Room code</label>
 
         <input
@@ -27,6 +46,7 @@ export function JoinGame() {
           autoCapitalize="characters"
           spellCheck="false"
           placeholder="NEPHI7"
+          defaultValue={invitationCode}
           required
         />
 
@@ -83,7 +103,7 @@ export function JoinGame() {
           account.
         </p>
 
-        <form action="game.html" method="get">
+        <form onSubmit={handleGuestJoin}>
           <label className="sb-form-label" htmlFor="guest-name">Display name</label>
 
           <input
@@ -98,7 +118,7 @@ export function JoinGame() {
           <input
             type="hidden"
             name="code"
-            value="NEPHI7"
+            defaultValue={roomCode}
           />
 
           <button className="sb-button-primary" type="submit">Continue as Guest</button>
@@ -113,7 +133,7 @@ export function JoinGame() {
           history.
         </p>
 
-        <form action="game.html" method="get">
+        <form onSubmit={handleSignInJoin}>
           <div>
             <label className="sb-form-label" htmlFor="email">Email</label>
             <input
@@ -139,16 +159,16 @@ export function JoinGame() {
           <input
             type="hidden"
             name="code"
-            value="NEPHI7"
+            defaultValue={roomCode}
           />
 
           <button className="sb-button-primary" type="submit">Sign In and Join</button>
         </form>
 
         <p>
-          <a href="account.html">
+          <Link to={`/account?code=${encodeURIComponent(roomCode)}`}>
             Need an account? Create one without losing this room.
-          </a>
+          </Link>
         </p>
       </section>
     </section>

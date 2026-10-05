@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import './account.css';
 
 export function Account() {
@@ -124,7 +125,7 @@ export function Account() {
       </dl>
 
       <p>
-        <a href="progress.html">View your learning progress</a>
+        <Link to="/progress">View your learning progress</Link>
       </p>
 
       <button className="sb-button-secondary" type="button">Sign Out</button>
