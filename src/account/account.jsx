@@ -3,8 +3,8 @@ import './account.css';
 
 export function Account() {
     return (
-          <main class="sb-main">
-    <header class="sb-header">
+          <main className="sb-main">
+    <header className="sb-header">
       <h1>Account</h1>
 
       <p>
@@ -13,37 +13,37 @@ export function Account() {
       </p>
     </header>
 
-    <section class="sb-form-group" aria-labelledby="sign-in-heading">
+    <section className="sb-form-group" aria-labelledby="sign-in-heading">
       <h2 id="sign-in-heading">Sign in</h2>
 
       <form>
         <div>
-          <label class="sb-form-label" for="sign-in-email">Email</label>
+          <label className="sb-form-label" htmlFor="sign-in-email">Email</label>
           <input
             id="sign-in-email"
             name="email"
             type="email"
-            autocomplete="email"
+            autoComplete="email"
             required
           />
         </div>
 
         <div>
-          <label class="sb-form-label" for="sign-in-password">Password</label>
+          <label className="sb-form-label" htmlFor="sign-in-password">Password</label>
           <input
             id="sign-in-password"
             name="password"
             type="password"
-            autocomplete="current-password"
+            autoComplete="current-password"
             required
           />
         </div>
 
-        <button class="sb-button-primary" type="button">Sign In</button>
+        <button className="sb-button-primary" type="button">Sign In</button>
       </form>
     </section>
 
-    <section class="sb-form-group" aria-labelledby="create-account-heading">
+    <section className="sb-form-group" aria-labelledby="create-account-heading">
       <h2 id="create-account-heading">Create an account</h2>
 
       <p>
@@ -53,58 +53,58 @@ export function Account() {
 
       <form>
         <div>
-          <label class="sb-form-label" for="display-name">Display name</label>
+          <label className="sb-form-label" htmlFor="display-name">Display name</label>
           <input
             id="display-name"
             name="display-name"
             type="text"
-            autocomplete="nickname"
+            autoComplete="nickname"
             required
           />
         </div>
 
         <div>
-          <label class="sb-form-label" for="create-email">Email</label>
+          <label className="sb-form-label" htmlFor="create-email">Email</label>
           <input
             id="create-email"
             name="email"
             type="email"
-            autocomplete="email"
+            autoComplete="email"
             required
           />
         </div>
 
         <div>
-          <label class="sb-form-label" for="create-password">Password</label>
+          <label className="sb-form-label" htmlFor="create-password">Password</label>
           <input
             id="create-password"
             name="password"
             type="password"
-            autocomplete="new-password"
+            autoComplete="new-password"
             required
           />
         </div>
 
         <div>
-          <label class="sb-form-label" for="confirm-password">Confirm password</label>
+          <label className="sb-form-label" htmlFor="confirm-password">Confirm password</label>
           <input
             id="confirm-password"
             name="confirm-password"
             type="password"
-            autocomplete="new-password"
+            autoComplete="new-password"
             required
           />
         </div>
 
-        <button class="sb-button-primary" type="button">Create Account</button>
+        <button className="sb-button-primary" type="button">Create Account</button>
       </form>
     </section>
 
-    {/* <!--
+    {/*
       This section represents the authenticated account state that will be
       shown after login.
-    --> */}
-    <section class="sb-form-group" aria-labelledby="signed-in-heading">
+    */}
+    <section className="sb-form-group" aria-labelledby="signed-in-heading">
       <h2 id="signed-in-heading">Example signed-in account</h2>
 
       <p>
@@ -127,14 +127,14 @@ export function Account() {
         <a href="progress.html">View your learning progress</a>
       </p>
 
-      <button class="sb-button-secondary" type="button">Sign Out</button>
+      <button className="sb-button-secondary" type="button">Sign Out</button>
     </section>
 
-    <section class="sb-form-group" aria-labelledby="preferences-heading">
+    <section className="sb-form-group" aria-labelledby="preferences-heading">
       <h2 id="preferences-heading">Practice preferences</h2>
 
       <form>
-        <fieldset class="sb-option-group">
+        <fieldset className="sb-option-group">
           <legend>Default answer difficulty</legend>
 
           <div>
@@ -143,9 +143,9 @@ export function Account() {
               id="answer-book-chapter"
               name="answer-difficulty"
               value="book-chapter"
-              checked
+              defaultChecked
             />
-            <label class="sb-form-label" for="answer-book-chapter">
+            <label className="sb-form-label" htmlFor="answer-book-chapter">
               Book and chapter
             </label>
           </div>
@@ -157,16 +157,16 @@ export function Account() {
               name="answer-difficulty"
               value="exact-verse"
             />
-            <label class="sb-form-label" for="answer-exact-verse">
+            <label className="sb-form-label" htmlFor="answer-exact-verse">
               Book, chapter, and exact verse
             </label>
           </div>
         </fieldset>
 
         <div>
-          <label class="sb-form-label" for="preferred-volume">Preferred scripture focus</label>
+          <label className="sb-form-label" htmlFor="preferred-volume">Preferred scripture focus</label>
 
-          <select class="sb-form-input" id="preferred-volume" name="preferred-volume">
+          <select className="sb-form-input" id="preferred-volume" name="preferred-volume">
             <option value="">No preference</option>
             <option value="old-testament">Old Testament</option>
             <option value="new-testament">New Testament</option>
@@ -180,11 +180,11 @@ export function Account() {
           </select>
         </div>
 
-        <button class="sb-button-primary" type="button">Save Preferences</button>
+        <button className="sb-button-primary" type="button">Save Preferences</button>
       </form>
     </section>
 
-    <section class="sb-form-group" aria-labelledby="notifications-heading">
+    <section className="sb-form-group" aria-labelledby="notifications-heading">
       <h2 id="notifications-heading">Notifications</h2>
 
       <p>
@@ -199,7 +199,7 @@ export function Account() {
             id="practice-reminders"
             name="practice-reminders"
           />
-          <label class="sb-form-label" for="practice-reminders">
+          <label className="sb-form-label" htmlFor="practice-reminders">
             Send optional practice reminders
           </label>
         </div>
@@ -209,14 +209,14 @@ export function Account() {
             type="checkbox"
             id="game-notifications"
             name="game-notifications"
-            checked
+            defaultChecked
           />
-          <label class="sb-form-label" for="game-notifications">
+          <label className="sb-form-label" htmlFor="game-notifications">
             Notify me when a private game needs my attention
           </label>
         </div>
 
-        <button class="sb-button-primary" type="button">Save Notification Settings</button>
+        <button className="sb-button-primary" type="button">Save Notification Settings</button>
       </form>
     </section>
   </main>

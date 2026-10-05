@@ -1,0 +1,1220 @@
+diff --git a/src/account/account.jsx b/src/account/account.jsx
+index db966a6..6978aff 100644
+--- a/src/account/account.jsx
++++ b/src/account/account.jsx
+@@ -3,8 +3,8 @@ import './account.css';
+ 
+ export function Account() {
+     return (
+-          <main class="sb-main">
+-    <header class="sb-header">
++          <main className="sb-main">
++    <header className="sb-header">
+       <h1>Account</h1>
+ 
+       <p>
+@@ -13,37 +13,37 @@ export function Account() {
+       </p>
+     </header>
+ 
+-    <section class="sb-form-group" aria-labelledby="sign-in-heading">
++    <section className="sb-form-group" aria-labelledby="sign-in-heading">
+       <h2 id="sign-in-heading">Sign in</h2>
+ 
+       <form>
+         <div>
+-          <label class="sb-form-label" for="sign-in-email">Email</label>
++          <label className="sb-form-label" htmlFor="sign-in-email">Email</label>
+           <input
+             id="sign-in-email"
+             name="email"
+             type="email"
+-            autocomplete="email"
++            autoComplete="email"
+             required
+           />
+         </div>
+ 
+         <div>
+-          <label class="sb-form-label" for="sign-in-password">Password</label>
++          <label className="sb-form-label" htmlFor="sign-in-password">Password</label>
+           <input
+             id="sign-in-password"
+             name="password"
+             type="password"
+-            autocomplete="current-password"
++            autoComplete="current-password"
+             required
+           />
+         </div>
+ 
+-        <button class="sb-button-primary" type="button">Sign In</button>
++        <button className="sb-button-primary" type="button">Sign In</button>
+       </form>
+     </section>
+ 
+-    <section class="sb-form-group" aria-labelledby="create-account-heading">
++    <section className="sb-form-group" aria-labelledby="create-account-heading">
+       <h2 id="create-account-heading">Create an account</h2>
+ 
+       <p>
+@@ -53,58 +53,58 @@ export function Account() {
+ 
+       <form>
+         <div>
+-          <label class="sb-form-label" for="display-name">Display name</label>
++          <label className="sb-form-label" htmlFor="display-name">Display name</label>
+           <input
+             id="display-name"
+             name="display-name"
+             type="text"
+-            autocomplete="nickname"
++            autoComplete="nickname"
+             required
+           />
+         </div>
+ 
+         <div>
+-          <label class="sb-form-label" for="create-email">Email</label>
++          <label className="sb-form-label" htmlFor="create-email">Email</label>
+           <input
+             id="create-email"
+             name="email"
+             type="email"
+-            autocomplete="email"
++            autoComplete="email"
+             required
+           />
+         </div>
+ 
+         <div>
+-          <label class="sb-form-label" for="create-password">Password</label>
++          <label className="sb-form-label" htmlFor="create-password">Password</label>
+           <input
+             id="create-password"
+             name="password"
+             type="password"
+-            autocomplete="new-password"
++            autoComplete="new-password"
+             required
+           />
+         </div>
+ 
+         <div>
+-          <label class="sb-form-label" for="confirm-password">Confirm password</label>
++          <label className="sb-form-label" htmlFor="confirm-password">Confirm password</label>
+           <input
+             id="confirm-password"
+             name="confirm-password"
+             type="password"
+-            autocomplete="new-password"
++            autoComplete="new-password"
+             required
+           />
+         </div>
+ 
+-        <button class="sb-button-primary" type="button">Create Account</button>
++        <button className="sb-button-primary" type="button">Create Account</button>
+       </form>
+     </section>
+ 
+-    {/* <!--
++    {/*
+       This section represents the authenticated account state that will be
+       shown after login.
+-    --> */}
+-    <section class="sb-form-group" aria-labelledby="signed-in-heading">
++    */}
++    <section className="sb-form-group" aria-labelledby="signed-in-heading">
+       <h2 id="signed-in-heading">Example signed-in account</h2>
+ 
+       <p>
+@@ -127,14 +127,14 @@ export function Account() {
+         <a href="progress.html">View your learning progress</a>
+       </p>
+ 
+-      <button class="sb-button-secondary" type="button">Sign Out</button>
++      <button className="sb-button-secondary" type="button">Sign Out</button>
+     </section>
+ 
+-    <section class="sb-form-group" aria-labelledby="preferences-heading">
++    <section className="sb-form-group" aria-labelledby="preferences-heading">
+       <h2 id="preferences-heading">Practice preferences</h2>
+ 
+       <form>
+-        <fieldset class="sb-option-group">
++        <fieldset className="sb-option-group">
+           <legend>Default answer difficulty</legend>
+ 
+           <div>
+@@ -143,9 +143,9 @@ export function Account() {
+               id="answer-book-chapter"
+               name="answer-difficulty"
+               value="book-chapter"
+-              checked
++              defaultChecked
+             />
+-            <label class="sb-form-label" for="answer-book-chapter">
++            <label className="sb-form-label" htmlFor="answer-book-chapter">
+               Book and chapter
+             </label>
+           </div>
+@@ -157,16 +157,16 @@ export function Account() {
+               name="answer-difficulty"
+               value="exact-verse"
+             />
+-            <label class="sb-form-label" for="answer-exact-verse">
++            <label className="sb-form-label" htmlFor="answer-exact-verse">
+               Book, chapter, and exact verse
+             </label>
+           </div>
+         </fieldset>
+ 
+         <div>
+-          <label class="sb-form-label" for="preferred-volume">Preferred scripture focus</label>
++          <label className="sb-form-label" htmlFor="preferred-volume">Preferred scripture focus</label>
+ 
+-          <select class="sb-form-input" id="preferred-volume" name="preferred-volume">
++          <select className="sb-form-input" id="preferred-volume" name="preferred-volume">
+             <option value="">No preference</option>
+             <option value="old-testament">Old Testament</option>
+             <option value="new-testament">New Testament</option>
+@@ -180,11 +180,11 @@ export function Account() {
+           </select>
+         </div>
+ 
+-        <button class="sb-button-primary" type="button">Save Preferences</button>
++        <button className="sb-button-primary" type="button">Save Preferences</button>
+       </form>
+     </section>
+ 
+-    <section class="sb-form-group" aria-labelledby="notifications-heading">
++    <section className="sb-form-group" aria-labelledby="notifications-heading">
+       <h2 id="notifications-heading">Notifications</h2>
+ 
+       <p>
+@@ -199,7 +199,7 @@ export function Account() {
+             id="practice-reminders"
+             name="practice-reminders"
+           />
+-          <label class="sb-form-label" for="practice-reminders">
++          <label className="sb-form-label" htmlFor="practice-reminders">
+             Send optional practice reminders
+           </label>
+         </div>
+@@ -209,14 +209,14 @@ export function Account() {
+             type="checkbox"
+             id="game-notifications"
+             name="game-notifications"
+-            checked
++            defaultChecked
+           />
+-          <label class="sb-form-label" for="game-notifications">
++          <label className="sb-form-label" htmlFor="game-notifications">
+             Notify me when a private game needs my attention
+           </label>
+         </div>
+ 
+-        <button class="sb-button-primary" type="button">Save Notification Settings</button>
++        <button className="sb-button-primary" type="button">Save Notification Settings</button>
+       </form>
+     </section>
+   </main>
+diff --git a/src/challenges/challenges.jsx b/src/challenges/challenges.jsx
+index 397c0f2..9d6254c 100644
+--- a/src/challenges/challenges.jsx
++++ b/src/challenges/challenges.jsx
+@@ -3,8 +3,8 @@ import './challenges.css';
+ 
+ export function Challenges() {
+     return (
+-          <main class="sb-main">
+-    <header class="sb-page-heading">
++          <main className="sb-main">
++    <header className="sb-page-heading">
+       <h1>Challenges</h1>
+ 
+       <p>
+@@ -13,10 +13,10 @@ export function Challenges() {
+       </p>
+     </header>
+ 
+-    <section class="sb-challenge-section" aria-labelledby="recommended-heading">
++    <section className="sb-challenge-section" aria-labelledby="recommended-heading">
+       <h2 id="recommended-heading">Recommended for you</h2>
+ 
+-      <article class="sb-challenge-card">
++      <article className="sb-challenge-card">
+         <h3>Today's Lineup</h3>
+ 
+         <p>
+@@ -31,7 +31,7 @@ export function Challenges() {
+         <a href="play.html">Play Today's Lineup</a>
+       </article>
+ 
+-      <article class="sb-challenge-card">
++      <article className="sb-challenge-card">
+         <h3>Doctrinal Mastery</h3>
+ 
+         <p>
+@@ -46,7 +46,7 @@ export function Challenges() {
+         <a href="create-game.html">Create a Multiplayer Game</a>
+       </article>
+ 
+-      <article class="sb-challenge-card">
++      <article className="sb-challenge-card">
+         <h3>Four Gospels</h3>
+ 
+         <p>
+@@ -63,14 +63,14 @@ export function Challenges() {
+       </article>
+     </section>
+ 
+-    {/* <!--
++    {/*
+       These challenges will eventually be generated from data stored for
+       the signed-in user.
+-    --> */}
+-    <section class="sb-challenge-section" aria-labelledby="personal-heading">
++    */}
++    <section className="sb-challenge-section" aria-labelledby="personal-heading">
+       <h2 id="personal-heading">Your challenges</h2>
+ 
+-      <article class="sb-challenge-card">
++      <article className="sb-challenge-card">
+         <h3>My Misses</h3>
+ 
+         <p>
+@@ -85,7 +85,7 @@ export function Challenges() {
+         <a href="play.html">Practice My Misses</a>
+       </article>
+ 
+-      <article class="sb-challenge-card">
++      <article className="sb-challenge-card">
+         <h3>My Favorites</h3>
+ 
+         <p>
+@@ -100,7 +100,7 @@ export function Challenges() {
+         <a href="play.html">Practice My Favorites</a>
+       </article>
+ 
+-      <article class="sb-challenge-card">
++      <article className="sb-challenge-card">
+         <h3>Weak Areas</h3>
+ 
+         <p>
+@@ -117,20 +117,20 @@ export function Challenges() {
+       </article>
+     </section>
+ 
+-    <section class="sb-challenge-section" aria-labelledby="browse-heading">
++    <section className="sb-challenge-section" aria-labelledby="browse-heading">
+       <h2 id="browse-heading">Browse challenges</h2>
+ 
+       <p>
+         Use these options to narrow the challenge catalog.
+       </p>
+ 
+-      {/* <!--
++      {/*
+         Filtering will become interactive when JavaScript and React are
+         introduced later in the course.
+-      --> */}
++      */}
+       <form>
+         <div>
+-          <label for="volume-filter">Standard work</label>
++          <label htmlFor="volume-filter">Standard work</label>
+           <select id="volume-filter" name="volume">
+             <option value="">All standard works</option>
+             <option value="old-testament">Old Testament</option>
+@@ -146,7 +146,7 @@ export function Challenges() {
+         </div>
+ 
+         <div>
+-          <label for="category-filter">Category</label>
++          <label htmlFor="category-filter">Category</label>
+           <select id="category-filter" name="category">
+             <option value="">All categories</option>
+             <option value="volume">Books and volumes</option>
+@@ -159,7 +159,7 @@ export function Challenges() {
+         </div>
+ 
+         <div>
+-          <label for="difficulty-filter">Difficulty</label>
++          <label htmlFor="difficulty-filter">Difficulty</label>
+           <select id="difficulty-filter" name="difficulty">
+             <option value="">Any difficulty</option>
+             <option value="beginner">Beginner</option>
+@@ -168,7 +168,7 @@ export function Challenges() {
+           </select>
+         </div>
+ 
+-        <button class="sb-button-primary" type="button">Apply Filters</button>
++        <button className="sb-button-primary" type="button">Apply Filters</button>
+       </form>
+     </section>
+ 
+@@ -178,7 +178,7 @@ export function Challenges() {
+       <section aria-labelledby="volume-heading">
+         <h3 id="volume-heading">Books and volumes</h3>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Book of Mormon</h4>
+           <p>
+             Practice locating passages throughout the Book of Mormon.
+@@ -186,7 +186,7 @@ export function Challenges() {
+           <a href="play.html">Start Challenge</a>
+         </article>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>New Testament</h4>
+           <p>
+             Practice locating passages throughout the New Testament.
+@@ -194,7 +194,7 @@ export function Challenges() {
+           <a href="play.html">Start Challenge</a>
+         </article>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Alma</h4>
+           <p>
+             Focus your practice on passages from the book of Alma.
+@@ -206,7 +206,7 @@ export function Challenges() {
+       <section aria-labelledby="topic-heading">
+         <h3 id="topic-heading">Topics and collections</h3>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Faith</h4>
+           <p>
+             Practice locating passages connected with the topic of faith.
+@@ -214,7 +214,7 @@ export function Challenges() {
+           <a href="play.html">Start Challenge</a>
+         </article>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Prayer</h4>
+           <p>
+             Practice locating passages connected with prayer.
+@@ -222,7 +222,7 @@ export function Challenges() {
+           <a href="play.html">Start Challenge</a>
+         </article>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Frequently Cited in Conference</h4>
+           <p>
+             Practice passages that appear frequently in General Conference
+@@ -235,7 +235,7 @@ export function Challenges() {
+       <section aria-labelledby="advanced-heading">
+         <h3 id="advanced-heading">Advanced challenges</h3>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Obscure Scriptures</h4>
+ 
+           <p>
+@@ -246,7 +246,7 @@ export function Challenges() {
+           <a href="play.html">Start Challenge</a>
+         </article>
+ 
+-        <article class="sb-challenge-card">
++        <article className="sb-challenge-card">
+           <h4>Isaiah Challenge</h4>
+ 
+           <p>
+diff --git a/src/create-game/create-game.jsx b/src/create-game/create-game.jsx
+index 5b74aa5..93fb6e3 100644
+--- a/src/create-game/create-game.jsx
++++ b/src/create-game/create-game.jsx
+@@ -3,8 +3,8 @@ import './create-game.css';
+ 
+ export function CreateGame() {
+     return (
+-  <main class="sb-main">
+-    <header class="sb-header">
++  <main className="sb-main">
++    <header className="sb-header">
+       <h1>Create a Private Game</h1>
+ 
+       <p>
+@@ -13,12 +13,12 @@ export function CreateGame() {
+       </p>
+     </header>
+ 
+-    <form class="sb-form-card" action="game.html" method="get">
+-      <section class="sb-form-group" aria-labelledby="challenge-heading">
++    <form className="sb-form-card" action="game.html" method="get">
++      <section className="sb-form-group" aria-labelledby="challenge-heading">
+         <h2 id="challenge-heading">Choose a challenge</h2>
+ 
+-        <label class="sb-form-label" for="challenge">Challenge</label>
+-        <select class="sb-form-input" id="challenge" name="challenge">
++        <label className="sb-form-label" htmlFor="challenge">Challenge</label>
++        <select className="sb-form-input" id="challenge" name="challenge">
+           <option value="book-of-mormon">Book of Mormon</option>
+           <option value="doctrinal-mastery">Doctrinal Mastery</option>
+           <option value="four-gospels">Four Gospels</option>
+@@ -33,10 +33,10 @@ export function CreateGame() {
+         </p>
+       </section>
+ 
+-      <section class="sb-form-group" aria-labelledby="format-heading">
++      <section className="sb-form-group" aria-labelledby="format-heading">
+         <h2 id="format-heading">Game format</h2>
+ 
+-        <fieldset class="sb-option-group">
++        <fieldset className="sb-option-group">
+           <legend>How will this game be played?</legend>
+ 
+           <div>
+@@ -45,9 +45,9 @@ export function CreateGame() {
+               id="format-live"
+               name="format"
+               value="live"
+-              checked
++              defaultChecked
+             />
+-            <label class="sb-form-label" for="format-live">Live private match</label>
++            <label className="sb-form-label" htmlFor="format-live">Live private match</label>
+             <p>
+               Everyone plays together in the same room.
+             </p>
+@@ -60,7 +60,7 @@ export function CreateGame() {
+               name="format"
+               value="async"
+             />
+-            <label class="sb-form-label" for="format-async">Friend challenge</label>
++            <label className="sb-form-label" htmlFor="format-async">Friend challenge</label>
+             <p>
+               Send the same set of pitches to friends to complete later.
+             </p>
+@@ -68,10 +68,10 @@ export function CreateGame() {
+         </fieldset>
+       </section>
+ 
+-      <section class="sb-form-group" aria-labelledby="difficulty-heading">
++      <section className="sb-form-group" aria-labelledby="difficulty-heading">
+         <h2 id="difficulty-heading">Difficulty</h2>
+ 
+-        <fieldset class="sb-option-group">
++        <fieldset className="sb-option-group">
+           <legend>Choose a difficulty level</legend>
+ 
+           <div>
+@@ -81,7 +81,7 @@ export function CreateGame() {
+               name="difficulty"
+               value="beginner"
+             />
+-            <label class="sb-form-label" for="difficulty-beginner">Beginner</label>
++            <label className="sb-form-label" htmlFor="difficulty-beginner">Beginner</label>
+             <p>
+               More answer choices and stronger hints.
+             </p>
+@@ -93,9 +93,9 @@ export function CreateGame() {
+               id="difficulty-standard"
+               name="difficulty"
+               value="standard"
+-              checked
++              defaultChecked
+             />
+-            <label class="sb-form-label" for="difficulty-standard">Standard</label>
++            <label className="sb-form-label" htmlFor="difficulty-standard">Standard</label>
+             <p>
+               Identify the book first, then the chapter.
+             </p>
+@@ -108,7 +108,7 @@ export function CreateGame() {
+               name="difficulty"
+               value="expert"
+             />
+-            <label class="sb-form-label" for="difficulty-expert">Expert</label>
++            <label className="sb-form-label" htmlFor="difficulty-expert">Expert</label>
+             <p>
+               Fewer cues and more difficult passages.
+             </p>
+@@ -116,10 +116,10 @@ export function CreateGame() {
+         </fieldset>
+       </section>
+ 
+-      <section class="sb-form-group" aria-labelledby="length-heading">
++      <section className="sb-form-group" aria-labelledby="length-heading">
+         <h2 id="length-heading">Game length</h2>
+ 
+-        <fieldset class="sb-option-group">
++        <fieldset className="sb-option-group">
+           <legend>Number of pitches</legend>
+ 
+           <div>
+@@ -129,7 +129,7 @@ export function CreateGame() {
+               name="length"
+               value="5"
+             />
+-            <label class="sb-form-label" for="length-5">5 pitches</label>
++            <label className="sb-form-label" htmlFor="length-5">5 pitches</label>
+           </div>
+ 
+           <div>
+@@ -138,9 +138,9 @@ export function CreateGame() {
+               id="length-10"
+               name="length"
+               value="10"
+-              checked
++              defaultChecked
+             />
+-            <label class="sb-form-label" for="length-10">10 pitches</label>
++            <label className="sb-form-label" htmlFor="length-10">10 pitches</label>
+           </div>
+ 
+           <div>
+@@ -150,12 +150,12 @@ export function CreateGame() {
+               name="length"
+               value="20"
+             />
+-            <label class="sb-form-label" for="length-20">20 pitches</label>
++            <label className="sb-form-label" htmlFor="length-20">20 pitches</label>
+           </div>
+         </fieldset>
+       </section>
+ 
+-      <section class="sb-form-group" aria-labelledby="answer-settings-heading">
++      <section className="sb-form-group" aria-labelledby="answer-settings-heading">
+         <h2 id="answer-settings-heading">Answer settings</h2>
+ 
+         <p>
+@@ -169,7 +169,7 @@ export function CreateGame() {
+             name="exact-verse"
+             value="yes"
+           />
+-          <label class="sb-form-label" for="exact-verse">
++          <label className="sb-form-label" htmlFor="exact-verse">
+             Also require the exact verse
+           </label>
+         </div>
+@@ -180,11 +180,11 @@ export function CreateGame() {
+         </p>
+       </section>
+ 
+-      <section class="sb-form-group" aria-labelledby="room-settings-heading">
++      <section className="sb-form-group" aria-labelledby="room-settings-heading">
+         <h2 id="room-settings-heading">Room settings</h2>
+ 
+         <div>
+-          <label class="sb-form-label" for="game-name">Game name</label>
++          <label className="sb-form-label" htmlFor="game-name">Game name</label>
+           <input
+             id="game-name"
+             name="game-name"
+@@ -194,20 +194,20 @@ export function CreateGame() {
+         </div>
+ 
+         <div>
+-          <label class="sb-form-label" for="max-players">Maximum players</label>
+-          <select class="sb-form-input" id="max-players" name="max-players">
++          <label className="sb-form-label" htmlFor="max-players">Maximum players</label>
++          <select className="sb-form-input" id="max-players" name="max-players" defaultValue="4">
+             <option value="2">2 players</option>
+-            <option value="4" selected>4 players</option>
++            <option value="4">4 players</option>
+             <option value="8">8 players</option>
+             <option value="12">12 players</option>
+           </select>
+         </div>
+       </section>
+ 
+-      <button class="sb-button-primary" type="submit">Create Game</button>
++      <button className="sb-button-primary" type="submit">Create Game</button>
+     </form>
+ 
+-    <section class="sb-form-group" aria-labelledby="after-creation-heading">
++    <section className="sb-form-group" aria-labelledby="after-creation-heading">
+       <h2 id="after-creation-heading">After you create the game</h2>
+ 
+       <p>
+diff --git a/src/game/game.jsx b/src/game/game.jsx
+index d249f51..0d68804 100644
+--- a/src/game/game.jsx
++++ b/src/game/game.jsx
+@@ -3,8 +3,8 @@ import './game.css';
+ 
+ export function Game() {
+     return (
+-  <main class="sb-main">
+-    <header class="sb-header">
++  <main className="sb-main">
++    <header className="sb-header">
+       <h1>Book of Mormon Baseball</h1>
+ 
+       <dl>
+@@ -35,10 +35,10 @@ export function Game() {
+       </dl>
+     </header>
+ 
+-    {/* <!--
++    {/*
+       This section represents the multiplayer lobby before the host starts
+       the game. Player membership will eventually update in realtime.
+-    --> */}
++    */}
+     <section aria-labelledby="lobby-heading">
+       <h2 id="lobby-heading">Lobby</h2>
+ 
+@@ -56,7 +56,7 @@ export function Game() {
+         WebSocket communication with the server.
+       </p>
+ 
+-      <button class="sb-button-primary" type="button">Start Game</button>
++      <button className="sb-button-primary" type="button">Start Game</button>
+     </section>
+ 
+     <section aria-labelledby="invite-heading">
+@@ -83,7 +83,7 @@ export function Game() {
+         </div>
+       </dl>
+ 
+-      <button class="sb-button-secondary" type="button">Copy Invitation Link</button>
++      <button className="sb-button-secondary" type="button">Copy Invitation Link</button>
+ 
+       <figure>
+         <div aria-label="QR code placeholder">
+@@ -95,20 +95,20 @@ export function Game() {
+       </figure>
+     </section>
+ 
+-    {/* <!--
++    {/*
+       This represents how the same page may look after the host starts
+       the game. JavaScript and React will eventually switch between lobby,
+       gameplay, feedback, and results states.
+-    --> */}
++    */}
+     <section aria-labelledby="game-heading">
+       <h2 id="game-heading">Example active game</h2>
+ 
+       <p>Pitch 3 of 10</p>
+ 
+-      <article class="sb-game-card" aria-labelledby="pitch-heading">
++      <article className="sb-game-card" aria-labelledby="pitch-heading">
+         <h3 id="pitch-heading">Where is this found?</h3>
+ 
+-        <blockquote class="scripture-text">
++        <blockquote className="scripture-text">
+           <p>“Adam fell that men might be...”</p>
+         </blockquote>
+ 
+@@ -126,7 +126,7 @@ export function Game() {
+                   name="book"
+                   value="1-nephi"
+                 />
+-                <label class="sb-answer-label sb-answer-button" for="game-book-1-nephi">1 Nephi</label>
++                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-1-nephi">1 Nephi</label>
+               </div>
+ 
+               <div>
+@@ -136,7 +136,7 @@ export function Game() {
+                   name="book"
+                   value="2-nephi"
+                 />
+-                <label class="sb-answer-label sb-answer-button" for="game-book-2-nephi">2 Nephi</label>
++                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-2-nephi">2 Nephi</label>
+               </div>
+ 
+               <div>
+@@ -146,7 +146,7 @@ export function Game() {
+                   name="book"
+                   value="alma"
+                 />
+-                <label class="sb-answer-label sb-answer-button" for="game-book-alma">Alma</label>
++                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-alma">Alma</label>
+               </div>
+ 
+               <div>
+@@ -156,11 +156,11 @@ export function Game() {
+                   name="book"
+                   value="mosiah"
+                 />
+-                <label class="sb-answer-label sb-answer-button" for="game-book-mosiah">Mosiah</label>
++                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-mosiah">Mosiah</label>
+               </div>
+             </fieldset>
+ 
+-            <button class="sb-button-primary" type="button">Submit Book</button>
++            <button className="sb-button-primary" type="button">Submit Book</button>
+           </form>
+         </section>
+ 
+@@ -171,17 +171,17 @@ export function Game() {
+             <h4 id="game-chapter-heading">Enter the chapter</h4>
+ 
+             <form>
+-              <label for="game-chapter-answer">Chapter</label>
++              <label htmlFor="game-chapter-answer">Chapter</label>
+ 
+               <input
+                 id="game-chapter-answer"
+                 name="chapter"
+                 type="number"
+                 min="1"
+-                inputmode="numeric"
++                inputMode="numeric"
+               />
+ 
+-              <button class="sb-button-primary" type="button">Submit Chapter</button>
++              <button className="sb-button-primary" type="button">Submit Chapter</button>
+             </form>
+           </section>
+         </details>
+@@ -200,12 +200,12 @@ export function Game() {
+             feedback after answering.
+           </p>
+ 
+-          <button class="sb-button-primary" type="button">Continue</button>
++          <button className="sb-button-primary" type="button">Continue</button>
+         </section>
+       </details>
+     </section>
+ 
+-    <section class="sb-scoreboard" aria-labelledby="score-heading">
++    <section className="sb-scoreboard" aria-labelledby="score-heading">
+       <h2 id="score-heading">Current game standings</h2>
+ 
+       <table>
+@@ -249,11 +249,11 @@ export function Game() {
+       </p>
+     </section>
+ 
+-    {/* <!--
++    {/*
+       WebSocket data placeholder required for the HTML deliverable.
+       These events will eventually be pushed from the backend to connected
+       players without requiring them to refresh the page.
+-    --> */}
++    */}
+     <section aria-labelledby="activity-heading">
+       <h2 id="activity-heading">Live game activity</h2>
+ 
+diff --git a/src/join-game/join-game.jsx b/src/join-game/join-game.jsx
+index 455d5c4..b812aad 100644
+--- a/src/join-game/join-game.jsx
++++ b/src/join-game/join-game.jsx
+@@ -3,8 +3,8 @@ import './join-game.css';
+ 
+ export function JoinGame() {
+     return (
+-  <main class="sb-main">
+-    <header class="sb-header">
++  <main className="sb-main">
++    <header className="sb-header">
+       <h1>Join a Private Game</h1>
+ 
+       <p>
+@@ -13,32 +13,32 @@ export function JoinGame() {
+       </p>
+     </header>
+ 
+-    <section class="sb-form-group" aria-labelledby="code-heading">
++    <section className="sb-form-group" aria-labelledby="code-heading">
+       <h2 id="code-heading">Enter a room code</h2>
+ 
+-      <form class="sb-form-card" action="game.html" method="get">
+-        <label class="sb-form-label" for="room-code">Room code</label>
++      <form className="sb-form-card" action="game.html" method="get">
++        <label className="sb-form-label" htmlFor="room-code">Room code</label>
+ 
+         <input
+           id="room-code"
+           name="code"
+           type="text"
+-          autocomplete="off"
+-          autocapitalize="characters"
+-          spellcheck="false"
++          autoComplete="off"
++          autoCapitalize="characters"
++          spellCheck="false"
+           placeholder="NEPHI7"
+           required
+         />
+ 
+-        <button class="sb-button-primary" type="submit">Find Game</button>
++        <button className="sb-button-primary" type="submit">Find Game</button>
+       </form>
+     </section>
+ 
+-    {/* <!--
++    {/*
+       In the finished application, this room preview will appear after a
+       valid invitation link or room code has been found.
+-    --> */}
+-    <section class="sb-form-group" aria-labelledby="preview-heading">
++    */}
++    <section className="sb-form-group" aria-labelledby="preview-heading">
+       <h2 id="preview-heading">Example room invitation</h2>
+ 
+       <article>
+@@ -72,10 +72,10 @@ export function JoinGame() {
+       </article>
+     </section>
+ 
+-    <section class="sb-form-group" aria-labelledby="identity-heading">
++    <section className="sb-form-group" aria-labelledby="identity-heading">
+       <h2 id="identity-heading">How would you like to join?</h2>
+ 
+-      <section class="sb-form-group" aria-labelledby="guest-heading">
++      <section className="sb-form-group" aria-labelledby="guest-heading">
+         <h3 id="guest-heading">Continue as a guest</h3>
+ 
+         <p>
+@@ -84,13 +84,13 @@ export function JoinGame() {
+         </p>
+ 
+         <form action="game.html" method="get">
+-          <label class="sb-form-label" for="guest-name">Display name</label>
++          <label className="sb-form-label" htmlFor="guest-name">Display name</label>
+ 
+           <input
+             id="guest-name"
+             name="display-name"
+             type="text"
+-            autocomplete="nickname"
++            autoComplete="nickname"
+             placeholder="Your name"
+             required
+           />
+@@ -101,11 +101,11 @@ export function JoinGame() {
+             value="NEPHI7"
+           />
+ 
+-          <button class="sb-button-primary" type="submit">Continue as Guest</button>
++          <button className="sb-button-primary" type="submit">Continue as Guest</button>
+         </form>
+       </section>
+ 
+-      <section class="sb-form-group" aria-labelledby="sign-in-heading">
++      <section className="sb-form-group" aria-labelledby="sign-in-heading">
+         <h3 id="sign-in-heading">Sign in</h3>
+ 
+         <p>
+@@ -115,23 +115,23 @@ export function JoinGame() {
+ 
+         <form action="game.html" method="get">
+           <div>
+-            <label class="sb-form-label" for="email">Email</label>
++            <label className="sb-form-label" htmlFor="email">Email</label>
+             <input
+               id="email"
+               name="email"
+               type="email"
+-              autocomplete="email"
++              autoComplete="email"
+               required
+             />
+           </div>
+ 
+           <div>
+-            <label class="sb-form-label" for="password">Password</label>
++            <label className="sb-form-label" htmlFor="password">Password</label>
+             <input
+               id="password"
+               name="password"
+               type="password"
+-              autocomplete="current-password"
++              autoComplete="current-password"
+               required
+             />
+           </div>
+@@ -142,7 +142,7 @@ export function JoinGame() {
+             value="NEPHI7"
+           />
+ 
+-          <button class="sb-button-primary" type="submit">Sign In and Join</button>
++          <button className="sb-button-primary" type="submit">Sign In and Join</button>
+         </form>
+ 
+         <p>
+@@ -153,7 +153,7 @@ export function JoinGame() {
+       </section>
+     </section>
+ 
+-    <section class="sb-form-group" aria-labelledby="state-heading">
++    <section className="sb-form-group" aria-labelledby="state-heading">
+       <h2 id="state-heading">Your place in the game is preserved</h2>
+ 
+       <p>
+diff --git a/src/play/play.jsx b/src/play/play.jsx
+index 99b57c4..c6143a3 100644
+--- a/src/play/play.jsx
++++ b/src/play/play.jsx
+@@ -3,8 +3,8 @@ import './play.css';
+ 
+ export function Play() {
+     return (
+-  <main class="sb-main">
+-    <header class="sb-header">
++  <main className="sb-main">
++    <header className="sb-header">
+       <h1>Today's Lineup</h1>
+       <p>Ready when you are.</p>
+     </header>
+@@ -35,13 +35,13 @@ export function Play() {
+       </dl>
+     </section>
+ 
+-    <article class="sb-game-card" aria-labelledby="pitch-heading">
+-      <header class="sb-header">
++    <article className="sb-game-card" aria-labelledby="pitch-heading">
++      <header className="sb-header">
+         <p>Pitch 3</p>
+         <h2 id="pitch-heading">Where is this found?</h2>
+       </header>
+ 
+-      <blockquote class="scripture-text">
++      <blockquote className="scripture-text">
+         <p>“Adam fell that men might be...”</p>
+       </blockquote>
+ 
+@@ -59,7 +59,7 @@ export function Play() {
+                 name="book"
+                 value="1-nephi"
+               />
+-              <label class="sb-answer-label sb-answer-button" for="book-1-nephi">1 Nephi</label>
++              <label className="sb-answer-label sb-answer-button" htmlFor="book-1-nephi">1 Nephi</label>
+             </div>
+ 
+             <div>
+@@ -69,7 +69,7 @@ export function Play() {
+                 name="book"
+                 value="2-nephi"
+               />
+-              <label class="sb-answer-label sb-answer-button" for="book-2-nephi">2 Nephi</label>
++              <label className="sb-answer-label sb-answer-button" htmlFor="book-2-nephi">2 Nephi</label>
+             </div>
+ 
+             <div>
+@@ -79,7 +79,7 @@ export function Play() {
+                 name="book"
+                 value="alma"
+               />
+-              <label class="sb-answer-label sb-answer-button" for="book-alma">Alma</label>
++              <label className="sb-answer-label sb-answer-button" htmlFor="book-alma">Alma</label>
+             </div>
+ 
+             <div>
+@@ -89,19 +89,19 @@ export function Play() {
+                 name="book"
+                 value="mosiah"
+               />
+-              <label class="sb-answer-label sb-answer-button" for="book-mosiah">Mosiah</label>
++              <label className="sb-answer-label sb-answer-button" htmlFor="book-mosiah">Mosiah</label>
+             </div>
+           </fieldset>
+ 
+-          <button class="sb-button-primary" type="button">Submit Book</button>
++          <button className="sb-button-primary" type="button">Submit Book</button>
+         </form>
+       </section>
+ 
+-      {/* <!--
++      {/*
+         In the finished application, this stage appears after the player
+         commits a book answer. Chapter scoring remains independent of the
+         selected book.
+-      --> */}
++      */}
+       <details open>
+         <summary>2. Which chapter?</summary>
+ 
+@@ -109,24 +109,24 @@ export function Play() {
+           <h3 id="chapter-stage-heading">Enter the chapter</h3>
+ 
+           <form>
+-            <label for="chapter-answer">Chapter</label>
++            <label htmlFor="chapter-answer">Chapter</label>
+             <input
+               id="chapter-answer"
+               name="chapter"
+               type="number"
+               min="1"
+-              inputmode="numeric"
++              inputMode="numeric"
+             />
+ 
+-            <button class="sb-button-primary" type="button">Submit Chapter</button>
++            <button className="sb-button-primary" type="button">Submit Chapter</button>
+           </form>
+         </section>
+       </details>
+ 
+-      {/* <!--
++      {/*
+         An optional third stage can be enabled in practice settings for
+         players who want to identify the exact verse or verse range.
+-      --> */}
++      */}
+       <details>
+         <summary>Advanced setting: exact verse</summary>
+ 
+@@ -139,24 +139,24 @@ export function Play() {
+           </p>
+ 
+           <form>
+-            <label for="verse-answer">Verse</label>
++            <label htmlFor="verse-answer">Verse</label>
+             <input
+               id="verse-answer"
+               name="verse"
+               type="number"
+               min="1"
+-              inputmode="numeric"
++              inputMode="numeric"
+             />
+ 
+-            <button class="sb-button-primary" type="button">Submit Verse</button>
++            <button className="sb-button-primary" type="button">Submit Verse</button>
+           </form>
+         </section>
+       </details>
+ 
+-      {/* <!--
++      {/*
+         JavaScript will eventually reveal this after the required answer
+         stages are complete.
+-      --> */}
++      */}
+       <details>
+         <summary>Example answer feedback</summary>
+ 
+@@ -187,7 +187,7 @@ export function Play() {
+             another part of the reference was incorrect.
+           </p>
+ 
+-          <button class="sb-button-primary" type="button">Next Pitch</button>
++          <button className="sb-button-primary" type="button">Next Pitch</button>
+         </section>
+ 
+         <section aria-labelledby="translation-heading">
+@@ -221,8 +221,8 @@ export function Play() {
+         whenever you need to.
+       </p>
+ 
+-      <button class="sb-button-secondary" type="button">Finish Here</button>
+-      <button class="sb-button-primary" type="button">Keep Playing</button>
++      <button className="sb-button-secondary" type="button">Finish Here</button>
++      <button className="sb-button-primary" type="button">Keep Playing</button>
+     </section>
+   </main>
+     );
+diff --git a/src/progress/progress.jsx b/src/progress/progress.jsx
+index e0a321b..8d1034a 100644
+--- a/src/progress/progress.jsx
++++ b/src/progress/progress.jsx
+@@ -3,8 +3,8 @@ import './progress.css';
+ 
+ export function Progress() {
+     return (
+-  <main class="sb-main">
+-    <header class="sb-header">
++  <main className="sb-main">
++    <header className="sb-header">
+       <h1>Your Progress</h1>
+ 
+       <p>
+@@ -13,11 +13,11 @@ export function Progress() {
+       </p>
+     </header>
+ 
+-    {/* <!--
++    {/*
+       The information on this page represents application data that will
+       eventually be retrieved from the database for the signed-in user.
+-    --> */}
+-    <section class="sb-progress-grid" aria-labelledby="overview-heading">
++    */}
++    <section className="sb-progress-grid" aria-labelledby="overview-heading">
+       <h2 id="overview-heading">Learning overview</h2>
+ 
+       <dl>
+@@ -43,10 +43,10 @@ export function Progress() {
+       </dl>
+     </section>
+ 
+-    <section class="sb-mastery-grid" aria-labelledby="mastery-heading">
++    <section className="sb-mastery-grid" aria-labelledby="mastery-heading">
+       <h2 id="mastery-heading">Mastery by standard work</h2>
+ 
+-      <article class="sb-progress-card">
++      <article className="sb-progress-card">
+         <h3>Book of Mormon</h3>
+ 
+         <dl>
+@@ -67,7 +67,7 @@ export function Progress() {
+         </dl>
+       </article>
+ 
+-      <article class="sb-progress-card">
++      <article className="sb-progress-card">
+         <h3>New Testament</h3>
+ 
+         <dl>
+@@ -88,7 +88,7 @@ export function Progress() {
+         </dl>
+       </article>
+ 
+-      <article class="sb-progress-card">
++      <article className="sb-progress-card">
+         <h3>Old Testament</h3>
+ 
+         <dl>
+@@ -121,7 +121,7 @@ export function Progress() {
+           locating the exact chapter.
+         </p>
+ 
+-        <a class="sb-progress-link" href="play.html">Practice this area</a>
++        <a className="sb-progress-link" href="play.html">Practice this area</a>
+       </article>
+ 
+       <article>
+@@ -132,14 +132,14 @@ export function Progress() {
+           from one another.
+         </p>
+ 
+-        <a class="sb-progress-link" href="play.html">Practice this area</a>
++        <a className="sb-progress-link" href="play.html">Practice this area</a>
+       </article>
+     </section>
+ 
+     <section aria-labelledby="recent-heading">
+       <h2 id="recent-heading">Recent practice</h2>
+ 
+-      <table class="sb-progress-table">
++      <table className="sb-progress-table">
+         <caption>Example recent practice stored in the database</caption>
+ 
+         <thead>
+@@ -190,13 +190,13 @@ export function Progress() {
+         <li>John 14:6</li>
+       </ul>
+ 
+-      <a class="sb-progress-link" href="challenges.html">Practice My Misses</a>
++      <a className="sb-progress-link" href="challenges.html">Practice My Misses</a>
+     </section>
+ 
+     <section aria-labelledby="achievements-heading">
+       <h2 id="achievements-heading">Achievements</h2>
+ 
+-      <article class="sb-achievement-card">
++      <article className="sb-achievement-card">
+         <h3>Four Gospels</h3>
+ 
+         <p>
+@@ -226,7 +226,7 @@ export function Progress() {
+     <section aria-labelledby="history-heading">
+       <h2 id="history-heading">Recent games</h2>
+ 
+-      <table class="sb-progress-table">
++      <table className="sb-progress-table">
+         <caption>Example multiplayer game history stored in the database</caption>
+ 
+         <thead>

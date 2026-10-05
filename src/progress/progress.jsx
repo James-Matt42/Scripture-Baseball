@@ -3,8 +3,8 @@ import './progress.css';
 
 export function Progress() {
     return (
-  <main class="sb-main">
-    <header class="sb-header">
+  <main className="sb-main">
+    <header className="sb-header">
       <h1>Your Progress</h1>
 
       <p>
@@ -13,11 +13,11 @@ export function Progress() {
       </p>
     </header>
 
-    {/* <!--
+    {/*
       The information on this page represents application data that will
       eventually be retrieved from the database for the signed-in user.
-    --> */}
-    <section class="sb-progress-grid" aria-labelledby="overview-heading">
+    */}
+    <section className="sb-progress-grid" aria-labelledby="overview-heading">
       <h2 id="overview-heading">Learning overview</h2>
 
       <dl>
@@ -43,10 +43,10 @@ export function Progress() {
       </dl>
     </section>
 
-    <section class="sb-mastery-grid" aria-labelledby="mastery-heading">
+    <section className="sb-mastery-grid" aria-labelledby="mastery-heading">
       <h2 id="mastery-heading">Mastery by standard work</h2>
 
-      <article class="sb-progress-card">
+      <article className="sb-progress-card">
         <h3>Book of Mormon</h3>
 
         <dl>
@@ -67,7 +67,7 @@ export function Progress() {
         </dl>
       </article>
 
-      <article class="sb-progress-card">
+      <article className="sb-progress-card">
         <h3>New Testament</h3>
 
         <dl>
@@ -88,7 +88,7 @@ export function Progress() {
         </dl>
       </article>
 
-      <article class="sb-progress-card">
+      <article className="sb-progress-card">
         <h3>Old Testament</h3>
 
         <dl>
@@ -121,7 +121,7 @@ export function Progress() {
           locating the exact chapter.
         </p>
 
-        <a class="sb-progress-link" href="play.html">Practice this area</a>
+        <a className="sb-progress-link" href="play.html">Practice this area</a>
       </article>
 
       <article>
@@ -132,14 +132,14 @@ export function Progress() {
           from one another.
         </p>
 
-        <a class="sb-progress-link" href="play.html">Practice this area</a>
+        <a className="sb-progress-link" href="play.html">Practice this area</a>
       </article>
     </section>
 
     <section aria-labelledby="recent-heading">
       <h2 id="recent-heading">Recent practice</h2>
 
-      <table class="sb-progress-table">
+      <table className="sb-progress-table">
         <caption>Example recent practice stored in the database</caption>
 
         <thead>
@@ -190,13 +190,13 @@ export function Progress() {
         <li>John 14:6</li>
       </ul>
 
-      <a class="sb-progress-link" href="challenges.html">Practice My Misses</a>
+      <a className="sb-progress-link" href="challenges.html">Practice My Misses</a>
     </section>
 
     <section aria-labelledby="achievements-heading">
       <h2 id="achievements-heading">Achievements</h2>
 
-      <article class="sb-achievement-card">
+      <article className="sb-achievement-card">
         <h3>Four Gospels</h3>
 
         <p>
@@ -226,7 +226,7 @@ export function Progress() {
     <section aria-labelledby="history-heading">
       <h2 id="history-heading">Recent games</h2>
 
-      <table class="sb-progress-table">
+      <table className="sb-progress-table">
         <caption>Example multiplayer game history stored in the database</caption>
 
         <thead>

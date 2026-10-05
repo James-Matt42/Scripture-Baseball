@@ -2,7 +2,6 @@ import React from "react";
 import './app.css';
 
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
-// import { game } from './game/game';
 import { Account } from './account/account';
 import { Challenges } from './challenges/challenges';
 import { CreateGame } from "./create-game/create-game";

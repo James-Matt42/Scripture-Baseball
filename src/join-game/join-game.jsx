@@ -3,8 +3,8 @@ import './join-game.css';
 
 export function JoinGame() {
     return (
-  <main class="sb-main">
-    <header class="sb-header">
+  <main className="sb-main">
+    <header className="sb-header">
       <h1>Join a Private Game</h1>
 
       <p>
@@ -13,32 +13,32 @@ export function JoinGame() {
       </p>
     </header>
 
-    <section class="sb-form-group" aria-labelledby="code-heading">
+    <section className="sb-form-group" aria-labelledby="code-heading">
       <h2 id="code-heading">Enter a room code</h2>
 
-      <form class="sb-form-card" action="game.html" method="get">
-        <label class="sb-form-label" for="room-code">Room code</label>
+      <form className="sb-form-card" action="game.html" method="get">
+        <label className="sb-form-label" htmlFor="room-code">Room code</label>
 
         <input
           id="room-code"
           name="code"
           type="text"
-          autocomplete="off"
-          autocapitalize="characters"
-          spellcheck="false"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck="false"
           placeholder="NEPHI7"
           required
         />
 
-        <button class="sb-button-primary" type="submit">Find Game</button>
+        <button className="sb-button-primary" type="submit">Find Game</button>
       </form>
     </section>
 
-    {/* <!--
+    {/*
       In the finished application, this room preview will appear after a
       valid invitation link or room code has been found.
-    --> */}
-    <section class="sb-form-group" aria-labelledby="preview-heading">
+    */}
+    <section className="sb-form-group" aria-labelledby="preview-heading">
       <h2 id="preview-heading">Example room invitation</h2>
 
       <article>
@@ -72,10 +72,10 @@ export function JoinGame() {
       </article>
     </section>
 
-    <section class="sb-form-group" aria-labelledby="identity-heading">
+    <section className="sb-form-group" aria-labelledby="identity-heading">
       <h2 id="identity-heading">How would you like to join?</h2>
 
-      <section class="sb-form-group" aria-labelledby="guest-heading">
+      <section className="sb-form-group" aria-labelledby="guest-heading">
         <h3 id="guest-heading">Continue as a guest</h3>
 
         <p>
@@ -84,13 +84,13 @@ export function JoinGame() {
         </p>
 
         <form action="game.html" method="get">
-          <label class="sb-form-label" for="guest-name">Display name</label>
+          <label className="sb-form-label" htmlFor="guest-name">Display name</label>
 
           <input
             id="guest-name"
             name="display-name"
             type="text"
-            autocomplete="nickname"
+            autoComplete="nickname"
             placeholder="Your name"
             required
           />
@@ -101,11 +101,11 @@ export function JoinGame() {
             value="NEPHI7"
           />
 
-          <button class="sb-button-primary" type="submit">Continue as Guest</button>
+          <button className="sb-button-primary" type="submit">Continue as Guest</button>
         </form>
       </section>
 
-      <section class="sb-form-group" aria-labelledby="sign-in-heading">
+      <section className="sb-form-group" aria-labelledby="sign-in-heading">
         <h3 id="sign-in-heading">Sign in</h3>
 
         <p>
@@ -115,23 +115,23 @@ export function JoinGame() {
 
         <form action="game.html" method="get">
           <div>
-            <label class="sb-form-label" for="email">Email</label>
+            <label className="sb-form-label" htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
               type="email"
-              autocomplete="email"
+              autoComplete="email"
               required
             />
           </div>
 
           <div>
-            <label class="sb-form-label" for="password">Password</label>
+            <label className="sb-form-label" htmlFor="password">Password</label>
             <input
               id="password"
               name="password"
               type="password"
-              autocomplete="current-password"
+              autoComplete="current-password"
               required
             />
           </div>
@@ -142,7 +142,7 @@ export function JoinGame() {
             value="NEPHI7"
           />
 
-          <button class="sb-button-primary" type="submit">Sign In and Join</button>
+          <button className="sb-button-primary" type="submit">Sign In and Join</button>
         </form>
 
         <p>
@@ -153,7 +153,7 @@ export function JoinGame() {
       </section>
     </section>
 
-    <section class="sb-form-group" aria-labelledby="state-heading">
+    <section className="sb-form-group" aria-labelledby="state-heading">
       <h2 id="state-heading">Your place in the game is preserved</h2>
 
       <p>

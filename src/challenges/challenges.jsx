@@ -3,8 +3,8 @@ import './challenges.css';
 
 export function Challenges() {
     return (
-          <main class="sb-main">
-    <header class="sb-page-heading">
+          <main className="sb-main">
+    <header className="sb-page-heading">
       <h1>Challenges</h1>
 
       <p>
@@ -13,10 +13,10 @@ export function Challenges() {
       </p>
     </header>
 
-    <section class="sb-challenge-section" aria-labelledby="recommended-heading">
+    <section className="sb-challenge-section" aria-labelledby="recommended-heading">
       <h2 id="recommended-heading">Recommended for you</h2>
 
-      <article class="sb-challenge-card">
+      <article className="sb-challenge-card">
         <h3>Today's Lineup</h3>
 
         <p>
@@ -31,7 +31,7 @@ export function Challenges() {
         <a href="play.html">Play Today's Lineup</a>
       </article>
 
-      <article class="sb-challenge-card">
+      <article className="sb-challenge-card">
         <h3>Doctrinal Mastery</h3>
 
         <p>
@@ -46,7 +46,7 @@ export function Challenges() {
         <a href="create-game.html">Create a Multiplayer Game</a>
       </article>
 
-      <article class="sb-challenge-card">
+      <article className="sb-challenge-card">
         <h3>Four Gospels</h3>
 
         <p>
@@ -63,14 +63,14 @@ export function Challenges() {
       </article>
     </section>
 
-    {/* <!--
+    {/*
       These challenges will eventually be generated from data stored for
       the signed-in user.
-    --> */}
-    <section class="sb-challenge-section" aria-labelledby="personal-heading">
+    */}
+    <section className="sb-challenge-section" aria-labelledby="personal-heading">
       <h2 id="personal-heading">Your challenges</h2>
 
-      <article class="sb-challenge-card">
+      <article className="sb-challenge-card">
         <h3>My Misses</h3>
 
         <p>
@@ -85,7 +85,7 @@ export function Challenges() {
         <a href="play.html">Practice My Misses</a>
       </article>
 
-      <article class="sb-challenge-card">
+      <article className="sb-challenge-card">
         <h3>My Favorites</h3>
 
         <p>
@@ -100,7 +100,7 @@ export function Challenges() {
         <a href="play.html">Practice My Favorites</a>
       </article>
 
-      <article class="sb-challenge-card">
+      <article className="sb-challenge-card">
         <h3>Weak Areas</h3>
 
         <p>
@@ -117,20 +117,20 @@ export function Challenges() {
       </article>
     </section>
 
-    <section class="sb-challenge-section" aria-labelledby="browse-heading">
+    <section className="sb-challenge-section" aria-labelledby="browse-heading">
       <h2 id="browse-heading">Browse challenges</h2>
 
       <p>
         Use these options to narrow the challenge catalog.
       </p>
 
-      {/* <!--
+      {/*
         Filtering will become interactive when JavaScript and React are
         introduced later in the course.
-      --> */}
+      */}
       <form>
         <div>
-          <label for="volume-filter">Standard work</label>
+          <label htmlFor="volume-filter">Standard work</label>
           <select id="volume-filter" name="volume">
             <option value="">All standard works</option>
             <option value="old-testament">Old Testament</option>
@@ -146,7 +146,7 @@ export function Challenges() {
         </div>
 
         <div>
-          <label for="category-filter">Category</label>
+          <label htmlFor="category-filter">Category</label>
           <select id="category-filter" name="category">
             <option value="">All categories</option>
             <option value="volume">Books and volumes</option>
@@ -159,7 +159,7 @@ export function Challenges() {
         </div>
 
         <div>
-          <label for="difficulty-filter">Difficulty</label>
+          <label htmlFor="difficulty-filter">Difficulty</label>
           <select id="difficulty-filter" name="difficulty">
             <option value="">Any difficulty</option>
             <option value="beginner">Beginner</option>
@@ -168,7 +168,7 @@ export function Challenges() {
           </select>
         </div>
 
-        <button class="sb-button-primary" type="button">Apply Filters</button>
+        <button className="sb-button-primary" type="button">Apply Filters</button>
       </form>
     </section>
 
@@ -178,7 +178,7 @@ export function Challenges() {
       <section aria-labelledby="volume-heading">
         <h3 id="volume-heading">Books and volumes</h3>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Book of Mormon</h4>
           <p>
             Practice locating passages throughout the Book of Mormon.
@@ -186,7 +186,7 @@ export function Challenges() {
           <a href="play.html">Start Challenge</a>
         </article>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>New Testament</h4>
           <p>
             Practice locating passages throughout the New Testament.
@@ -194,7 +194,7 @@ export function Challenges() {
           <a href="play.html">Start Challenge</a>
         </article>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Alma</h4>
           <p>
             Focus your practice on passages from the book of Alma.
@@ -206,7 +206,7 @@ export function Challenges() {
       <section aria-labelledby="topic-heading">
         <h3 id="topic-heading">Topics and collections</h3>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Faith</h4>
           <p>
             Practice locating passages connected with the topic of faith.
@@ -214,7 +214,7 @@ export function Challenges() {
           <a href="play.html">Start Challenge</a>
         </article>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Prayer</h4>
           <p>
             Practice locating passages connected with prayer.
@@ -222,7 +222,7 @@ export function Challenges() {
           <a href="play.html">Start Challenge</a>
         </article>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Frequently Cited in Conference</h4>
           <p>
             Practice passages that appear frequently in General Conference
@@ -235,7 +235,7 @@ export function Challenges() {
       <section aria-labelledby="advanced-heading">
         <h3 id="advanced-heading">Advanced challenges</h3>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Obscure Scriptures</h4>
 
           <p>
@@ -246,7 +246,7 @@ export function Challenges() {
           <a href="play.html">Start Challenge</a>
         </article>
 
-        <article class="sb-challenge-card">
+        <article className="sb-challenge-card">
           <h4>Isaiah Challenge</h4>
 
           <p>

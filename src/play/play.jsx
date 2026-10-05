@@ -3,8 +3,8 @@ import './play.css';
 
 export function Play() {
     return (
-  <main class="sb-main">
-    <header class="sb-header">
+  <main className="sb-main">
+    <header className="sb-header">
       <h1>Today's Lineup</h1>
       <p>Ready when you are.</p>
     </header>
@@ -35,13 +35,13 @@ export function Play() {
       </dl>
     </section>
 
-    <article class="sb-game-card" aria-labelledby="pitch-heading">
-      <header class="sb-header">
+    <article className="sb-game-card" aria-labelledby="pitch-heading">
+      <header className="sb-header">
         <p>Pitch 3</p>
         <h2 id="pitch-heading">Where is this found?</h2>
       </header>
 
-      <blockquote class="scripture-text">
+      <blockquote className="scripture-text">
         <p>“Adam fell that men might be...”</p>
       </blockquote>
 
@@ -59,7 +59,7 @@ export function Play() {
                 name="book"
                 value="1-nephi"
               />
-              <label class="sb-answer-label sb-answer-button" for="book-1-nephi">1 Nephi</label>
+              <label className="sb-answer-label sb-answer-button" htmlFor="book-1-nephi">1 Nephi</label>
             </div>
 
             <div>
@@ -69,7 +69,7 @@ export function Play() {
                 name="book"
                 value="2-nephi"
               />
-              <label class="sb-answer-label sb-answer-button" for="book-2-nephi">2 Nephi</label>
+              <label className="sb-answer-label sb-answer-button" htmlFor="book-2-nephi">2 Nephi</label>
             </div>
 
             <div>
@@ -79,7 +79,7 @@ export function Play() {
                 name="book"
                 value="alma"
               />
-              <label class="sb-answer-label sb-answer-button" for="book-alma">Alma</label>
+              <label className="sb-answer-label sb-answer-button" htmlFor="book-alma">Alma</label>
             </div>
 
             <div>
@@ -89,19 +89,19 @@ export function Play() {
                 name="book"
                 value="mosiah"
               />
-              <label class="sb-answer-label sb-answer-button" for="book-mosiah">Mosiah</label>
+              <label className="sb-answer-label sb-answer-button" htmlFor="book-mosiah">Mosiah</label>
             </div>
           </fieldset>
 
-          <button class="sb-button-primary" type="button">Submit Book</button>
+          <button className="sb-button-primary" type="button">Submit Book</button>
         </form>
       </section>
 
-      {/* <!--
+      {/*
         In the finished application, this stage appears after the player
         commits a book answer. Chapter scoring remains independent of the
         selected book.
-      --> */}
+      */}
       <details open>
         <summary>2. Which chapter?</summary>
 
@@ -109,24 +109,24 @@ export function Play() {
           <h3 id="chapter-stage-heading">Enter the chapter</h3>
 
           <form>
-            <label for="chapter-answer">Chapter</label>
+            <label htmlFor="chapter-answer">Chapter</label>
             <input
               id="chapter-answer"
               name="chapter"
               type="number"
               min="1"
-              inputmode="numeric"
+              inputMode="numeric"
             />
 
-            <button class="sb-button-primary" type="button">Submit Chapter</button>
+            <button className="sb-button-primary" type="button">Submit Chapter</button>
           </form>
         </section>
       </details>
 
-      {/* <!--
+      {/*
         An optional third stage can be enabled in practice settings for
         players who want to identify the exact verse or verse range.
-      --> */}
+      */}
       <details>
         <summary>Advanced setting: exact verse</summary>
 
@@ -139,24 +139,24 @@ export function Play() {
           </p>
 
           <form>
-            <label for="verse-answer">Verse</label>
+            <label htmlFor="verse-answer">Verse</label>
             <input
               id="verse-answer"
               name="verse"
               type="number"
               min="1"
-              inputmode="numeric"
+              inputMode="numeric"
             />
 
-            <button class="sb-button-primary" type="button">Submit Verse</button>
+            <button className="sb-button-primary" type="button">Submit Verse</button>
           </form>
         </section>
       </details>
 
-      {/* <!--
+      {/*
         JavaScript will eventually reveal this after the required answer
         stages are complete.
-      --> */}
+      */}
       <details>
         <summary>Example answer feedback</summary>
 
@@ -187,7 +187,7 @@ export function Play() {
             another part of the reference was incorrect.
           </p>
 
-          <button class="sb-button-primary" type="button">Next Pitch</button>
+          <button className="sb-button-primary" type="button">Next Pitch</button>
         </section>
 
         <section aria-labelledby="translation-heading">
@@ -221,8 +221,8 @@ export function Play() {
         whenever you need to.
       </p>
 
-      <button class="sb-button-secondary" type="button">Finish Here</button>
-      <button class="sb-button-primary" type="button">Keep Playing</button>
+      <button className="sb-button-secondary" type="button">Finish Here</button>
+      <button className="sb-button-primary" type="button">Keep Playing</button>
     </section>
   </main>
     );

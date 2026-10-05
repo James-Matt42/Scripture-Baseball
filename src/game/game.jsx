@@ -3,8 +3,8 @@ import './game.css';
 
 export function Game() {
     return (
-  <main class="sb-main">
-    <header class="sb-header">
+  <main className="sb-main">
+    <header className="sb-header">
       <h1>Book of Mormon Baseball</h1>
 
       <dl>
@@ -35,10 +35,10 @@ export function Game() {
       </dl>
     </header>
 
-    {/* <!--
+    {/*
       This section represents the multiplayer lobby before the host starts
       the game. Player membership will eventually update in realtime.
-    --> */}
+    */}
     <section aria-labelledby="lobby-heading">
       <h2 id="lobby-heading">Lobby</h2>
 
@@ -56,7 +56,7 @@ export function Game() {
         WebSocket communication with the server.
       </p>
 
-      <button class="sb-button-primary" type="button">Start Game</button>
+      <button className="sb-button-primary" type="button">Start Game</button>
     </section>
 
     <section aria-labelledby="invite-heading">
@@ -83,7 +83,7 @@ export function Game() {
         </div>
       </dl>
 
-      <button class="sb-button-secondary" type="button">Copy Invitation Link</button>
+      <button className="sb-button-secondary" type="button">Copy Invitation Link</button>
 
       <figure>
         <div aria-label="QR code placeholder">
@@ -95,20 +95,20 @@ export function Game() {
       </figure>
     </section>
 
-    {/* <!--
+    {/*
       This represents how the same page may look after the host starts
       the game. JavaScript and React will eventually switch between lobby,
       gameplay, feedback, and results states.
-    --> */}
+    */}
     <section aria-labelledby="game-heading">
       <h2 id="game-heading">Example active game</h2>
 
       <p>Pitch 3 of 10</p>
 
-      <article class="sb-game-card" aria-labelledby="pitch-heading">
+      <article className="sb-game-card" aria-labelledby="pitch-heading">
         <h3 id="pitch-heading">Where is this found?</h3>
 
-        <blockquote class="scripture-text">
+        <blockquote className="scripture-text">
           <p>“Adam fell that men might be...”</p>
         </blockquote>
 
@@ -126,7 +126,7 @@ export function Game() {
                   name="book"
                   value="1-nephi"
                 />
-                <label class="sb-answer-label sb-answer-button" for="game-book-1-nephi">1 Nephi</label>
+                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-1-nephi">1 Nephi</label>
               </div>
 
               <div>
@@ -136,7 +136,7 @@ export function Game() {
                   name="book"
                   value="2-nephi"
                 />
-                <label class="sb-answer-label sb-answer-button" for="game-book-2-nephi">2 Nephi</label>
+                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-2-nephi">2 Nephi</label>
               </div>
 
               <div>
@@ -146,7 +146,7 @@ export function Game() {
                   name="book"
                   value="alma"
                 />
-                <label class="sb-answer-label sb-answer-button" for="game-book-alma">Alma</label>
+                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-alma">Alma</label>
               </div>
 
               <div>
@@ -156,11 +156,11 @@ export function Game() {
                   name="book"
                   value="mosiah"
                 />
-                <label class="sb-answer-label sb-answer-button" for="game-book-mosiah">Mosiah</label>
+                <label className="sb-answer-label sb-answer-button" htmlFor="game-book-mosiah">Mosiah</label>
               </div>
             </fieldset>
 
-            <button class="sb-button-primary" type="button">Submit Book</button>
+            <button className="sb-button-primary" type="button">Submit Book</button>
           </form>
         </section>
 
@@ -171,17 +171,17 @@ export function Game() {
             <h4 id="game-chapter-heading">Enter the chapter</h4>
 
             <form>
-              <label for="game-chapter-answer">Chapter</label>
+              <label htmlFor="game-chapter-answer">Chapter</label>
 
               <input
                 id="game-chapter-answer"
                 name="chapter"
                 type="number"
                 min="1"
-                inputmode="numeric"
+                inputMode="numeric"
               />
 
-              <button class="sb-button-primary" type="button">Submit Chapter</button>
+              <button className="sb-button-primary" type="button">Submit Chapter</button>
             </form>
           </section>
         </details>
@@ -200,12 +200,12 @@ export function Game() {
             feedback after answering.
           </p>
 
-          <button class="sb-button-primary" type="button">Continue</button>
+          <button className="sb-button-primary" type="button">Continue</button>
         </section>
       </details>
     </section>
 
-    <section class="sb-scoreboard" aria-labelledby="score-heading">
+    <section className="sb-scoreboard" aria-labelledby="score-heading">
       <h2 id="score-heading">Current game standings</h2>
 
       <table>
@@ -249,11 +249,11 @@ export function Game() {
       </p>
     </section>
 
-    {/* <!--
+    {/*
       WebSocket data placeholder required for the HTML deliverable.
       These events will eventually be pushed from the backend to connected
       players without requiring them to refresh the page.
-    --> */}
+    */}
     <section aria-labelledby="activity-heading">
       <h2 id="activity-heading">Live game activity</h2>
 
