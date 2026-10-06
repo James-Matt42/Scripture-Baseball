@@ -1,5 +1,6 @@
 import React from "react";
 import "./app.css";
+import logo from './assets/logo-small.png';
 
 import { BrowserRouter, Link, NavLink, Route, Routes } from "react-router-dom";
 import { Account } from "./account/account";
@@ -29,11 +30,16 @@ export default function App() {
             aria-label="Primary navigation"
           >
             <Link
-              className="font-serif text-lg font-bold text-green-950"
-              to="/"
-              aria-label="Scripture Baseball home"
+                className="flex items-center gap-2 font-serif text-lg font-bold text-green-950"
+                to="/"
+                aria-label="Scripture Baseball home"
             >
-              Scripture Baseball
+                <img
+                    src={logo}
+                    alt=""
+                    className="h-10 w-auto"
+                />
+                <span>Scripture Baseball</span>
             </Link>
 
             <menu className="flex flex-wrap gap-2">
