@@ -1,12 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import './account.css';
 
 export function Account() {
     return (
-          <main className="sb-main">
-    <header className="sb-header">
-      <h1>Account</h1>
+          <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+    <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
+      <h1 className="text-3xl font-bold text-green-950">Account</h1>
 
       <p>
         Sign in to save your learning history, continue across devices,
@@ -14,12 +13,12 @@ export function Account() {
       </p>
     </header>
 
-    <section className="sb-form-group" aria-labelledby="sign-in-heading">
-      <h2 id="sign-in-heading">Sign in</h2>
+    <section className="mb-5 grid gap-2" aria-labelledby="sign-in-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="sign-in-heading">Sign in</h2>
 
-      <form>
-        <div>
-          <label className="sb-form-label" htmlFor="sign-in-email">Email</label>
+      <form className="grid gap-4">
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="sign-in-email">Email</label>
           <input
             id="sign-in-email"
             name="email"
@@ -29,8 +28,8 @@ export function Account() {
           />
         </div>
 
-        <div>
-          <label className="sb-form-label" htmlFor="sign-in-password">Password</label>
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="sign-in-password">Password</label>
           <input
             id="sign-in-password"
             name="password"
@@ -40,21 +39,21 @@ export function Account() {
           />
         </div>
 
-        <button className="sb-button-primary" type="button">Sign In</button>
+        <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Sign In</button>
       </form>
     </section>
 
-    <section className="sb-form-group" aria-labelledby="create-account-heading">
-      <h2 id="create-account-heading">Create an account</h2>
+    <section className="mb-5 grid gap-2" aria-labelledby="create-account-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="create-account-heading">Create an account</h2>
 
       <p>
         If you have already practiced or joined a game as a guest, your
         existing activity will be carried into your new account.
       </p>
 
-      <form>
-        <div>
-          <label className="sb-form-label" htmlFor="display-name">Display name</label>
+      <form className="grid gap-4">
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="display-name">Display name</label>
           <input
             id="display-name"
             name="display-name"
@@ -64,8 +63,8 @@ export function Account() {
           />
         </div>
 
-        <div>
-          <label className="sb-form-label" htmlFor="create-email">Email</label>
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="create-email">Email</label>
           <input
             id="create-email"
             name="email"
@@ -75,8 +74,8 @@ export function Account() {
           />
         </div>
 
-        <div>
-          <label className="sb-form-label" htmlFor="create-password">Password</label>
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="create-password">Password</label>
           <input
             id="create-password"
             name="password"
@@ -86,8 +85,8 @@ export function Account() {
           />
         </div>
 
-        <div>
-          <label className="sb-form-label" htmlFor="confirm-password">Confirm password</label>
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="confirm-password">Confirm password</label>
           <input
             id="confirm-password"
             name="confirm-password"
@@ -97,7 +96,7 @@ export function Account() {
           />
         </div>
 
-        <button className="sb-button-primary" type="button">Create Account</button>
+        <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Create Account</button>
       </form>
     </section>
 
@@ -105,8 +104,8 @@ export function Account() {
       This section represents the authenticated account state that will be
       shown after login.
     */}
-    <section className="sb-form-group" aria-labelledby="signed-in-heading">
-      <h2 id="signed-in-heading">Example signed-in account</h2>
+    <section className="mb-5 grid gap-2" aria-labelledby="signed-in-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="signed-in-heading">Example signed-in account</h2>
 
       <p>
         Signed in as <strong>[USERNAME]</strong>
@@ -125,49 +124,51 @@ export function Account() {
       </dl>
 
       <p>
-        <Link to="/progress">View your learning progress</Link>
+        <Link className="font-semibold text-green-800 hover:text-green-950" to="/progress">View your learning progress</Link>
       </p>
 
-      <button className="sb-button-secondary" type="button">Sign Out</button>
+      <button className="w-full cursor-pointer rounded-lg border border-scripture-green sm:w-auto bg-white px-6 py-3 font-semibold text-scripture-green transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Sign Out</button>
     </section>
 
-    <section className="sb-form-group" aria-labelledby="preferences-heading">
-      <h2 id="preferences-heading">Practice preferences</h2>
+    <section className="mb-5 grid gap-2" aria-labelledby="preferences-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="preferences-heading">Practice preferences</h2>
 
-      <form>
-        <fieldset className="sb-option-group">
+      <form className="grid gap-4">
+        <fieldset className="grid gap-3 rounded-lg border border-stone-200 bg-amber-50 p-4">
           <legend>Default answer difficulty</legend>
 
-          <div>
+          <div className="grid grid-cols-[auto_1fr] items-start gap-3">
             <input
               type="radio"
+              className="mt-1 size-4 accent-scripture-green"
               id="answer-book-chapter"
               name="answer-difficulty"
               value="book-chapter"
               defaultChecked
             />
-            <label className="sb-form-label" htmlFor="answer-book-chapter">
+            <label className="font-semibold text-stone-700" htmlFor="answer-book-chapter">
               Book and chapter
             </label>
           </div>
 
-          <div>
+          <div className="grid grid-cols-[auto_1fr] items-start gap-3">
             <input
               type="radio"
+              className="mt-1 size-4 accent-scripture-green"
               id="answer-exact-verse"
               name="answer-difficulty"
               value="exact-verse"
             />
-            <label className="sb-form-label" htmlFor="answer-exact-verse">
+            <label className="font-semibold text-stone-700" htmlFor="answer-exact-verse">
               Book, chapter, and exact verse
             </label>
           </div>
         </fieldset>
 
-        <div>
-          <label className="sb-form-label" htmlFor="preferred-volume">Preferred scripture focus</label>
+        <div className="grid gap-2">
+          <label className="font-semibold text-stone-700" htmlFor="preferred-volume">Preferred scripture focus</label>
 
-          <select className="sb-form-input" id="preferred-volume" name="preferred-volume">
+          <select className="w-full" id="preferred-volume" name="preferred-volume">
             <option value="">No preference</option>
             <option value="old-testament">Old Testament</option>
             <option value="new-testament">New Testament</option>
@@ -181,43 +182,45 @@ export function Account() {
           </select>
         </div>
 
-        <button className="sb-button-primary" type="button">Save Preferences</button>
+        <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Save Preferences</button>
       </form>
     </section>
 
-    <section className="sb-form-group" aria-labelledby="notifications-heading">
-      <h2 id="notifications-heading">Notifications</h2>
+    <section className="mb-5 grid gap-2" aria-labelledby="notifications-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="notifications-heading">Notifications</h2>
 
       <p>
         Reminders and multiplayer notifications will be optional and can
         be changed at any time.
       </p>
 
-      <form>
-        <div>
+      <form className="grid gap-4">
+        <div className="grid grid-cols-[auto_1fr] items-start gap-3">
           <input
             type="checkbox"
+            className="mt-1 size-4 accent-scripture-green"
             id="practice-reminders"
             name="practice-reminders"
           />
-          <label className="sb-form-label" htmlFor="practice-reminders">
+          <label className="font-semibold text-stone-700" htmlFor="practice-reminders">
             Send optional practice reminders
           </label>
         </div>
 
-        <div>
+        <div className="grid grid-cols-[auto_1fr] items-start gap-3">
           <input
             type="checkbox"
+            className="mt-1 size-4 accent-scripture-green"
             id="game-notifications"
             name="game-notifications"
             defaultChecked
           />
-          <label className="sb-form-label" htmlFor="game-notifications">
+          <label className="font-semibold text-stone-700" htmlFor="game-notifications">
             Notify me when a private game needs my attention
           </label>
         </div>
 
-        <button className="sb-button-primary" type="button">Save Notification Settings</button>
+        <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Save Notification Settings</button>
       </form>
     </section>
   </main>

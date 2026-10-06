@@ -1,12 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import './progress.css';
 
 export function Progress() {
     return (
-  <main className="sb-main">
-    <header className="sb-header">
-      <h1>Your Progress</h1>
+  <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+    <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
+      <h1 className="text-3xl font-bold text-green-950">Your Progress</h1>
 
       <p>
         See what you know well, what is still developing, and where your
@@ -18,10 +17,10 @@ export function Progress() {
       The information on this page represents application data that will
       eventually be retrieved from the database for the signed-in user.
     */}
-    <section className="sb-progress-grid" aria-labelledby="overview-heading">
-      <h2 id="overview-heading">Learning overview</h2>
+    <section className="space-y-4" aria-labelledby="overview-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="overview-heading">Learning overview</h2>
 
-      <dl>
+      <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 [&>div]:rounded-2xl [&>div]:border [&>div]:border-stone-200 [&>div]:bg-white [&>div]:p-5 [&>div]:text-center [&>div]:shadow-sm [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-2 [&_dd]:text-2xl [&_dd]:font-bold [&_dd]:text-green-950">
         <div>
           <dt>Strong passages</dt>
           <dd>42</dd>
@@ -44,10 +43,10 @@ export function Progress() {
       </dl>
     </section>
 
-    <section className="sb-mastery-grid" aria-labelledby="mastery-heading">
-      <h2 id="mastery-heading">Mastery by standard work</h2>
+    <section className="grid grid-cols-1 gap-6 md:grid-cols-3 [&>h2]:col-span-full" aria-labelledby="mastery-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="mastery-heading">Mastery by standard work</h2>
 
-      <article className="sb-progress-card">
+      <article className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-green-950 [&_dl]:mt-4 [&_dl]:grid [&_dl]:gap-3 [&_dl>div]:rounded-lg [&_dl>div]:bg-green-50 [&_dl>div]:p-3 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-1 [&_dd]:font-semibold">
         <h3>Book of Mormon</h3>
 
         <dl>
@@ -68,7 +67,7 @@ export function Progress() {
         </dl>
       </article>
 
-      <article className="sb-progress-card">
+      <article className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-green-950 [&_dl]:mt-4 [&_dl]:grid [&_dl]:gap-3 [&_dl>div]:rounded-lg [&_dl>div]:bg-green-50 [&_dl>div]:p-3 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-1 [&_dd]:font-semibold">
         <h3>New Testament</h3>
 
         <dl>
@@ -89,7 +88,7 @@ export function Progress() {
         </dl>
       </article>
 
-      <article className="sb-progress-card">
+      <article className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-green-950 [&_dl]:mt-4 [&_dl]:grid [&_dl]:gap-3 [&_dl>div]:rounded-lg [&_dl>div]:bg-green-50 [&_dl>div]:p-3 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-1 [&_dd]:font-semibold">
         <h3>Old Testament</h3>
 
         <dl>
@@ -111,36 +110,36 @@ export function Progress() {
       </article>
     </section>
 
-    <section aria-labelledby="areas-heading">
-      <h2 id="areas-heading">Areas to strengthen</h2>
+    <section className="grid gap-5 md:grid-cols-2 [&>h2]:md:col-span-2" aria-labelledby="areas-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="areas-heading">Areas to strengthen</h2>
 
-      <article>
-        <h3>New Testament chapters</h3>
+      <article className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-bold text-green-950">New Testament chapters</h3>
 
         <p>
           You often identify the correct book but have more difficulty
           locating the exact chapter.
         </p>
 
-        <Link className="sb-progress-link" to="/play">Practice this area</Link>
+        <Link className="font-semibold text-green-800 hover:text-green-950" to="/play">Practice this area</Link>
       </article>
 
-      <article>
-        <h3>Small Old Testament books</h3>
+      <article className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-bold text-green-950">Small Old Testament books</h3>
 
         <p>
           These books are currently more difficult for you to distinguish
           from one another.
         </p>
 
-        <Link className="sb-progress-link" to="/play">Practice this area</Link>
+        <Link className="font-semibold text-green-800 hover:text-green-950" to="/play">Practice this area</Link>
       </article>
     </section>
 
-    <section aria-labelledby="recent-heading">
-      <h2 id="recent-heading">Recent practice</h2>
+    <section className="space-y-4 overflow-x-auto" aria-labelledby="recent-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="recent-heading">Recent practice</h2>
 
-      <table className="sb-progress-table">
+      <table className="w-full min-w-[640px] overflow-hidden rounded-xl bg-white text-left shadow-md [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">
         <caption>Example recent practice stored in the database</caption>
 
         <thead>
@@ -177,27 +176,27 @@ export function Progress() {
       </table>
     </section>
 
-    <section aria-labelledby="comeback-heading">
-      <h2 id="comeback-heading">Comeback passages</h2>
+    <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="comeback-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="comeback-heading">Comeback passages</h2>
 
       <p>
         These are passages you previously missed and have recently
         retrieved correctly.
       </p>
 
-      <ul>
+      <ul className="my-4 list-disc space-y-1 pl-5">
         <li>2 Nephi 2:25</li>
         <li>Alma 32:21</li>
         <li>John 14:6</li>
       </ul>
 
-      <Link className="sb-progress-link" to="/challenges">Practice My Misses</Link>
+      <Link className="font-semibold text-green-800 hover:text-green-950" to="/challenges">Practice My Misses</Link>
     </section>
 
-    <section aria-labelledby="achievements-heading">
-      <h2 id="achievements-heading">Achievements</h2>
+    <section className="grid gap-5 md:grid-cols-2 [&>h2]:md:col-span-2" aria-labelledby="achievements-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="achievements-heading">Achievements</h2>
 
-      <article className="sb-achievement-card">
+      <article className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
         <h3>Four Gospels</h3>
 
         <p>
@@ -210,7 +209,7 @@ export function Progress() {
         </p>
       </article>
 
-      <article>
+      <article className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
         <h3>Doctrinal Master</h3>
 
         <p>
@@ -224,10 +223,10 @@ export function Progress() {
       </article>
     </section>
 
-    <section aria-labelledby="history-heading">
-      <h2 id="history-heading">Recent games</h2>
+    <section className="space-y-4 overflow-x-auto" aria-labelledby="history-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="history-heading">Recent games</h2>
 
-      <table className="sb-progress-table">
+      <table className="w-full min-w-[640px] overflow-hidden rounded-xl bg-white text-left shadow-md [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">
         <caption>Example multiplayer game history stored in the database</caption>
 
         <thead>
@@ -254,8 +253,8 @@ export function Progress() {
       </table>
     </section>
 
-    <section aria-labelledby="progress-note-heading">
-      <h2 id="progress-note-heading">How progress works</h2>
+    <section className="rounded-xl bg-green-50 p-6" aria-labelledby="progress-note-heading">
+      <h2 className="text-2xl font-bold text-green-950" id="progress-note-heading">How progress works</h2>
 
       <p>
         Scripture Baseball tracks book and chapter knowledge separately
