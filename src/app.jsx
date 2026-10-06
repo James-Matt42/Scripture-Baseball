@@ -23,7 +23,7 @@ const navLinkClass = ({ isActive }) =>
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen">
+      <div className="flex min-h-screen flex-col">
         <header className="border-b border-stone-200 bg-white shadow-sm">
           <nav
             className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8"
@@ -82,16 +82,22 @@ export default function App() {
           </nav>
         </header>
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/challenges" element={<Challenges />} />
-          <Route path="/create-game" element={<CreateGame />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/join-game" element={<JoinGame />} />
-          <Route path="/play" element={<Play />} />
-          <Route path="/progress" element={<Progress />} />
-        </Routes>
+        <main>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/challenges" element={<Challenges />} />
+                <Route path="/create-game" element={<CreateGame />} />
+                <Route path="/game" element={<Game />} />
+                <Route path="/join-game" element={<JoinGame />} />
+                <Route path="/play" element={<Play />} />
+                <Route path="/progress" element={<Progress />} />
+            </Routes>
+        </main>
+
+        <footer className="border-t border-green-900/10 bg-green-950 px-6 py-4 text-center text-sm text-white">
+            Scripture Baseball is an independent, unofficial hobby project made by Matthew.
+        </footer>
       </div>
     </BrowserRouter>
   );
