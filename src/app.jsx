@@ -96,7 +96,13 @@ export default function App() {
         </main>
 
         <footer className="border-t border-green-900/10 bg-green-950 px-6 py-4 text-center text-sm text-white">
-            Scripture Baseball is an independent, unofficial hobby project made by Matthew.
+            Scripture Baseball is an independent, unofficial hobby project made by Matthew <br />
+            Visit the <a 
+              href="https://github.com/James-Matt42/Scripture-Baseball"
+              className="text-blue-300 underline hover:text-blue-600 transition-colors"
+            >
+              GitHub repo
+            </a>
         </footer>
       </div>
     </BrowserRouter>
