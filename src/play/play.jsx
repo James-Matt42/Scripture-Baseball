@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { ScriptureQuestion } from "../components/ScriptureQuestion";
 import { SAMPLE_QUESTIONS } from "../scripture/questions";
-import { getPracticeStats, getResumePitchIndex } from "./session";
+import { getPracticeStats } from "./session";
+import { usePractice } from "./PracticeContext";
 
 const primaryButton =
   "w-full cursor-pointer rounded-lg bg-scripture-green px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto";
@@ -9,58 +10,23 @@ const secondaryButton =
   "w-full cursor-pointer rounded-lg border border-scripture-green bg-white px-6 py-3 font-semibold text-scripture-green transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto";
 
 export function Play() {
-  const [pitchIndex, setPitchIndex] = useState(0);
-  const [attempts, setAttempts] = useState([]);
-  const [exactVerse, setExactVerse] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
-  const [inning, setInning] = useState(1);
-  const [questionReset, setQuestionReset] = useState(0);
+  const {
+    session: { inning, pitchIndex, attempts, exactVerse, isFinished, draft },
+    history,
+    isSaved,
+    saveDraft,
+    setExactVerse,
+    answerPitch,
+    nextPitch,
+    finishInning,
+    keepPlaying,
+    startNewInning,
+  } = usePractice();
 
   const currentQuestion = SAMPLE_QUESTIONS[pitchIndex];
   const stats = getPracticeStats(attempts, SAMPLE_QUESTIONS.length, exactVerse);
-  const answeredCurrent = attempts.some((attempt) => attempt.questionId === currentQuestion.id);
+  const savedAttempt = attempts.find((attempt) => attempt.questionId === currentQuestion.id) ?? null;
   const allAnswered = stats.completed === stats.totalPitches;
-
-  function handleAnswered(attempt) {
-    // Ignore duplicate submissions (for example, a rapid double-click).
-    setAttempts((previous) =>
-      previous.some((item) => item.questionId === attempt.questionId)
-        ? previous
-        : [...previous, attempt],
-    );
-  }
-
-  function nextPitch() {
-    if (!answeredCurrent) return;
-    if (pitchIndex === SAMPLE_QUESTIONS.length - 1) {
-      setIsFinished(true);
-    } else {
-      setPitchIndex((index) => index + 1);
-    }
-  }
-
-  function startNewInning() {
-    setAttempts([]);
-    setPitchIndex(0);
-    setQuestionReset(0);
-    setInning((number) => number + 1);
-    setIsFinished(false);
-  }
-
-  function keepPlaying() {
-    if (allAnswered) {
-      startNewInning();
-      return;
-    }
-    const resumeIndex = getResumePitchIndex(SAMPLE_QUESTIONS, pitchIndex, attempts);
-    if (resumeIndex === pitchIndex) {
-      // An incomplete pitch starts over when returning from the summary.
-      setQuestionReset((number) => number + 1);
-    } else {
-      setPitchIndex(resumeIndex);
-    }
-    setIsFinished(false);
-  }
 
   return (
     <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
@@ -95,10 +61,7 @@ export function Play() {
                   type="checkbox"
                   checked={exactVerse}
                   disabled={stats.completed > 0}
-                  onChange={(event) => {
-                    setExactVerse(event.target.checked);
-                    setQuestionReset((number) => number + 1);
-                  }}
+                  onChange={(event) => setExactVerse(event.target.checked)}
                 />
                 <span>{exactVerse ? "On" : "Off"} — optional extra point</span>
               </label>
@@ -106,8 +69,7 @@ export function Play() {
           </div>
         </dl>
         <p className="mt-3 text-sm text-stone-600">
-          Each correct book and chapter earns one point. With exact verse enabled, a correct verse earns one more.
-          {stats.completed > 0 && " Answer format is locked for this inning."}
+          One point per correct answer.{stats.completed > 0 && " Mode locked for this inning."}
         </p>
       </section>
 
@@ -118,6 +80,12 @@ export function Play() {
           {" "}{stats.bookCorrect} correct books · {stats.chapterCorrect} correct chapters
           {exactVerse && <> · {stats.verseCorrect} correct verses</>}
         </p>
+        {isSaved !== null && (
+          <p className="mt-2 text-xs text-green-900">
+            {isSaved ? "Saved on this device" : "Browser storage unavailable — scores may be lost on refresh"}
+            {history.length > 0 && ` · ${history.length} previous ${history.length === 1 ? "inning" : "innings"}`}
+          </p>
+        )}
       </section>
 
       {!isFinished ? (
@@ -129,10 +97,13 @@ export function Play() {
               </h2>
             </header>
             <ScriptureQuestion
-              key={`${inning}-${currentQuestion.id}-${exactVerse}-${questionReset}`}
+              key={`${inning}-${currentQuestion.id}-${exactVerse}`}
               question={currentQuestion}
               exactVerse={exactVerse}
-              onAnswered={handleAnswered}
+              savedAttempt={savedAttempt}
+              initialDraft={draft}
+              onDraftChange={saveDraft}
+              onAnswered={answerPitch}
               onNext={nextPitch}
               nextLabel={pitchIndex === SAMPLE_QUESTIONS.length - 1 ? "See Inning Results" : "Next Pitch"}
             />
@@ -146,10 +117,9 @@ export function Play() {
                 : `${stats.completed} ${stats.completed === 1 ? "pitch" : "pitches"} scored so far.`}
             </p>
             <p className="mt-2 text-sm text-stone-600">
-              You can finish early and view your results. Unfinished guesses are not scored.
-              Saving progress across refreshes will be added in the next step.
+              You can pause and resume this inning later.
             </p>
-            <button className={`mt-4 ${secondaryButton}`} type="button" onClick={() => setIsFinished(true)}>
+            <button className={`mt-4 ${secondaryButton}`} type="button" onClick={finishInning}>
               Finish Here
             </button>
           </section>
@@ -180,10 +150,7 @@ export function Play() {
             )}
           </dl>
           <p className="mt-4 text-sm text-stone-600">
-            {allAnswered
-              ? "You answered every pitch. Keep playing to start another inning."
-              : "Keep playing to resume your inning. An incomplete pitch will restart from the book guess."}
-            {" "}Results are currently temporary; local saving comes in the next step.
+            {allAnswered ? "Keep playing to start another inning." : "Keep playing to resume where you left off."}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <button className={primaryButton} type="button" onClick={keepPlaying}>

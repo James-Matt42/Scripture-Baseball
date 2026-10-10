@@ -9,43 +9,72 @@ import {
 const primaryButton =
   "w-full cursor-pointer rounded-lg bg-scripture-green px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto disabled:cursor-not-allowed disabled:opacity-50";
 
-// Each mounted question owns its form state. Key this component by question.id
-// (and session/mode) when moving to a new pitch so previous answers are cleared.
+// Keep the same key for a question while playing; give a new pitch a new key.
 export function ScriptureQuestion({
   question,
   onAnswered,
   onNext,
   exactVerse = false,
   nextLabel = "Next Pitch",
+  initialDraft = null,
+  savedAttempt = null,
+  onDraftChange,
 }) {
   const id = useId();
-  const [stage, setStage] = useState("book");
-  const [bookId, setBookId] = useState("");
-  const [chapterInput, setChapterInput] = useState("");
-  const [verseInput, setVerseInput] = useState("");
-  const [attempt, setAttempt] = useState(null);
+  const [draft, setDraft] = useState(() => {
+    const blank = {
+      questionId: question.id,
+      stage: "book",
+      bookId: "",
+      chapterInput: "",
+      verseInput: "",
+    };
+    if (savedAttempt) {
+      return {
+        ...blank,
+        stage: "feedback",
+        bookId: savedAttempt.bookId,
+        chapterInput: String(savedAttempt.chapter),
+        verseInput: savedAttempt.verse === undefined ? "" : String(savedAttempt.verse),
+      };
+    }
+    return initialDraft?.questionId === question.id ? { ...blank, ...initialDraft } : blank;
+  });
+  const [attempt, setAttempt] = useState(() => {
+    if (savedAttempt) return savedAttempt;
+    if (draft.stage === "verse") {
+      return gradeBookAndChapter(question, draft.bookId, Number(draft.chapterInput));
+    }
+    return null;
+  });
+  const { stage, bookId, chapterInput, verseInput } = draft;
   const bookCorrect = bookId === question.bookId;
+
+  function updateDraft(changes) {
+    const next = { ...draft, ...changes };
+    setDraft(next);
+    onDraftChange?.(next);
+  }
 
   function submitBook(event) {
     event.preventDefault();
     if (stage !== "book" || !bookId) return;
-    // Show the result before presenting the chapter form.
-    setStage("book-feedback");
+    // Show feedback and the chapter field in the same step: no Continue button.
+    updateDraft({ stage: "chapter" });
   }
 
   function submitChapter(event) {
     event.preventDefault();
     if (stage !== "chapter") return;
     const chapter = Number(chapterInput);
-    if (!Number.isInteger(chapter) || chapter < 1) return;
+    if (!Number.isSafeInteger(chapter) || chapter < 1) return;
 
     const result = gradeBookAndChapter(question, bookId, chapter);
     setAttempt(result);
     if (exactVerse) {
-      // Do not reveal the full reference before the optional verse guess.
-      setStage("chapter-feedback");
+      updateDraft({ stage: "verse" });
     } else {
-      setStage("feedback");
+      setDraft({ ...draft, stage: "feedback" });
       onAnswered?.(result);
     }
   }
@@ -54,22 +83,17 @@ export function ScriptureQuestion({
     event.preventDefault();
     if (stage !== "verse" || !attempt) return;
     const verse = Number(verseInput);
-    if (!Number.isInteger(verse) || verse < 1) return;
+    if (!Number.isSafeInteger(verse) || verse < 1) return;
 
     const result = gradeExactVerse(question, attempt, verse);
     setAttempt(result);
-    setStage("feedback");
+    setDraft({ ...draft, stage: "feedback" });
     onAnswered?.(result);
   }
 
   return (
     <div>
       <h3 className="text-xl font-bold text-green-950">Where is this found?</h3>
-      <p className="mt-2 text-sm text-stone-600">
-        Guess the book, then the chapter{exactVerse ? ", then the exact verse" : ""}.
-        Each answer is scored independently.
-      </p>
-
       <blockquote className="my-6 rounded-xl bg-amber-50 p-6 text-xl leading-relaxed text-stone-800">
         <p>“{question.passage}”</p>
       </blockquote>
@@ -87,7 +111,7 @@ export function ScriptureQuestion({
                   name={`${id}-book`}
                   value={choice}
                   checked={bookId === choice}
-                  onChange={() => setBookId(choice)}
+                  onChange={() => updateDraft({ bookId: choice })}
                 />
                 <label
                   className="block min-h-12 w-full cursor-pointer rounded-xl border border-stone-200 bg-white px-5 py-4 text-center font-semibold text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:border-green-700 hover:bg-green-50 hover:text-green-900 hover:shadow-md peer-focus-visible:ring-2 peer-focus-visible:ring-green-300 peer-checked:border-green-900 peer-checked:bg-green-700 peer-checked:text-white"
@@ -104,28 +128,16 @@ export function ScriptureQuestion({
         </form>
       )}
 
-      {stage === "book-feedback" && (
-        <section aria-label="Book feedback" aria-live="polite">
-          <div
-            className={`rounded-xl border p-4 ${bookCorrect ? "border-green-300 bg-green-50 text-green-950" : "border-amber-300 bg-amber-50 text-stone-800"}`}
-            role="status"
-          >
-            <h4 className="text-lg font-bold">Book: {bookCorrect ? "Correct!" : "Not quite."}</h4>
-            <p className="mt-1">You chose {getBookLabel(bookId)}.</p>
-            {!bookCorrect && <p>The correct book is {getBookLabel(question.bookId)}.</p>}
-            <p className="mt-2 text-sm">Your chapter guess will count independently of your book answer.</p>
-          </div>
-          <button className={`mt-4 ${primaryButton}`} type="button" onClick={() => setStage("chapter")}>
-            Continue to Chapter
-          </button>
-        </section>
-      )}
-
       {stage === "chapter" && (
         <section aria-label="Chapter question">
-          <p className="mb-3 rounded-lg bg-green-50 p-3 text-green-900">
-            Book answer locked: {getBookLabel(bookId)}.
-          </p>
+          <div
+            className={`mb-4 rounded-lg border p-3 ${bookCorrect ? "border-green-300 bg-green-50 text-green-950" : "border-amber-300 bg-amber-50 text-stone-800"}`}
+            role="status"
+            aria-live="polite"
+          >
+            <strong>Book: {bookCorrect ? "Correct!" : "Not quite."}</strong>
+            {!bookCorrect && <> Correct: {getBookLabel(question.bookId)}.</>}
+          </div>
           <form className="grid max-w-sm gap-3" onSubmit={submitChapter}>
             <label className="font-semibold text-stone-700" htmlFor={`${id}-chapter`}>
               2. Which chapter?
@@ -138,34 +150,25 @@ export function ScriptureQuestion({
               min="1"
               step="1"
               required
+              autoFocus
               value={chapterInput}
-              onChange={(event) => setChapterInput(event.target.value)}
+              onChange={(event) => updateDraft({ chapterInput: event.target.value })}
             />
-            <button className={primaryButton} type="submit">
-              Submit Chapter
-            </button>
+            <button className={primaryButton} type="submit">Submit Chapter</button>
           </form>
         </section>
       )}
 
-      {stage === "chapter-feedback" && attempt && (
-        <section aria-label="Chapter feedback" aria-live="polite">
-          <div
-            className={`rounded-xl border p-4 ${attempt.chapterCorrect ? "border-green-300 bg-green-50 text-green-950" : "border-amber-300 bg-amber-50 text-stone-800"}`}
-            role="status"
-          >
-            <h4 className="text-lg font-bold">Chapter: {attempt.chapterCorrect ? "Correct!" : "Not quite."}</h4>
-            <p className="mt-1">You entered chapter {attempt.chapter}.</p>
-            {!attempt.chapterCorrect && <p>The correct chapter is {question.chapter}.</p>}
-          </div>
-          <button className={`mt-4 ${primaryButton}`} type="button" onClick={() => setStage("verse")}>
-            Continue to Exact Verse
-          </button>
-        </section>
-      )}
-
-      {stage === "verse" && (
+      {stage === "verse" && attempt && (
         <section aria-label="Verse question">
+          <div
+            className={`mb-4 rounded-lg border p-3 ${attempt.chapterCorrect ? "border-green-300 bg-green-50 text-green-950" : "border-amber-300 bg-amber-50 text-stone-800"}`}
+            role="status"
+            aria-live="polite"
+          >
+            <strong>Chapter: {attempt.chapterCorrect ? "Correct!" : "Not quite."}</strong>
+            {!attempt.chapterCorrect && <> Correct: {question.chapter}.</>}
+          </div>
           <form className="grid max-w-sm gap-3" onSubmit={submitVerse}>
             <label className="font-semibold text-stone-700" htmlFor={`${id}-verse`}>
               3. Which exact verse?
@@ -178,12 +181,11 @@ export function ScriptureQuestion({
               min="1"
               step="1"
               required
+              autoFocus
               value={verseInput}
-              onChange={(event) => setVerseInput(event.target.value)}
+              onChange={(event) => updateDraft({ verseInput: event.target.value })}
             />
-            <button className={primaryButton} type="submit">
-              Submit Verse
-            </button>
+            <button className={primaryButton} type="submit">Submit Verse</button>
           </form>
         </section>
       )}
@@ -196,28 +198,19 @@ export function ScriptureQuestion({
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg bg-amber-50 p-4">
               <dt className="font-semibold text-green-950">Book</dt>
-              <dd className="mt-1 text-stone-800">
-                {attempt.bookCorrect ? "Correct!" : "Not quite."} You chose {getBookLabel(attempt.bookId)}.
-              </dd>
+              <dd className="mt-1 text-stone-800">{attempt.bookCorrect ? "Correct" : "Incorrect"}</dd>
             </div>
             <div className="rounded-lg bg-amber-50 p-4">
               <dt className="font-semibold text-green-950">Chapter</dt>
-              <dd className="mt-1 text-stone-800">
-                {attempt.chapterCorrect ? "Correct!" : "Not quite."} You entered {attempt.chapter}.
-              </dd>
+              <dd className="mt-1 text-stone-800">{attempt.chapterCorrect ? "Correct" : "Incorrect"}</dd>
             </div>
             {exactVerse && (
               <div className="rounded-lg bg-amber-50 p-4">
                 <dt className="font-semibold text-green-950">Exact verse</dt>
-                <dd className="mt-1 text-stone-800">
-                  {attempt.verseCorrect ? "Correct!" : "Not quite."} You entered {attempt.verse}.
-                </dd>
+                <dd className="mt-1 text-stone-800">{attempt.verseCorrect ? "Correct" : "Incorrect"}</dd>
               </div>
             )}
           </dl>
-          <p className="mt-4 text-stone-600">
-            Each correct answer earns one point. Review the reference, then continue.
-          </p>
           {onNext && (
             <button className={`mt-4 ${primaryButton}`} type="button" onClick={onNext}>
               {nextLabel}

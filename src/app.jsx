@@ -11,6 +11,7 @@ import { Home } from "./home/home";
 import { JoinGame } from "./join-game/join-game";
 import { Play } from "./play/play";
 import { Progress } from "./progress/progress";
+import { PracticeProvider } from "./play/PracticeContext";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -21,6 +22,14 @@ const navLinkClass = ({ isActive }) =>
   ].join(" ");
 
 export default function App() {
+  return (
+    <PracticeProvider>
+      <Site />
+    </PracticeProvider>
+  );
+}
+
+function Site() {
   return (
     <BrowserRouter>
       <div className="flex min-h-screen flex-col">

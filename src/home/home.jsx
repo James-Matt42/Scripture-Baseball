@@ -57,7 +57,7 @@ export function Home() {
               {" "}{correctChapters} correct {correctChapters === 1 ? "chapter" : "chapters"}
             </p>
             <p className="mt-2 text-sm text-stone-600">
-              These demo results last only until you leave or refresh this page. Saved progress will be added in a later step.
+              Demo scores are temporary. Solo practice saves on this device.
             </p>
             <Link className="mt-3 inline-block font-semibold text-green-800 hover:text-green-950" to="/account">
               Explore accounts

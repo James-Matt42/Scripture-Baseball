@@ -1,7 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { usePractice } from "../play/PracticeContext";
+import { getPracticeStats } from "../play/session";
 
 export function Progress() {
+    const { recordedAttempts, history } = usePractice();
+    const saved = getPracticeStats(recordedAttempts, recordedAttempts.length);
     return (
   <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
     <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
@@ -13,10 +17,13 @@ export function Progress() {
       </p>
     </header>
 
-    {/*
-      The information on this page represents application data that will
-      eventually be retrieved from the database for the signed-in user.
-    */}
+    <section className="rounded-xl border border-green-900/20 bg-green-50 p-5" aria-label="Saved solo practice">
+      <h2 className="text-lg font-bold text-green-950">Saved solo practice</h2>
+      <p className="mt-1 text-green-900">
+        {saved.completed} pitches · {saved.bookCorrect} correct books · {saved.chapterCorrect} correct chapters · {history.length} finished innings
+      </p>
+      <p className="mt-1 text-xs text-stone-600">Detailed progress below is sample data for now.</p>
+    </section>
     <section className="space-y-4" aria-labelledby="overview-heading">
       <h2 className="text-2xl font-bold text-green-950" id="overview-heading">Learning overview</h2>
 
