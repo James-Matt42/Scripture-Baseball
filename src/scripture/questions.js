@@ -81,3 +81,15 @@ export function gradeBookAndChapter(question, bookId, chapter) {
     chapterCorrect: Number.isInteger(chapterNumber) && chapterNumber === question.chapter,
   };
 }
+
+// Exact-verse practice is optional. Preserve the independently graded book
+// and chapter results and add a third, separately scored answer.
+export function gradeExactVerse(question, bookAndChapterAttempt, verse) {
+  const verseNumber = Number(verse);
+
+  return {
+    ...bookAndChapterAttempt,
+    verse: verseNumber,
+    verseCorrect: Number.isInteger(verseNumber) && verseNumber === question.verse,
+  };
+}

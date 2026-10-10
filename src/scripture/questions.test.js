@@ -5,6 +5,7 @@ import {
   SCRIPTURE_BOOKS,
   formatScriptureReference,
   gradeBookAndChapter,
+  gradeExactVerse,
 } from "./questions.js";
 
 test("every sample question has a valid book and answer choices", () => {
@@ -41,4 +42,19 @@ test("book and chapter answers are scored independently", () => {
   const correct = gradeBookAndChapter(question, "2-nephi", 2);
   assert.equal(correct.bookCorrect, true);
   assert.equal(correct.chapterCorrect, true);
+});
+
+test("exact verse adds independently scored feedback without altering book and chapter", () => {
+  const question = SAMPLE_QUESTIONS[0];
+  const bookAndChapter = gradeBookAndChapter(question, "alma", 2);
+  const rightVerse = gradeExactVerse(question, bookAndChapter, 25);
+  assert.equal(rightVerse.bookCorrect, false);
+  assert.equal(rightVerse.chapterCorrect, true);
+  assert.equal(rightVerse.verseCorrect, true);
+  assert.equal(rightVerse.verse, 25);
+
+  const wrongVerse = gradeExactVerse(question, bookAndChapter, 7);
+  assert.equal(wrongVerse.verseCorrect, false);
+  assert.equal(wrongVerse.verse, 7);
+  assert.equal(Object.hasOwn(bookAndChapter, "verseCorrect"), false);
 });
