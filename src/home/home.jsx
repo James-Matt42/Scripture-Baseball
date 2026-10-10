@@ -1,9 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { navigateWithGetForm } from "../routing";
+import { ScriptureQuestion } from "../components/ScriptureQuestion";
+import { SAMPLE_QUESTIONS } from "../scripture/questions";
 
 export function Home() {
   const navigate = useNavigate();
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [guestAttempts, setGuestAttempts] = useState([]);
+  const currentQuestion = SAMPLE_QUESTIONS[questionIndex];
+  const correctBooks = guestAttempts.filter((attempt) => attempt.bookCorrect).length;
+  const correctChapters = guestAttempts.filter((attempt) => attempt.chapterCorrect).length;
+
+  function nextPitch() {
+    setQuestionIndex((index) => (index + 1) % SAMPLE_QUESTIONS.length);
+  }
 
   function handleJoinGame(event) {
     navigateWithGetForm(event, navigate, "/join-game");
@@ -25,128 +36,34 @@ export function Home() {
       <section className="py-4 md:py-8" aria-labelledby="sample-heading">
         <h2 className="mb-4 text-2xl font-bold text-green-950" id="sample-heading">Try a pitch</h2>
 
-        <article className="rounded-xl border border-amber-200 bg-white p-4 shadow-md sm:p-6" aria-labelledby="question-heading">
-          <h3 id="question-heading">Where is this found?</h3>
-
-          <blockquote className="my-6 rounded-lg bg-amber-50 p-6 text-xl leading-relaxed text-stone-800">
-            <p>“Adam fell that men might be...”</p>
-          </blockquote>
-
-          <form>
-            <fieldset className="grid gap-4 rounded-xl border border-amber-200 bg-white p-6">
-              <legend>Choose a book</legend>
-
-              <div className="relative">
-                <input
-                  type="radio"
-                  id="answer-1-nephi"
-                  className="peer sr-only"
-                  name="book"
-                  value="1-nephi"
-                />
-                <label className="block min-h-12 w-full cursor-pointer rounded-xl border border-stone-200 bg-white px-5 py-4 text-center font-semibold text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:border-green-700 hover:bg-green-50 hover:text-green-900 hover:shadow-md peer-focus-visible:ring-2 peer-focus-visible:ring-green-300 peer-checked:border-green-900 peer-checked:bg-green-700 peer-checked:text-white" htmlFor="answer-1-nephi">1 Nephi</label>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="radio"
-                  id="answer-2-nephi"
-                  className="peer sr-only"
-                  name="book"
-                  value="2-nephi"
-                />
-                <label className="block min-h-12 w-full cursor-pointer rounded-xl border border-stone-200 bg-white px-5 py-4 text-center font-semibold text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:border-green-700 hover:bg-green-50 hover:text-green-900 hover:shadow-md peer-focus-visible:ring-2 peer-focus-visible:ring-green-300 peer-checked:border-green-900 peer-checked:bg-green-700 peer-checked:text-white" htmlFor="answer-2-nephi">2 Nephi</label>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="radio"
-                  id="answer-alma"
-                  className="peer sr-only"
-                  name="book"
-                  value="alma"
-                />
-                <label className="block min-h-12 w-full cursor-pointer rounded-xl border border-stone-200 bg-white px-5 py-4 text-center font-semibold text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:border-green-700 hover:bg-green-50 hover:text-green-900 hover:shadow-md peer-focus-visible:ring-2 peer-focus-visible:ring-green-300 peer-checked:border-green-900 peer-checked:bg-green-700 peer-checked:text-white" htmlFor="answer-alma">Alma</label>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="radio"
-                  id="answer-mosiah"
-                  className="peer sr-only"
-                  name="book"
-                  value="mosiah"
-                />
-                <label className="block min-h-12 w-full cursor-pointer rounded-xl border border-stone-200 bg-white px-5 py-4 text-center font-semibold text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:border-green-700 hover:bg-green-50 hover:text-green-900 hover:shadow-md peer-focus-visible:ring-2 peer-focus-visible:ring-green-300 peer-checked:border-green-900 peer-checked:bg-green-700 peer-checked:text-white" htmlFor="answer-mosiah">Mosiah</label>
-              </div>
-            </fieldset>
-
-            <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Submit Answer</button>
-          </form>
-
-          <details>
-            <summary>Example next stage</summary>
-
-            <section aria-labelledby="chapter-heading">
-              <h3 id="chapter-heading">Which chapter?</h3>
-
-              <p>
-                Your chapter answer is recorded separately from your book answer.
-              </p>
-
-              <form>
-                <label htmlFor="chapter-answer">Chapter</label>
-                <input
-                  className="mt-2 w-full max-w-xs"
-                  id="chapter-answer"
-                  name="chapter"
-                  type="number"
-                  min="1"
-                  inputMode="numeric"
-                />
-
-                <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Submit Chapter</button>
-              </form>
-            </section>
-          </details>
+        <article className="rounded-xl border border-amber-200 bg-white p-4 shadow-md sm:p-6">
+          <p className="mb-4 text-sm font-semibold text-green-900">
+            Guest demo · Passage {questionIndex + 1} of {SAMPLE_QUESTIONS.length}
+          </p>
+          <ScriptureQuestion
+            key={currentQuestion.id}
+            question={currentQuestion}
+            onAnswered={(attempt) => setGuestAttempts((attempts) => [...attempts, attempt])}
+            onNext={nextPitch}
+          />
         </article>
 
-        {/*
-          JavaScript will eventually show feedback after the player answers.
-          The details element keeps the future state represented in the
-          prototype without pretending that the game works yet.
-        */}
-        <details id="sample-feedback">
-          <summary>Example answer feedback</summary>
-
-          <section aria-labelledby="feedback-heading">
-            <h3 id="feedback-heading">Correct — 2 Nephi 2:25</h3>
-
-            <p>
-              After each pitch, the player will see the correct scripture
-              reference and useful learning feedback.
+        {guestAttempts.length > 0 && (
+          <section className="mt-4 rounded-xl border border-amber-200 bg-white p-5 shadow-sm" aria-labelledby="guest-summary-heading">
+            <h3 className="text-lg font-bold text-green-950" id="guest-summary-heading">Your guest scoreboard</h3>
+            <p className="mt-2 text-stone-700">
+              {guestAttempts.length} {guestAttempts.length === 1 ? "pitch" : "pitches"} completed ·
+              {" "}{correctBooks} correct {correctBooks === 1 ? "book" : "books"} ·
+              {" "}{correctChapters} correct {correctChapters === 1 ? "chapter" : "chapters"}
             </p>
-
-            <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Next Pitch</button>
-          </section>
-        </details>
-
-        {/* Shown after several guest pitches in the finished application. */}
-        <details>
-          <summary>Example guest progress</summary>
-
-          <section aria-labelledby="guest-summary-heading">
-            <h3 id="guest-summary-heading">You went 4 / 5.</h3>
-
-            <p>
-              Create a free account to save your progress, learn which books
-              you know best, and get personalized practice.
+            <p className="mt-2 text-sm text-stone-600">
+              These demo results last only until you leave or refresh this page. Saved progress will be added in a later step.
             </p>
-
-            <Link className="font-semibold text-green-800 hover:text-green-950" to="/account">Save My Progress</Link>
-            <button className="w-full cursor-pointer rounded-lg border border-scripture-green sm:w-auto bg-white px-6 py-3 font-semibold text-scripture-green transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="button">Keep Playing as Guest</button>
+            <Link className="mt-3 inline-block font-semibold text-green-800 hover:text-green-950" to="/account">
+              Explore accounts
+            </Link>
           </section>
-        </details>
+        )}
       </section>
 
       <section className="rounded-xl bg-green-900 p-6 text-white shadow-md" aria-labelledby="join-heading">

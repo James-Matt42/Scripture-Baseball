@@ -36,7 +36,7 @@ export default function App() {
             >
                 <img
                     src={logo}
-                    alt=""
+                    alt="Scripture Baseball Logo"
                     className="h-10 w-auto"
                 />
                 <span>Scripture Baseball</span>
