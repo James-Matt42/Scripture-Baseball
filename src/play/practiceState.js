@@ -9,6 +9,12 @@ export const PRACTICE_STORAGE_KEY = "scripture-baseball.practice.v1";
 const VERSION = 1;
 const MAX_SAVED_INNINGS = 100;
 
+export function getPracticeStorageKey(profileId) {
+  return typeof profileId === "string" && /^account-[1-9]\d*$/.test(profileId)
+    ? `${PRACTICE_STORAGE_KEY}.${profileId}`
+    : PRACTICE_STORAGE_KEY;
+}
+
 const questionById = new Map(SAMPLE_QUESTIONS.map((question) => [question.id, question]));
 
 function isRecord(value) {
@@ -25,14 +31,15 @@ function createSession(inning = 1, exactVerse = false) {
     pitchIndex: 0,
     attempts: [],
     exactVerse,
+    modeOverride: false,
     isFinished: false,
     archived: false,
     draft: null,
   };
 }
 
-export function createInitialPracticeState() {
-  return { version: VERSION, session: createSession(), history: [] };
+export function createInitialPracticeState(defaultExactVerse = false) {
+  return { version: VERSION, session: createSession(1, defaultExactVerse), history: [] };
 }
 
 // Recalculate scores from saved guesses instead of trusting saved 'correct' flags.
@@ -107,15 +114,19 @@ function normalizeHistory(value) {
   });
 }
 
-export function normalizePracticeState(value) {
+export function normalizePracticeState(value, defaultExactVerse = false) {
   if (!isRecord(value) || value.version !== VERSION || !isRecord(value.session)) {
-    return createInitialPracticeState();
+    return createInitialPracticeState(defaultExactVerse);
   }
   const source = value.session;
   const inning = positiveInteger(source.inning) ? source.inning : 1;
   const pitchIndex = Number.isSafeInteger(source.pitchIndex)
     ? Math.max(0, Math.min(source.pitchIndex, SAMPLE_QUESTIONS.length - 1)) : 0;
   const exactVerse = source.exactVerse === true;
+  // Previous versions had no modeOverride field. Preserve a manually enabled
+  // exact-verse mode when migrating their existing practice data.
+  const modeOverride = source.modeOverride === true ||
+    (source.modeOverride === undefined && exactVerse);
   const attempts = normalizeAttempts(source.attempts, exactVerse);
   const history = normalizeHistory(value.history);
   const archived = source.archived === true && history.some((entry) => entry.inning === inning);
@@ -124,25 +135,25 @@ export function normalizePracticeState(value) {
 
   return {
     version: VERSION,
-    session: { inning, pitchIndex, exactVerse, attempts, isFinished, archived, draft },
+    session: { inning, pitchIndex, exactVerse, modeOverride, attempts, isFinished, archived, draft },
     history,
   };
 }
 
-export function loadPracticeState(storage) {
+export function loadPracticeState(storage, storageKey = PRACTICE_STORAGE_KEY, defaultExactVerse = false) {
   try {
-    const json = storage?.getItem(PRACTICE_STORAGE_KEY);
-    return json ? normalizePracticeState(JSON.parse(json)) : createInitialPracticeState();
+    const json = storage?.getItem(storageKey);
+    return json ? normalizePracticeState(JSON.parse(json), defaultExactVerse) : createInitialPracticeState(defaultExactVerse);
   } catch {
     // Private browsing, blocked storage, or malformed saved data: start fresh.
-    return createInitialPracticeState();
+    return createInitialPracticeState(defaultExactVerse);
   }
 }
 
-export function savePracticeState(storage, state) {
+export function savePracticeState(storage, state, storageKey = PRACTICE_STORAGE_KEY) {
   try {
     if (!storage) return false;
-    storage.setItem(PRACTICE_STORAGE_KEY, JSON.stringify(state));
+    storage.setItem(storageKey, JSON.stringify(state));
     return true;
   } catch {
     return false;
@@ -172,12 +183,12 @@ function archive(state, session, timestamp) {
   };
 }
 
-function startNewInning(state, timestamp) {
+function startNewInning(state, timestamp, defaultExactVerse = state.session.exactVerse) {
   const { session } = state;
   const previous = archive(state, session, timestamp);
   return {
     ...previous,
-    session: createSession(session.inning + 1, session.exactVerse),
+    session: createSession(session.inning + 1, defaultExactVerse),
   };
 }
 
@@ -191,8 +202,19 @@ export function practiceReducer(state, action) {
   switch (action.type) {
     case "set-exact-verse":
       if (session.isFinished || session.attempts.length > 0) return state;
+      // Saving preferences updates an unstarted inning, but must not clear a
+      // manual choice or an in-progress question draft.
+      if (action.fromPreference && (session.modeOverride || session.draft)) return state;
       if (session.exactVerse === (action.enabled === true)) return state;
-      return { ...state, session: { ...session, exactVerse: action.enabled === true, draft: null } };
+      return {
+        ...state,
+        session: {
+          ...session,
+          exactVerse: action.enabled === true,
+          modeOverride: action.fromPreference ? session.modeOverride : true,
+          draft: null,
+        },
+      };
 
     case "set-draft": {
       if (session.isFinished || answeredCurrent) return state;
@@ -227,7 +249,7 @@ export function practiceReducer(state, action) {
 
     case "resume": {
       if (!session.isFinished) return state;
-      if (session.attempts.length === SAMPLE_QUESTIONS.length) return startNewInning(state, action.timestamp);
+      if (session.attempts.length === SAMPLE_QUESTIONS.length) return startNewInning(state, action.timestamp, action.defaultExactVerse ?? session.exactVerse);
       const pitchIndex = getResumePitchIndex(SAMPLE_QUESTIONS, session.pitchIndex, session.attempts);
       return {
         ...state,
@@ -241,7 +263,7 @@ export function practiceReducer(state, action) {
     }
 
     case "new-inning":
-      return startNewInning(state, action.timestamp);
+      return startNewInning(state, action.timestamp, action.defaultExactVerse ?? session.exactVerse);
 
     default:
       return state;

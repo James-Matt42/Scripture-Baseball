@@ -182,3 +182,34 @@ test("blocked storage does not crash gameplay", () => {
   assert.equal(savePracticeState(blocked, createInitialPracticeState()), false);
   assert.equal(savePracticeState(null, createInitialPracticeState()), false);
 });
+
+test("new innings take the current default answer difficulty", () => {
+  const initial = createInitialPracticeState(true);
+  assert.equal(initial.session.exactVerse, true);
+  let state = createInitialPracticeState();
+  state = send(state, "new-inning", { timestamp: time, defaultExactVerse: true });
+  assert.equal(state.session.exactVerse, true);
+  assert.equal(state.session.modeOverride, false);
+  state = send(state, "finish", { timestamp: time });
+  state = send(state, "resume", { timestamp: time });
+  assert.equal(state.session.exactVerse, true, "resume a paused inning retains its chosen mode");
+  for (let i = 0; i < SAMPLE_QUESTIONS.length; i += 1) {
+    state = answerAndNext(state, i);
+  }
+  state = send(state, "resume", { timestamp: time, defaultExactVerse: false });
+  assert.equal(state.session.exactVerse, false, "a new inning uses the updated default");
+});
+
+test("changing preferences only changes an untouched inning", () => {
+  let state = createInitialPracticeState();
+  state = send(state, "set-exact-verse", { enabled: true, fromPreference: true });
+  assert.equal(state.session.exactVerse, true);
+  state = send(state, "set-exact-verse", { enabled: false });
+  assert.equal(state.session.modeOverride, true);
+  assert.strictEqual(send(state, "set-exact-verse", { enabled: true, fromPreference: true }), state);
+  state = send(state, "new-inning", { timestamp: time, defaultExactVerse: false });
+  state = send(state, "set-draft", { draft: {
+    questionId: SAMPLE_QUESTIONS[0].id, stage: "chapter", bookId: "alma", chapterInput: "2", verseInput: "",
+  } });
+  assert.strictEqual(send(state, "set-exact-verse", { enabled: true, fromPreference: true }), state);
+});

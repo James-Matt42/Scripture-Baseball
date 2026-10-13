@@ -12,6 +12,8 @@ import { JoinGame } from "./join-game/join-game";
 import { Play } from "./play/play";
 import { Progress } from "./progress/progress";
 import { PracticeProvider } from "./play/PracticeContext";
+import { getPracticeStorageKey } from "./play/practiceState.js";
+import { AccountProvider, useAccount } from "./account/AccountContext";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -23,13 +25,28 @@ const navLinkClass = ({ isActive }) =>
 
 export default function App() {
   return (
-    <PracticeProvider>
+    <AccountProvider>
+      <AppWithAccount />
+    </AccountProvider>
+  );
+}
+
+function AppWithAccount() {
+  const { activeProfile, preferences } = useAccount();
+  const storageKey = getPracticeStorageKey(activeProfile?.id);
+  return (
+    <PracticeProvider
+      key={storageKey}
+      storageKey={storageKey}
+      defaultExactVerse={preferences.answerDifficulty === "exact-verse"}
+    >
       <Site />
     </PracticeProvider>
   );
 }
 
 function Site() {
+  const { activeProfile } = useAccount();
   return (
     <BrowserRouter>
       <div className="flex min-h-screen flex-col">
@@ -84,7 +101,7 @@ function Site() {
               </li>
               <li>
                 <NavLink className={navLinkClass} to="/account">
-                  Account
+                  {activeProfile ? activeProfile.displayName : "Account"}
                 </NavLink>
               </li>
             </menu>
