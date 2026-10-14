@@ -1,6 +1,6 @@
 import React from "react";
 import { ScriptureQuestion } from "../components/ScriptureQuestion";
-import { SAMPLE_QUESTIONS } from "../scripture/questions";
+import { getChallengeById } from "../challenges/catalog.js";
 import { getPracticeStats } from "./session";
 import { usePractice } from "./PracticeContext";
 
@@ -11,7 +11,10 @@ const secondaryButton =
 
 export function Play() {
   const {
-    session: { inning, pitchIndex, attempts, exactVerse, isFinished, draft },
+    session: { inning, pitchIndex, attempts, exactVerse, isFinished, draft, challengeId },
+    questions,
+    favorites,
+    toggleFavorite,
     history,
     isSaved,
     saveDraft,
@@ -23,8 +26,9 @@ export function Play() {
     startNewInning,
   } = usePractice();
 
-  const currentQuestion = SAMPLE_QUESTIONS[pitchIndex];
-  const stats = getPracticeStats(attempts, SAMPLE_QUESTIONS.length, exactVerse);
+  const currentQuestion = questions[pitchIndex];
+  const challenge = getChallengeById(challengeId);
+  const stats = getPracticeStats(attempts, questions.length, exactVerse);
   const savedAttempt = attempts.find((attempt) => attempt.questionId === currentQuestion.id) ?? null;
   const allAnswered = stats.completed === stats.totalPitches;
 
@@ -32,8 +36,8 @@ export function Play() {
     <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
       <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
         <div>
-          <h1 className="text-3xl font-bold text-green-950">Today's Lineup</h1>
-          <p className="mt-2 text-stone-700">Six Book of Mormon passages, one pitch at a time.</p>
+          <h1 className="text-3xl font-bold text-green-950">{challenge?.title ?? "Solo Practice"}</h1>
+          <p className="mt-2 text-stone-700">{questions.length} {questions.length === 1 ? "passage" : "passages"}, one pitch at a time.</p>
         </div>
         <p className="mt-3 font-semibold text-green-950 md:mt-0">Inning {inning}</p>
       </header>
@@ -43,7 +47,7 @@ export function Play() {
         <dl className="mt-4 grid gap-3 md:grid-cols-2 [&>div]:rounded-lg [&>div]:bg-amber-50 [&>div]:p-4 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:uppercase [&_dt]:tracking-wide [&_dt]:text-stone-500 [&_dd]:mt-1 [&_dd]:font-medium [&_dd]:text-green-900">
           <div>
             <dt>Challenge</dt>
-            <dd>Starter lineup ({stats.totalPitches} pitches)</dd>
+            <dd>{challenge?.title ?? "Custom challenge"} ({stats.totalPitches} pitches)</dd>
           </div>
           <div>
             <dt>Mode</dt>
@@ -96,6 +100,14 @@ export function Play() {
                 Pitch {pitchIndex + 1} of {stats.totalPitches}
               </h2>
             </header>
+            <button
+              className="mb-4 rounded-lg border border-green-800 px-4 py-2 text-sm font-semibold text-green-900 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+              type="button"
+              aria-pressed={favorites.includes(currentQuestion.id)}
+              onClick={() => toggleFavorite(currentQuestion.id)}
+            >
+              {favorites.includes(currentQuestion.id) ? "★ Saved to favorites" : "☆ Save to favorites"}
+            </button>
             <ScriptureQuestion
               key={`${inning}-${currentQuestion.id}-${exactVerse}`}
               question={currentQuestion}
@@ -105,7 +117,7 @@ export function Play() {
               onDraftChange={saveDraft}
               onAnswered={answerPitch}
               onNext={nextPitch}
-              nextLabel={pitchIndex === SAMPLE_QUESTIONS.length - 1 ? "See Inning Results" : "Next Pitch"}
+              nextLabel={pitchIndex === questions.length - 1 ? "See Inning Results" : "Next Pitch"}
             />
           </article>
 

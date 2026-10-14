@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   getRecordedAttempts,
+  getSessionQuestions,
   loadPracticeState,
   practiceReducer,
   savePracticeState,
@@ -39,10 +40,17 @@ export function PracticeProvider({ children, storageKey, defaultExactVerse = fal
 
   const value = useMemo(() => ({
     session: practice.session,
+    questions: getSessionQuestions(practice.session),
+    favorites: practice.favorites,
     history: practice.history,
     recordedAttempts: getRecordedAttempts(practice),
     isSaved,
     saveDraft: (draft) => dispatch({ type: "set-draft", draft }),
+    toggleFavorite: (questionId) => dispatch({ type: "toggle-favorite", questionId }),
+    startChallenge: (challengeId, questions) => dispatch({
+      type: "start-challenge", challengeId, questionIds: questions.map((item) => item.id),
+      timestamp: new Date().toISOString(), defaultExactVerse,
+    }),
     setExactVerse: (enabled) => dispatch({ type: "set-exact-verse", enabled }),
     answerPitch: (attempt) => dispatch({ type: "answer", attempt }),
     nextPitch: () => dispatch({ type: "next", timestamp: new Date().toISOString() }),
