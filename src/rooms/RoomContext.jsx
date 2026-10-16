@@ -13,6 +13,11 @@ import {
   rememberRoomGuest,
   saveRoomGuestState,
   saveRoomState,
+  ROOM_STORAGE_KEY,
+  setRoomPlayerReadyInState,
+  startRoomMatchInState,
+  submitRoomAnswerInState,
+  advanceRoomRoundInState,
 } from "./roomState.js";
 
 const RoomContext = createContext(null);
@@ -88,6 +93,44 @@ export function RoomProvider({ children }) {
     return result;
   }, [roomState, guestState, activeProfile]);
 
+  // Other tabs on the same origin can participate in the local mock. Storage
+  // events do not fire in the tab that wrote the change, so avoid re-saving an
+  // unchanged snapshot (which would otherwise bounce events between tabs).
+  useEffect(() => {
+    function handleStorage(event) {
+      if (event.key !== ROOM_STORAGE_KEY) return;
+      const incoming = loadRoomState(browserStorage());
+      setRoomState((previous) => JSON.stringify(previous) === JSON.stringify(incoming) ? previous : incoming);
+    }
+    if (typeof window === "undefined") return undefined;
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const setMyReady = useCallback((code, playerId, ready) => {
+    const result = setRoomPlayerReadyInState(roomState, code, playerId, ready);
+    if (!result.error && result.state !== roomState) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
+  const startMatch = useCallback((code, playerId) => {
+    const result = startRoomMatchInState(roomState, code, playerId);
+    if (!result.error) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
+  const answerRound = useCallback((code, playerId, answer) => {
+    const result = submitRoomAnswerInState(roomState, code, playerId, answer);
+    if (!result.error) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
+  const advanceRound = useCallback((code, playerId, skipMissing = false) => {
+    const result = advanceRoomRoundInState(roomState, code, playerId, { skipMissing });
+    if (!result.error) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
   const findRoom = useCallback((code) => getRoomByCode(roomState, code), [roomState]);
   const findGuestRoomPlayer = useCallback((code) => {
     const room = getRoomByCode(roomState, code);
@@ -110,7 +153,12 @@ export function RoomProvider({ children }) {
     findRoom,
     findMyRoomPlayer,
     findGuestRoomPlayer,
-  }), [roomState, isSaved, createRoom, joinRoom, findRoom, findMyRoomPlayer, findGuestRoomPlayer]);
+    setMyReady,
+    startMatch,
+    answerRound,
+    advanceRound,
+  }), [roomState, isSaved, createRoom, joinRoom, findRoom, findMyRoomPlayer, findGuestRoomPlayer,
+    setMyReady, startMatch, answerRound, advanceRound]);
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;
 }

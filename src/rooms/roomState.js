@@ -1,4 +1,5 @@
 import { CHALLENGES, getChallengeById, getChallengeQuestions } from "../challenges/catalog.js";
+import { getQuestionById, gradeBookAndChapter, gradeExactVerse } from "../scripture/questions.js";
 
 export const ROOM_STORAGE_KEY = "scripture-baseball.rooms.v1";
 export const ROOM_GUEST_STORAGE_KEY = "scripture-baseball.room-guests.v1";
@@ -135,6 +136,55 @@ export function createRoomInState(state, draft, {
   };
 }
 
+// Only a small, validated match record is persisted. Never trust stored grading
+// flags: recompute answers from the question bank on every load.
+function validDate(value) {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
+function gradeRoomAnswer(question, candidate, exactVerse) {
+  if (!isRecord(candidate) || !question.choices.includes(candidate.bookId) ||
+    !Number.isSafeInteger(candidate.chapter) || candidate.chapter < 1) return null;
+  const bookAndChapter = gradeBookAndChapter(question, candidate.bookId, candidate.chapter);
+  if (!exactVerse) return bookAndChapter;
+  if (!Number.isSafeInteger(candidate.verse) || candidate.verse < 1) return null;
+  return gradeExactVerse(question, bookAndChapter, candidate.verse);
+}
+
+function normalizeRoomMatch(candidate, status, questionIds, players, exactVerse) {
+  if (status === "lobby") return null;
+  if (!isRecord(candidate) || !validDate(candidate.startedAt) ||
+    !Number.isInteger(candidate.roundIndex)) return null;
+  const complete = status === "complete";
+  if (candidate.roundIndex < 0 || candidate.roundIndex > questionIds.length - (complete ? 0 : 1)) return null;
+  if (complete && (candidate.roundIndex !== questionIds.length || !validDate(candidate.completedAt))) return null;
+  if (!Array.isArray(candidate.responses)) return null;
+
+  const playerIds = new Set(players.map((player) => player.id));
+  const seen = new Set();
+  const responses = [];
+  for (const response of candidate.responses.slice(0, questionIds.length * players.length)) {
+    if (!isRecord(response) || !Number.isInteger(response.roundIndex) ||
+      response.roundIndex < 0 || response.roundIndex > (complete ? questionIds.length - 1 : candidate.roundIndex) ||
+      !playerIds.has(response.playerId) || !validDate(response.answeredAt) ||
+      response.questionId !== questionIds[response.roundIndex]) continue;
+    const key = `${response.roundIndex}:${response.playerId}`;
+    if (seen.has(key)) continue;
+    const question = getQuestionById(response.questionId);
+    const attempt = question && gradeRoomAnswer(question, response.attempt, exactVerse);
+    if (!attempt) continue;
+    seen.add(key);
+    responses.push({ roundIndex: response.roundIndex, questionId: question.id,
+      playerId: response.playerId, answeredAt: response.answeredAt, attempt });
+  }
+  return {
+    startedAt: candidate.startedAt,
+    roundIndex: candidate.roundIndex,
+    responses,
+    ...(complete ? { completedAt: candidate.completedAt } : {}),
+  };
+}
+
 function normalizeRoom(value) {
   if (!isRecord(value) || !CODE_PATTERN.test(value.code) ||
     typeof value.createdAt !== "string" || Number.isNaN(Date.parse(value.createdAt))) return null;
@@ -172,6 +222,14 @@ function normalizeRoom(value) {
     });
   }
   const unique = new Set();
+  const normalizedPlayers = players.filter((player) => {
+    if (unique.has(player.id) || unique.size >= result.value.settings.maxPlayers) return false;
+    unique.add(player.id);
+    return true;
+  });
+  const questionIds = buildRoomPitchQueue(result.value.settings.challengeId, result.value.settings.length);
+  const savedStatus = ["lobby", "active", "complete"].includes(value.status) ? value.status : "lobby";
+  const match = normalizeRoomMatch(value.match, savedStatus, questionIds, normalizedPlayers, result.value.settings.exactVerse);
   return {
     code: value.code,
     name: result.value.name,
@@ -179,13 +237,10 @@ function normalizeRoom(value) {
     hostName: result.value.hostName,
     createdAt: value.createdAt,
     settings: result.value.settings,
-    questionIds: buildRoomPitchQueue(result.value.settings.challengeId, result.value.settings.length),
-    status: ["lobby", "active", "complete"].includes(value.status) ? value.status : "lobby",
-    players: players.filter((player) => {
-      if (unique.has(player.id) || unique.size >= result.value.settings.maxPlayers) return false;
-      unique.add(player.id);
-      return true;
-    }),
+    questionIds,
+    status: savedStatus !== "lobby" && !match ? "lobby" : savedStatus,
+    players: normalizedPlayers,
+    ...(match ? { match } : {}),
   };
 }
 
@@ -318,11 +373,120 @@ export function claimGuestRoomSeatInState(state, code, guestId, { playerId, disp
     ...room,
     ...(isHost ? { hostId: playerId, hostName: name } : {}),
     players: room.players.map((item) => item.id === guestId ? player : item),
+    ...(room.match ? { match: { ...room.match, responses: room.match.responses.map((response) =>
+      response.playerId === guestId ? { ...response, playerId } : response) } } : {}),
   };
   return {
     state: { ...state, rooms: state.rooms.map((item) => item.code === room.code ? updated : item) },
     room: updated, player, error: null,
   };
+}
+
+// Step 9: pure room transitions are shared by the UI and tests. Each action
+// validates its actor and phase, and returns the untouched state on failure.
+function updateRoom(state, room, updated) {
+  return {
+    state: { ...state, rooms: state.rooms.map((item) => item.code === room.code ? updated : item) },
+    room: updated,
+    error: null,
+  };
+}
+
+function roomError(state, room, error) {
+  return { state, room, error };
+}
+
+export function setRoomPlayerReadyInState(state, code, playerId, ready) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.status !== "lobby") return roomError(state, room, "Readiness cannot change after the match starts.");
+  if (typeof ready !== "boolean") return roomError(state, room, "Choose ready or not ready.");
+  const player = room.players.find((item) => item.id === playerId);
+  if (!player) return roomError(state, room, "Join this room to change readiness.");
+  if (player.ready === ready) return { state, room, error: null };
+  return updateRoom(state, room, {
+    ...room, players: room.players.map((item) => item.id === playerId ? { ...item, ready } : item),
+  });
+}
+
+export function startRoomMatchInState(state, code, hostId, { startedAt = new Date().toISOString() } = {}) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.hostId !== hostId) return roomError(state, room, "Only the host can start the game.");
+  if (room.status !== "lobby") return roomError(state, room, "This game has already started.");
+  if (!room.players.length || room.players.some((player) => !player.ready)) {
+    return roomError(state, room, "All players must be ready before starting.");
+  }
+  if (!validDate(startedAt) || room.questionIds.length !== room.settings.length ||
+    room.questionIds.some((id) => !getQuestionById(id))) {
+    return roomError(state, room, "The room questions are not ready.");
+  }
+  return updateRoom(state, room, {
+    ...room, status: "active",
+    match: { startedAt, roundIndex: 0, responses: [] },
+  });
+}
+
+export function getRoomRoundQuestion(room) {
+  if (room?.status !== "active" || !room.match) return null;
+  return getQuestionById(room.questionIds[room.match.roundIndex]);
+}
+
+export function getRoomRoundResponses(room, roundIndex = room?.match?.roundIndex) {
+  if (!Array.isArray(room?.match?.responses) || !Number.isInteger(roundIndex)) return [];
+  return room.match.responses.filter((response) => response.roundIndex === roundIndex);
+}
+
+export function submitRoomAnswerInState(state, code, playerId, answer, {
+  answeredAt = new Date().toISOString(),
+} = {}) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.status !== "active" || !room.match) return roomError(state, room, "This round is not active.");
+  if (!room.players.some((player) => player.id === playerId)) {
+    return roomError(state, room, "Join the room before answering.");
+  }
+  const roundIndex = room.match.roundIndex;
+  if (getRoomRoundResponses(room).some((response) => response.playerId === playerId)) {
+    return roomError(state, room, "You already answered this pitch.");
+  }
+  const question = getRoomRoundQuestion(room);
+  if (!question || answer?.questionId !== question.id || !validDate(answeredAt)) {
+    return roomError(state, room, "This answer is for a different pitch.");
+  }
+  const attempt = gradeRoomAnswer(question, answer, room.settings.exactVerse);
+  if (!attempt) return roomError(state, room, "Enter a valid book, chapter, and verse if enabled.");
+  const response = { roundIndex, questionId: question.id, playerId, answeredAt, attempt };
+  return updateRoom(state, room, {
+    ...room,
+    match: { ...room.match, responses: [...room.match.responses, response] },
+  });
+}
+
+export function advanceRoomRoundInState(state, code, hostId, {
+  skipMissing = false, advancedAt = new Date().toISOString(),
+} = {}) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.hostId !== hostId) return roomError(state, room, "Only the host can advance the game.");
+  if (room.status !== "active" || !room.match) return roomError(state, room, "No active round to advance.");
+  const answers = new Set(getRoomRoundResponses(room).map((response) => response.playerId));
+  if (!answers.has(hostId)) return roomError(state, room, "Answer this pitch before advancing.");
+  if (!skipMissing && room.players.some((player) => !answers.has(player.id))) {
+    return roomError(state, room, "Wait for the other players, or skip their unanswered pitches.");
+  }
+  const nextIndex = room.match.roundIndex + 1;
+  const completed = nextIndex >= room.questionIds.length;
+  if (completed && !validDate(advancedAt)) return roomError(state, room, "Invalid finish time.");
+  return updateRoom(state, room, {
+    ...room,
+    status: completed ? "complete" : "active",
+    match: {
+      ...room.match,
+      roundIndex: nextIndex,
+      ...(completed ? { completedAt: advancedAt } : {}),
+    },
+  });
 }
 
 export function generateGuestPlayerId() {
