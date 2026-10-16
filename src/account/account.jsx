@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { getInvitationPath } from "../rooms/roomState.js";
 import { useAccount } from "./AccountContext";
 import { VOLUME_OPTIONS } from "./accountState.js";
 
@@ -10,6 +11,9 @@ const secondaryButton =
 const inputClass = "w-full rounded-lg border border-stone-300 bg-white px-3 py-2";
 
 export function Account() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnToRoom = getInvitationPath(searchParams.get("code"));
   const { activeProfile, preferences, isSaved, createProfile, signIn, signOut, updatePreferences } = useAccount();
   const [signInEmail, setSignInEmail] = useState("");
   const [newName, setNewName] = useState("");
@@ -38,6 +42,7 @@ export function Account() {
       : "Local profile created.");
     setNewName("");
     setNewEmail("");
+    if (returnToRoom) navigate(returnToRoom);
   }
 
   function handleSignIn(event) {
@@ -51,6 +56,7 @@ export function Account() {
     setAccountError("");
     setAccountMessage("Signed in to this browser's saved profile.");
     setSignInEmail("");
+    if (returnToRoom) navigate(returnToRoom);
   }
 
   function handleSignOut() {
@@ -85,6 +91,13 @@ export function Account() {
           Local demo profiles only. No passwords, secure login, or cross-device syncing.
         </p>
       </header>
+
+      {returnToRoom && (
+        <p className="rounded-lg bg-green-50 p-3 text-stone-800">
+          <Link className="font-semibold text-green-800 underline" to={returnToRoom}>Return to room invitation</Link>
+          {" "}after choosing a local profile.
+        </p>
+      )}
 
       {isSaved === false && (
         <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-stone-800" role="alert">

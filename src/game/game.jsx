@@ -8,7 +8,7 @@ const panel = "rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6"
 
 export function Game() {
   const [searchParams] = useSearchParams();
-  const { findRoom, isSaved } = useRooms();
+  const { findRoom, findMyRoomPlayer, isSaved } = useRooms();
   const room = findRoom(searchParams.get("code"));
 
   if (!room) {
@@ -26,6 +26,7 @@ export function Game() {
     );
   }
 
+  const myPlayer = findMyRoomPlayer(room.code);
   const settings = room.settings;
   const challenge = getChallengeById(settings.challengeId);
   return (
@@ -51,9 +52,24 @@ export function Game() {
             <li key={player.id}>{player.displayName}{player.role === "host" ? " — Host" : ""}</li>
           ))}
         </ul>
-        <p className="mt-4 text-sm text-stone-600">
-          Joining and starting rounds are coming in the next implementation steps.
-        </p>
+        {myPlayer ? (
+          <p className="mt-4 rounded-lg bg-green-50 p-3 text-green-950" role="status">
+            You're here as <strong>{myPlayer.displayName}</strong>{myPlayer.role === "host" ? " (host)" : ""}.
+            {" "}Game rounds will be added in Step 9.
+            {myPlayer.id.startsWith("guest-") && (
+              <> {" "}<Link className="font-semibold text-green-800 underline" to={`/account?code=${room.code}`}>
+                Link this seat to a local profile
+              </Link></>
+            )}
+          </p>
+        ) : (
+          <p className="mt-4 rounded-lg bg-amber-50 p-3 text-stone-800">
+            You aren't in this room yet.{" "}
+            <Link className="font-semibold text-green-800 underline" to={`/join-game?code=${room.code}`}>
+              Join this room
+            </Link>
+          </p>
+        )}
       </section>
 
       <RoomInvitation code={room.code} />

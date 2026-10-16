@@ -84,6 +84,7 @@ export function Home() {
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck="false"
+            placeholder="ABC234"
           />
 
           <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="submit">Join Game</button>
