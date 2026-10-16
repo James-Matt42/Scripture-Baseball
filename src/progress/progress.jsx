@@ -1,280 +1,204 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { getChallengeQuestions } from "../challenges/catalog.js";
 import { usePractice } from "../play/PracticeContext";
-import { getPracticeStats } from "../play/session";
+import { formatScriptureReference } from "../scripture/questions.js";
+import { getProgressReport } from "./progressReport.js";
+
+const panel = "rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6";
+const actionLink = "inline-flex w-fit rounded-lg bg-scripture-green px-4 py-2 font-semibold text-white hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300";
+
+function Percent({ value }) {
+  return value === null ? "—" : `${value}%`;
+}
+
+function Metric({ title, value, detail }) {
+  return (
+    <div className={`${panel} text-center`}>
+      <dt className="text-sm font-semibold text-stone-600">{title}</dt>
+      <dd className="mt-2 text-3xl font-bold text-green-950">{value}</dd>
+      <p className="mt-2 text-xs text-stone-600">{detail}</p>
+    </div>
+  );
+}
+
+function VolumeCard({ volume }) {
+  const hasPractice = volume.pitches > 0;
+  return (
+    <article className={panel}>
+      <h3 className="text-lg font-bold text-green-950">{volume.label}</h3>
+      <p className="mt-1 text-sm text-stone-600">
+        {hasPractice ? `${volume.pitches} recorded ${volume.pitches === 1 ? "pitch" : "pitches"}` : "Not practiced yet"}
+      </p>
+      {hasPractice && (
+        <>
+          <p className="mt-2 text-sm font-semibold text-green-900">{volume.strongPassages} strong {volume.strongPassages === 1 ? "passage" : "passages"}</p>
+          <dl className="mt-4 space-y-4">
+          {[
+            { label: "Book accuracy", correct: volume.bookCorrect, percent: volume.bookAccuracy },
+            { label: "Chapter accuracy", correct: volume.chapterCorrect, percent: volume.chapterAccuracy },
+          ].map(({ label, correct, percent }) => (
+            <div key={label}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <dt className="font-semibold text-stone-700">{label}</dt>
+                <dd className="font-semibold text-green-950">{percent}% ({correct}/{volume.pitches})</dd>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-label={`${volume.label} ${label.toLowerCase()}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+                <div className="h-full rounded-full bg-green-800" style={{ width: `${percent}%` }} />
+              </div>
+            </div>
+          ))}
+          </dl>
+        </>
+      )}
+    </article>
+  );
+}
+
+function PassageList({ passages, empty }) {
+  return passages.length ? (
+    <ul className="mt-3 list-disc space-y-2 pl-5 text-stone-700">
+      {passages.slice(0, 8).map(({ question, attempts }) => (
+        <li key={question.id}>{formatScriptureReference(question)} <span className="text-sm text-stone-500">({attempts} {attempts === 1 ? "try" : "tries"})</span></li>
+      ))}
+    </ul>
+  ) : <p className="mt-3 text-sm text-stone-600">{empty}</p>;
+}
 
 export function Progress() {
-    const { recordedAttempts, history } = usePractice();
-    const saved = getPracticeStats(recordedAttempts, recordedAttempts.length);
-    return (
-  <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
-    <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
-      <h1 className="text-3xl font-bold text-green-950">Your Progress</h1>
+  const { recordedAttempts, history, favorites, startChallenge } = usePractice();
+  const progress = useMemo(
+    () => getProgressReport({ attempts: recordedAttempts, history }),
+    [recordedAttempts, history],
+  );
+  const hasPractice = progress.pitches > 0;
 
-      <p>
-        See what you know well, what is still developing, and where your
-        practice is making a difference.
-      </p>
-    </header>
+  function practiceWeakBook(area) {
+    const available = getChallengeQuestions("my-misses", recordedAttempts, favorites);
+    const requested = new Set(area.questionIds);
+    startChallenge("my-misses", available.filter(({ id }) => requested.has(id)));
+  }
 
-    <section className="rounded-xl border border-green-900/20 bg-green-50 p-5" aria-label="Saved solo practice">
-      <h2 className="text-lg font-bold text-green-950">Saved solo practice</h2>
-      <p className="mt-1 text-green-900">
-        {saved.completed} pitches · {saved.bookCorrect} correct books · {saved.chapterCorrect} correct chapters · {history.length} finished innings
-      </p>
-      <p className="mt-1 text-xs text-stone-600">Detailed progress below is sample data for now.</p>
-    </section>
-    <section className="space-y-4" aria-labelledby="overview-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="overview-heading">Learning overview</h2>
-
-      <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 [&>div]:rounded-2xl [&>div]:border [&>div]:border-stone-200 [&>div]:bg-white [&>div]:p-5 [&>div]:text-center [&>div]:shadow-sm [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-2 [&_dd]:text-2xl [&_dd]:font-bold [&_dd]:text-green-950">
+  return (
+    <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <header className={`${panel} md:flex md:items-start md:justify-between md:gap-6`}>
         <div>
-          <dt>Strong passages</dt>
-          <dd>42</dd>
+          <h1 className="text-3xl font-bold text-green-950">Your Progress</h1>
+          <p className="mt-2 text-stone-700">Your saved solo practice, including pitches from the current inning.</p>
         </div>
+        <Link to="/play" className={`${actionLink} mt-4 shrink-0 md:mt-0`}>Practice now</Link>
+      </header>
 
-        <div>
-          <dt>Learning</dt>
-          <dd>18</dd>
-        </div>
+      {!hasPractice && (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5" role="status">
+          <h2 className="text-lg font-bold text-green-950">No practice recorded yet</h2>
+          <p className="mt-2 text-stone-700">Answer a few pitches to start tracking book and chapter accuracy.</p>
+          <Link to="/challenges" className="mt-3 inline-block font-semibold text-green-800 underline hover:text-green-950">Choose a challenge</Link>
+        </section>
+      )}
 
-        <div>
-          <dt>Strengthened this week</dt>
-          <dd>11</dd>
-        </div>
-
-        <div>
-          <dt>Practice days this week</dt>
-          <dd>5 of 7</dd>
-        </div>
-      </dl>
-    </section>
-
-    <section className="grid grid-cols-1 gap-6 md:grid-cols-3 [&>h2]:col-span-full" aria-labelledby="mastery-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="mastery-heading">Mastery by standard work</h2>
-
-      <article className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-green-950 [&_dl]:mt-4 [&_dl]:grid [&_dl]:gap-3 [&_dl>div]:rounded-lg [&_dl>div]:bg-green-50 [&_dl>div]:p-3 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-1 [&_dd]:font-semibold">
-        <h3>Book of Mormon</h3>
-
-        <dl>
-          <div>
-            <dt>Current strength</dt>
-            <dd>Strong</dd>
-          </div>
-
-          <div>
-            <dt>Book identification</dt>
-            <dd>86%</dd>
-          </div>
-
-          <div>
-            <dt>Chapter identification</dt>
-            <dd>72%</dd>
-          </div>
+      <section className="space-y-4" aria-labelledby="overview-heading">
+        <h2 id="overview-heading" className="text-2xl font-bold text-green-950">Learning overview</h2>
+        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Metric title="Pitches recorded" value={progress.pitches} detail="Across saved solo sessions" />
+          <Metric title="Book accuracy" value={<Percent value={progress.bookAccuracy} />} detail={`${progress.bookCorrect} correct of ${progress.pitches}`} />
+          <Metric title="Chapter accuracy" value={<Percent value={progress.chapterAccuracy} />} detail={`${progress.chapterCorrect} correct of ${progress.pitches}`} />
+          <Metric title="Strong passages" value={progress.strongPassages.length} detail="Two consecutive fully correct recalls" />
         </dl>
-      </article>
+        <div className="rounded-xl border border-green-900/20 bg-green-50 p-5 text-sm text-green-950">
+          <strong>This week:</strong> {progress.practiceDays} {progress.practiceDays === 1 ? "day" : "days"} with a finished inning · {progress.strengthenedThisWeek.length} recovered {progress.strengthenedThisWeek.length === 1 ? "passage" : "passages"} in finished innings
+          {progress.versePitches > 0 && <span> · Exact verses: {progress.verseCorrect}/{progress.versePitches} correct</span>}
+          <p className="mt-2 text-xs text-stone-600">Weekly activity counts finished innings only; unfinished pitches still count toward accuracy.</p>
+        </div>
+      </section>
 
-      <article className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-green-950 [&_dl]:mt-4 [&_dl]:grid [&_dl]:gap-3 [&_dl>div]:rounded-lg [&_dl>div]:bg-green-50 [&_dl>div]:p-3 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-1 [&_dd]:font-semibold">
-        <h3>New Testament</h3>
+      <section className="space-y-4" aria-labelledby="volume-heading">
+        <h2 id="volume-heading" className="text-2xl font-bold text-green-950">Accuracy by standard work</h2>
+        <p className="text-sm text-stone-600">Percentages reflect passages you have practiced, not the entire standard work.</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {progress.volumes.map((volume) => <VolumeCard key={volume.id} volume={volume} />)}
+        </div>
+      </section>
 
-        <dl>
-          <div>
-            <dt>Current strength</dt>
-            <dd>Learning</dd>
+      <section className="grid gap-5 md:grid-cols-2" aria-label="Passage knowledge">
+        <article className={panel}>
+          <h2 className="text-xl font-bold text-green-950">Strong passages ({progress.strongPassages.length})</h2>
+          <p className="mt-1 text-sm text-stone-600">Book and chapter correct twice in a row, plus the verse when attempted. {progress.learningPassages.length} other practiced {progress.learningPassages.length === 1 ? "passage is" : "passages are"} still learning.</p>
+          <PassageList passages={progress.strongPassages} empty="No passages strong yet. Revisit a passage to build your streak." />
+        </article>
+        <article className={panel}>
+          <h2 className="text-xl font-bold text-green-950">Needs review ({progress.needsReview.length})</h2>
+          <p className="mt-1 text-sm text-stone-600">Passages with an incorrect answer on the latest attempt.</p>
+          <PassageList passages={progress.needsReview} empty={hasPractice ? "No recent misses among your recorded passages." : "Your missed passages will appear here."} />
+        </article>
+      </section>
+
+      <section className="space-y-4" aria-labelledby="weak-heading">
+        <h2 id="weak-heading" className="text-2xl font-bold text-green-950">Areas to strengthen</h2>
+        {progress.weakBooks.length ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {progress.weakBooks.slice(0, 6).map((area) => (
+              <article key={area.bookId} className={panel}>
+                <h3 className="text-lg font-bold text-green-950">{area.label}</h3>
+                <p className="mt-2 text-sm text-stone-700">{area.needsReview} {area.needsReview === 1 ? "passage needs" : "passages need"} review.</p>
+                <p className="mt-2 text-sm text-stone-600">Book {area.bookAccuracy}% · Chapter {area.chapterAccuracy}%</p>
+                <Link to="/play" className={`${actionLink} mt-4`} onClick={() => practiceWeakBook(area)}>Practice these passages</Link>
+              </article>
+            ))}
           </div>
+        ) : (
+          <p className={`${panel} text-stone-600`}>{hasPractice ? "No passages currently need review." : "Areas to strengthen will appear after you practice."}</p>
+        )}
+      </section>
 
-          <div>
-            <dt>Book identification</dt>
-            <dd>74%</dd>
+      <section className="space-y-4" aria-labelledby="recent-heading">
+        <h2 id="recent-heading" className="text-2xl font-bold text-green-950">Recent solo innings</h2>
+        {progress.recentInnings.length ? (
+          <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm">
+            <table className="w-full min-w-[650px] text-left text-sm [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">
+              <caption className="sr-only">Your ten most recently saved solo innings</caption>
+              <thead><tr><th scope="col">Finished</th><th scope="col">Challenge</th><th scope="col">Pitches</th><th scope="col">Book</th><th scope="col">Chapter</th><th scope="col">Points</th></tr></thead>
+              <tbody>
+                {progress.recentInnings.map((inning, index) => (
+                  <tr key={`${inning.id ?? "inning"}-${index}`}>
+                    <td>{inning.finishedAt ? inning.finishedAt.toLocaleDateString() : "Date unavailable"}</td>
+                    <td>{inning.challenge}</td>
+                    <td>{inning.completed}/{inning.totalPitches}{!inning.complete && <span className="text-stone-500"> (ended early)</span>}</td>
+                    <td><Percent value={inning.bookAccuracy} /></td>
+                    <td><Percent value={inning.chapterAccuracy} /></td>
+                    <td>{inning.earnedPoints}/{inning.possiblePoints}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        ) : <p className={`${panel} text-stone-600`}>No finished innings yet. Your current practice still counts toward the overview above.</p>}
+      </section>
 
-          <div>
-            <dt>Chapter identification</dt>
-            <dd>58%</dd>
-          </div>
-        </dl>
-      </article>
+      <section className="grid gap-5 md:grid-cols-2" aria-label="Improvements and milestones">
+        <article className={panel}>
+          <h2 className="text-xl font-bold text-green-950">Comeback passages ({progress.comebacks.length})</h2>
+          <p className="mt-1 text-sm text-stone-600">Previously missed, then correct on the latest try.</p>
+          <PassageList passages={progress.comebacks} empty="No comeback passages yet." />
+          <Link to="/challenges" className="mt-4 inline-block font-semibold text-green-800 underline hover:text-green-950">Browse challenges</Link>
+        </article>
+        <article className={panel}>
+          <h2 className="text-xl font-bold text-green-950">Milestones</h2>
+          <ul className="mt-4 space-y-3">
+            {progress.achievements.map((achievement) => (
+              <li key={achievement.id} className="flex items-center justify-between gap-3 rounded-lg bg-amber-50 p-3">
+                <div>
+                  <p className="font-semibold text-green-950">{achievement.label}</p>
+                  <p className="text-xs text-stone-600">{achievement.detail}</p>
+                </div>
+                <span className="shrink-0 text-sm font-semibold text-green-900">{achievement.earned ? "Earned" : "Not yet"}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+      </section>
 
-      <article className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-green-950 [&_dl]:mt-4 [&_dl]:grid [&_dl]:gap-3 [&_dl>div]:rounded-lg [&_dl>div]:bg-green-50 [&_dl>div]:p-3 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:text-stone-600 [&_dd]:mt-1 [&_dd]:font-semibold">
-        <h3>Old Testament</h3>
-
-        <dl>
-          <div>
-            <dt>Current strength</dt>
-            <dd>Familiar</dd>
-          </div>
-
-          <div>
-            <dt>Book identification</dt>
-            <dd>68%</dd>
-          </div>
-
-          <div>
-            <dt>Chapter identification</dt>
-            <dd>51%</dd>
-          </div>
-        </dl>
-      </article>
-    </section>
-
-    <section className="grid gap-5 md:grid-cols-2 [&>h2]:md:col-span-2" aria-labelledby="areas-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="areas-heading">Areas to strengthen</h2>
-
-      <article className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h3 className="text-xl font-bold text-green-950">New Testament chapters</h3>
-
-        <p>
-          You often identify the correct book but have more difficulty
-          locating the exact chapter.
-        </p>
-
-        <Link className="font-semibold text-green-800 hover:text-green-950" to="/play">Practice this area</Link>
-      </article>
-
-      <article className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h3 className="text-xl font-bold text-green-950">Small Old Testament books</h3>
-
-        <p>
-          These books are currently more difficult for you to distinguish
-          from one another.
-        </p>
-
-        <Link className="font-semibold text-green-800 hover:text-green-950" to="/play">Practice this area</Link>
-      </article>
-    </section>
-
-    <section className="space-y-4 overflow-x-auto" aria-labelledby="recent-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="recent-heading">Recent practice</h2>
-
-      <table className="w-full min-w-[640px] overflow-hidden rounded-xl bg-white text-left shadow-md [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">
-        <caption>Example recent practice stored in the database</caption>
-
-        <thead>
-          <tr>
-            <th scope="col">Challenge</th>
-            <th scope="col">Pitches</th>
-            <th scope="col">Book accuracy</th>
-            <th scope="col">Chapter accuracy</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr>
-            <td>Today's Lineup</td>
-            <td>8</td>
-            <td>88%</td>
-            <td>75%</td>
-          </tr>
-
-          <tr>
-            <td>Doctrinal Mastery</td>
-            <td>10</td>
-            <td>90%</td>
-            <td>80%</td>
-          </tr>
-
-          <tr>
-            <td>Four Gospels</td>
-            <td>10</td>
-            <td>70%</td>
-            <td>60%</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="comeback-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="comeback-heading">Comeback passages</h2>
-
-      <p>
-        These are passages you previously missed and have recently
-        retrieved correctly.
-      </p>
-
-      <ul className="my-4 list-disc space-y-1 pl-5">
-        <li>2 Nephi 2:25</li>
-        <li>Alma 32:21</li>
-        <li>John 14:6</li>
-      </ul>
-
-      <Link className="font-semibold text-green-800 hover:text-green-950" to="/challenges">Practice My Misses</Link>
-    </section>
-
-    <section className="grid gap-5 md:grid-cols-2 [&>h2]:md:col-span-2" aria-labelledby="achievements-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="achievements-heading">Achievements</h2>
-
-      <article className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-        <h3>Four Gospels</h3>
-
-        <p>
-          Demonstrated reliable recognition of passages from Matthew,
-          Mark, Luke, and John.
-        </p>
-
-        <p>
-          <strong>Earned:</strong> [DATE]
-        </p>
-      </article>
-
-      <article className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-        <h3>Doctrinal Master</h3>
-
-        <p>
-          Progress toward demonstrating location mastery across the
-          current doctrinal mastery set.
-        </p>
-
-        <p>
-          <strong>Current progress:</strong> 18 of 24 passages strong
-        </p>
-      </article>
-    </section>
-
-    <section className="space-y-4 overflow-x-auto" aria-labelledby="history-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="history-heading">Recent games</h2>
-
-      <table className="w-full min-w-[640px] overflow-hidden rounded-xl bg-white text-left shadow-md [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">
-        <caption>Example multiplayer game history stored in the database</caption>
-
-        <thead>
-          <tr>
-            <th scope="col">Game</th>
-            <th scope="col">Challenge</th>
-            <th scope="col">Result</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr>
-            <td>Family Scripture Game</td>
-            <td>Book of Mormon</td>
-            <td>8 of 10</td>
-          </tr>
-
-          <tr>
-            <td>Four Gospels Challenge</td>
-            <td>Four Gospels</td>
-            <td>7 of 10</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section className="rounded-xl bg-green-50 p-6" aria-labelledby="progress-note-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="progress-note-heading">How progress works</h2>
-
-      <p>
-        Scripture Baseball tracks book and chapter knowledge separately
-        and looks at repeated retrieval over time rather than treating one
-        correct answer as mastery.
-      </p>
-
-      <p>
-        Practice can become more difficult as you improve, so a similar
-        accuracy percentage can still represent progress when you are
-        answering harder questions.
-      </p>
-    </section>
-  </main>
-    );
+      <p className="text-sm text-stone-600">Progress is saved in this browser for the active local profile. Multiplayer results will be added when game sessions are implemented.</p>
+    </main>
+  );
 }
