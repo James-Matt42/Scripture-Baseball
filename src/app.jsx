@@ -14,6 +14,7 @@ import { Progress } from "./progress/progress";
 import { PracticeProvider } from "./play/PracticeContext";
 import { getPracticeStorageKey } from "./play/practiceState.js";
 import { AccountProvider, useAccount } from "./account/AccountContext";
+import { RoomProvider } from "./rooms/RoomContext";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -26,7 +27,9 @@ const navLinkClass = ({ isActive }) =>
 export default function App() {
   return (
     <AccountProvider>
-      <AppWithAccount />
+      <RoomProvider>
+        <AppWithAccount />
+      </RoomProvider>
     </AccountProvider>
   );
 }

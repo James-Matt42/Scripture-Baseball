@@ -1,241 +1,223 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { navigateWithGetForm } from '../routing';
+import React, { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useAccount } from "../account/AccountContext";
+import { getChallengeById } from "../challenges/catalog.js";
+import { RoomInvitation } from "../rooms/RoomInvitation";
+import { useRooms } from "../rooms/RoomContext";
+import { ROOM_CHALLENGES } from "../rooms/roomState.js";
+
+const panel = "grid gap-4 rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6";
+const action = "inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-scripture-green px-6 py-3 font-semibold text-white hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300";
+
+function RadioChoice({ name, value, label, checked, onChange }) {
+  const id = `${name}-${value}`;
+  return (
+    <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-stone-200 bg-amber-50 p-3" htmlFor={id}>
+      <input
+        id={id}
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        onChange={() => onChange(value)}
+        className="size-4 accent-scripture-green"
+      />
+      <span className="font-semibold text-stone-700">{label}</span>
+    </label>
+  );
+}
+
+const INITIAL_SETTINGS = {
+  challengeId: "book-of-mormon",
+  format: "live",
+  difficulty: "standard",
+  length: 10,
+  maxPlayers: 4,
+  exactVerse: false,
+  name: "",
+  hostName: "",
+};
 
 export function CreateGame() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { activeProfile } = useAccount();
+  const { createRoom, findRoom, isSaved } = useRooms();
+  const [form, setForm] = useState(INITIAL_SETTINGS);
+  const [error, setError] = useState("");
+  const createdRoom = findRoom(searchParams.get("code"));
 
-    function handleCreateGame(event) {
-      navigateWithGetForm(event, navigate, "/game");
+  function update(field, value) {
+    setForm((previous) => ({ ...previous, [field]: value }));
+    setError("");
+  }
+
+  function handleCreateGame(event) {
+    event.preventDefault();
+    const result = createRoom({
+      ...form,
+      hostName: activeProfile?.displayName ?? form.hostName,
+    }, activeProfile?.id ?? null);
+    if (result.error) {
+      setError(result.error);
+      return;
     }
+    navigate(`/create-game?code=${encodeURIComponent(result.room.code)}`);
+  }
 
+  if (createdRoom) {
+    const challenge = getChallengeById(createdRoom.settings.challengeId);
     return (
-  <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
-    <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
-      <h1 className="text-3xl font-bold text-green-950">Create a Private Game</h1>
-
-      <p>
-        Choose a challenge and a few game settings, then invite your
-        friends or family to join.
-      </p>
-    </header>
-
-    <form className="grid gap-5 rounded-xl border border-stone-200 bg-white p-4 shadow-md sm:p-6" onSubmit={handleCreateGame}>
-      <section className="grid gap-3" aria-labelledby="challenge-heading">
-        <h2 className="text-xl font-bold text-green-950" id="challenge-heading">Choose a challenge</h2>
-
-        <label className="font-semibold text-stone-700" htmlFor="challenge">Challenge</label>
-        <select className="w-full" id="challenge" name="challenge">
-          <option value="book-of-mormon">Book of Mormon</option>
-          <option value="doctrinal-mastery">Doctrinal Mastery</option>
-          <option value="four-gospels">Four Gospels</option>
-          <option value="new-testament">New Testament</option>
-          <option value="faith">Faith</option>
-          <option value="conference">Frequently Cited in Conference</option>
-          <option value="obscure">Obscure Scriptures</option>
-        </select>
-
-        <p>
-          <Link className="font-semibold text-green-800 hover:text-green-950" to="/challenges">Browse all challenges</Link>
-        </p>
-      </section>
-
-      <section className="grid gap-3" aria-labelledby="format-heading">
-        <h2 className="text-xl font-bold text-green-950" id="format-heading">Game format</h2>
-
-        <fieldset className="grid gap-4 rounded-lg border border-stone-200 bg-amber-50 p-4 [&>div]:grid [&>div]:grid-cols-[auto_1fr] [&>div]:items-start [&>div]:gap-x-3 [&>div>p]:col-start-2 [&>div>p]:text-sm [&>div>p]:text-muted">
-          <legend>How will this game be played?</legend>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="format-live"
-              name="format"
-              value="live"
-              defaultChecked
-            />
-            <label className="font-semibold text-stone-700" htmlFor="format-live">Live private match</label>
-            <p>
-              Everyone plays together in the same room.
+      <main className="mx-auto w-full max-w-[1000px] space-y-6 px-4 py-6 sm:px-6 md:py-8">
+        <header className={panel}>
+          <h1 className="text-3xl font-bold text-green-950">Room created!</h1>
+          <p className="text-lg font-semibold text-stone-800">{createdRoom.name}</p>
+          <p className="text-stone-700">Hosted by {createdRoom.hostName} · {challenge?.title} · {createdRoom.settings.length} pitches</p>
+          <p className="text-stone-700">
+            {createdRoom.settings.format === "live" ? "Live match" : "Friend challenge"} · {createdRoom.settings.difficulty} · {createdRoom.settings.maxPlayers} players maximum
+            {createdRoom.settings.exactVerse ? " · Exact verse enabled" : ""}
+          </p>
+          {isSaved === false && (
+            <p role="alert" className="rounded-lg bg-amber-50 p-3 text-stone-800">
+              Browser storage is unavailable. This room will disappear after a refresh.
             </p>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="format-async"
-              name="format"
-              value="async"
-            />
-            <label className="font-semibold text-stone-700" htmlFor="format-async">Friend challenge</label>
-            <p>
-              Send the same set of pitches to friends to complete later.
-            </p>
-          </div>
-        </fieldset>
-      </section>
-
-      <section className="grid gap-3" aria-labelledby="difficulty-heading">
-        <h2 className="text-xl font-bold text-green-950" id="difficulty-heading">Difficulty</h2>
-
-        <fieldset className="grid gap-4 rounded-lg border border-stone-200 bg-amber-50 p-4 [&>div]:grid [&>div]:grid-cols-[auto_1fr] [&>div]:items-start [&>div]:gap-x-3 [&>div>p]:col-start-2 [&>div>p]:text-sm [&>div>p]:text-muted">
-          <legend>Choose a difficulty level</legend>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="difficulty-beginner"
-              name="difficulty"
-              value="beginner"
-            />
-            <label className="font-semibold text-stone-700" htmlFor="difficulty-beginner">Beginner</label>
-            <p>
-              More answer choices and stronger hints.
-            </p>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="difficulty-standard"
-              name="difficulty"
-              value="standard"
-              defaultChecked
-            />
-            <label className="font-semibold text-stone-700" htmlFor="difficulty-standard">Standard</label>
-            <p>
-              Identify the book first, then the chapter.
-            </p>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="difficulty-expert"
-              name="difficulty"
-              value="expert"
-            />
-            <label className="font-semibold text-stone-700" htmlFor="difficulty-expert">Expert</label>
-            <p>
-              Fewer cues and more difficult passages.
-            </p>
-          </div>
-        </fieldset>
-      </section>
-
-      <section className="grid gap-3" aria-labelledby="length-heading">
-        <h2 className="text-xl font-bold text-green-950" id="length-heading">Game length</h2>
-
-        <fieldset className="grid gap-4 rounded-lg border border-stone-200 bg-amber-50 p-4 [&>div]:grid [&>div]:grid-cols-[auto_1fr] [&>div]:items-start [&>div]:gap-x-3 [&>div>p]:col-start-2 [&>div>p]:text-sm [&>div>p]:text-muted">
-          <legend>Number of pitches</legend>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="length-5"
-              name="length"
-              value="5"
-            />
-            <label className="font-semibold text-stone-700" htmlFor="length-5">5 pitches</label>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="length-10"
-              name="length"
-              value="10"
-              defaultChecked
-            />
-            <label className="font-semibold text-stone-700" htmlFor="length-10">10 pitches</label>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              className="mt-1 size-4 accent-scripture-green"
-              id="length-20"
-              name="length"
-              value="20"
-            />
-            <label className="font-semibold text-stone-700" htmlFor="length-20">20 pitches</label>
-          </div>
-        </fieldset>
-      </section>
-
-      <section className="grid gap-3" aria-labelledby="answer-settings-heading">
-        <h2 className="text-xl font-bold text-green-950" id="answer-settings-heading">Answer settings</h2>
-
-        <p>
-          Players normally identify the book first and then the chapter.
-        </p>
-
-        <div className="grid grid-cols-[auto_1fr] items-start gap-3">
-          <input
-            type="checkbox"
-            className="mt-1 size-4 accent-scripture-green"
-            id="exact-verse"
-            name="exact-verse"
-            value="yes"
-          />
-          <label className="font-semibold text-stone-700" htmlFor="exact-verse">
-            Also require the exact verse
-          </label>
+          )}
+        </header>
+        <RoomInvitation code={createdRoom.code} />
+        <div className="flex flex-wrap items-center gap-4">
+          <Link to={`/game?code=${encodeURIComponent(createdRoom.code)}`} className={action}>View Room</Link>
+          <Link to="/create-game" className="font-semibold text-green-800 underline hover:text-green-950">Create another game</Link>
         </div>
-
-        <p>
-          Exact verse identification adds an additional stage and is
-          intended for players who want a harder challenge.
-        </p>
-      </section>
-
-      <section className="grid gap-3" aria-labelledby="room-settings-heading">
-        <h2 className="text-xl font-bold text-green-950" id="room-settings-heading">Room settings</h2>
-
-        <div className="grid gap-2">
-          <label className="font-semibold text-stone-700" htmlFor="game-name">Game name</label>
-          <input
-            id="game-name"
-            name="game-name"
-            type="text"
-            placeholder="Saturday Scripture Game"
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label className="font-semibold text-stone-700" htmlFor="max-players">Maximum players</label>
-          <select className="w-full" id="max-players" name="max-players" defaultValue="4">
-            <option value="2">2 players</option>
-            <option value="4">4 players</option>
-            <option value="8">8 players</option>
-            <option value="12">12 players</option>
-          </select>
-        </div>
-      </section>
-
-      <button className="w-full cursor-pointer rounded-lg bg-scripture-green sm:w-auto px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300" type="submit">Create Game</button>
-    </form>
-
-    <section className="grid gap-3" aria-labelledby="after-creation-heading">
-      <h2 className="text-xl font-bold text-green-950" id="after-creation-heading">After you create the game</h2>
-
-      <p>
-        A private room will be created with a short join code, invitation
-        link, and QR code that you can share with other players.
-      </p>
-
-      <p>
-        Invited players will be able to sign in or continue as a guest
-        without losing their place in the room.
-      </p>
-    </section>
-  </main>
+      </main>
     );
+  }
+
+  return (
+    <main className="mx-auto w-full max-w-[1000px] space-y-6 px-4 py-6 sm:px-6 md:py-8">
+      <header className={panel}>
+        <h1 className="text-3xl font-bold text-green-950">Create a Private Game</h1>
+        <p className="text-stone-700">Choose your settings, then share a room code.</p>
+        {searchParams.has("code") && (
+          <p role="alert" className="text-red-800">This room isn't saved in this browser. Create a new one.</p>
+        )}
+      </header>
+
+      <form className="grid gap-5" onSubmit={handleCreateGame}>
+        <section className={panel} aria-labelledby="challenge-heading">
+          <h2 className="text-xl font-bold text-green-950" id="challenge-heading">Challenge</h2>
+          <label className="font-semibold text-stone-700" htmlFor="challenge">Choose a challenge</label>
+          <select
+            id="challenge"
+            name="challenge"
+            className="w-full"
+            value={form.challengeId}
+            onChange={(event) => update("challengeId", event.target.value)}
+            required
+          >
+            {ROOM_CHALLENGES.map((challenge) => (
+              <option key={challenge.id} value={challenge.id}>{challenge.title}</option>
+            ))}
+          </select>
+          <Link className="w-fit font-semibold text-green-800 underline hover:text-green-950" to="/challenges">Browse challenges</Link>
+        </section>
+
+        <section className={panel} aria-labelledby="format-heading">
+          <h2 className="text-xl font-bold text-green-950" id="format-heading">Game format</h2>
+          <fieldset className="grid gap-2 sm:grid-cols-2">
+            <legend className="sr-only">Game format</legend>
+            <RadioChoice name="format" value="live" label="Live private match" checked={form.format === "live"} onChange={(value) => update("format", value)} />
+            <RadioChoice name="format" value="async" label="Friend challenge" checked={form.format === "async"} onChange={(value) => update("format", value)} />
+          </fieldset>
+        </section>
+
+        <section className={panel} aria-labelledby="difficulty-heading">
+          <h2 className="text-xl font-bold text-green-950" id="difficulty-heading">Difficulty</h2>
+          <fieldset className="grid gap-2 sm:grid-cols-3">
+            <legend className="sr-only">Difficulty</legend>
+            <RadioChoice name="difficulty" value="beginner" label="Beginner" checked={form.difficulty === "beginner"} onChange={(value) => update("difficulty", value)} />
+            <RadioChoice name="difficulty" value="standard" label="Standard" checked={form.difficulty === "standard"} onChange={(value) => update("difficulty", value)} />
+            <RadioChoice name="difficulty" value="expert" label="Expert" checked={form.difficulty === "expert"} onChange={(value) => update("difficulty", value)} />
+          </fieldset>
+        </section>
+
+        <section className={panel} aria-labelledby="length-heading">
+          <h2 className="text-xl font-bold text-green-950" id="length-heading">Game length</h2>
+          <fieldset className="grid gap-2 sm:grid-cols-3">
+            <legend className="sr-only">Number of pitches</legend>
+            {[5, 10, 20].map((length) => (
+              <RadioChoice key={length} name="length" value={length} label={`${length} pitches`} checked={form.length === length} onChange={(value) => update("length", value)} />
+            ))}
+          </fieldset>
+          <p className="text-sm text-stone-600">Longer games may reuse passages from the starter collection.</p>
+        </section>
+
+        <section className={panel} aria-labelledby="room-settings-heading">
+          <h2 className="text-xl font-bold text-green-950" id="room-settings-heading">Room settings</h2>
+          <label className="flex cursor-pointer items-center gap-3 font-semibold text-stone-700" htmlFor="exact-verse">
+            <input
+              id="exact-verse"
+              name="exact-verse"
+              type="checkbox"
+              checked={form.exactVerse}
+              onChange={(event) => update("exactVerse", event.target.checked)}
+              className="size-4 accent-scripture-green"
+            />
+            Require the exact verse
+          </label>
+          <label className="grid gap-2 font-semibold text-stone-700" htmlFor="game-name">
+            Game name (optional)
+            <input
+              id="game-name"
+              name="game-name"
+              type="text"
+              maxLength={60}
+              placeholder="Saturday Scripture Game"
+              value={form.name}
+              onChange={(event) => update("name", event.target.value)}
+              className="font-normal"
+            />
+          </label>
+          {activeProfile ? (
+            <p className="font-semibold text-stone-700">Host: {activeProfile.displayName}</p>
+          ) : (
+            <label className="grid gap-2 font-semibold text-stone-700" htmlFor="host-name">
+              Your display name
+              <input
+                id="host-name"
+                name="host-name"
+                type="text"
+                autoComplete="nickname"
+                maxLength={40}
+                value={form.hostName}
+                onChange={(event) => update("hostName", event.target.value)}
+                placeholder="Your name"
+                required
+                className="font-normal"
+              />
+            </label>
+          )}
+          <label className="grid gap-2 font-semibold text-stone-700" htmlFor="max-players">
+            Maximum players
+            <select
+              id="max-players"
+              name="max-players"
+              value={form.maxPlayers}
+              onChange={(event) => update("maxPlayers", Number(event.target.value))}
+              className="w-full font-normal"
+            >
+              {[2, 4, 8, 12].map((capacity) => (
+                <option key={capacity} value={capacity}>{capacity} players</option>
+              ))}
+            </select>
+          </label>
+        </section>
+
+        {error && <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-900">{error}</p>}
+        <button className={action} type="submit">Create Game</button>
+        <p className="text-sm text-stone-600">
+          Local demo: room settings and invitations are saved in this browser only.
+        </p>
+      </form>
+    </main>
+  );
 }
