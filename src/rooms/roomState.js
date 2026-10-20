@@ -9,6 +9,16 @@ const CODE_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const GUEST_PLAYER_PATTERN = /^guest-player-[A-HJ-NP-Z2-9]{10}$/;
 const ACCOUNT_PLAYER_PATTERN = /^account-[1-9]\d*$/;
+const BOT_NAMES = ["Miriam", "Ruth", "Ezra", "Leah", "Caleb", "Esther", "Nephi", "Abigail", "Daniel", "Naomi", "Isaiah"];
+
+function botPlayerId(code, slot) {
+  return `bot-${code}-${slot}`;
+}
+
+function isBotPlayer(room, player) {
+  return player?.isBot === true && player.id.startsWith(`bot-${room.code}-`) &&
+    /^[1-9]\d*$/.test(player.id.slice(`bot-${room.code}-`.length));
+}
 
 export const ROOM_FORMATS = ["live", "async"];
 export const ROOM_DIFFICULTIES = ["beginner", "standard", "expert"];
@@ -205,13 +215,18 @@ function normalizeRoom(value) {
       typeof player.displayName === "string" && player.displayName.trim().length > 0 &&
       player.displayName.trim().length <= 40)
     .slice(0, result.value.settings.maxPlayers)
-    .map((player) => ({
-      id: player.id,
-      displayName: player.displayName.trim(),
-      role: player.id === hostId ? "host" : "player",
-      ready: player.ready === true,
-      joinedAt: typeof player.joinedAt === "string" ? player.joinedAt : value.createdAt,
-    }));
+    .map((player) => {
+      const isBot = player.isBot === true && player.id.startsWith(`bot-${value.code}-`) &&
+        /^[1-9]\d*$/.test(player.id.slice(`bot-${value.code}-`.length));
+      return {
+        id: player.id,
+        displayName: player.displayName.trim(),
+        role: player.id === hostId ? "host" : "player",
+        ready: isBot || player.ready === true,
+        joinedAt: typeof player.joinedAt === "string" ? player.joinedAt : value.createdAt,
+        ...(isBot && player.id !== hostId ? { isBot: true } : {}),
+      };
+    });
   if (!players.some((player) => player.id === hostId)) {
     players.unshift({
       id: hostId,
@@ -403,6 +418,7 @@ export function setRoomPlayerReadyInState(state, code, playerId, ready) {
   if (typeof ready !== "boolean") return roomError(state, room, "Choose ready or not ready.");
   const player = room.players.find((item) => item.id === playerId);
   if (!player) return roomError(state, room, "Join this room to change readiness.");
+  if (isBotPlayer(room, player)) return roomError(state, room, "Simulated players are always ready.");
   if (player.ready === ready) return { state, room, error: null };
   return updateRoom(state, room, {
     ...room, players: room.players.map((item) => item.id === playerId ? { ...item, ready } : item),
@@ -437,14 +453,16 @@ export function getRoomRoundResponses(room, roundIndex = room?.match?.roundIndex
   return room.match.responses.filter((response) => response.roundIndex === roundIndex);
 }
 
-export function submitRoomAnswerInState(state, code, playerId, answer, {
-  answeredAt = new Date().toISOString(),
+function recordRoomAnswerInState(state, code, playerId, answer, {
+  answeredAt = new Date().toISOString(), allowBot = false,
 } = {}) {
   const room = getRoomByCode(state, code);
   if (!room) return roomError(state, null, "Room not found.");
   if (room.status !== "active" || !room.match) return roomError(state, room, "This round is not active.");
-  if (!room.players.some((player) => player.id === playerId)) {
-    return roomError(state, room, "Join the room before answering.");
+  const player = room.players.find((item) => item.id === playerId);
+  if (!player) return roomError(state, room, "Join the room before answering.");
+  if (isBotPlayer(room, player) && !allowBot) {
+    return roomError(state, room, "Simulated players answer automatically.");
   }
   const roundIndex = room.match.roundIndex;
   if (getRoomRoundResponses(room).some((response) => response.playerId === playerId)) {
@@ -461,6 +479,134 @@ export function submitRoomAnswerInState(state, code, playerId, answer, {
     ...room,
     match: { ...room.match, responses: [...room.match.responses, response] },
   });
+}
+
+export function submitRoomAnswerInState(state, code, playerId, answer, options = {}) {
+  return recordRoomAnswerInState(state, code, playerId, answer, { answeredAt: options.answeredAt });
+}
+
+// Step 10: add computer-controlled seats while in the lobby. They count toward
+// capacity and ready checks, but no external user or server is represented.
+export function addSimulatedPlayerInState(state, code, hostId, { joinedAt = new Date().toISOString() } = {}) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.hostId !== hostId) return roomError(state, room, "Only the host can add simulated players.");
+  if (room.status !== "lobby") return roomError(state, room, "Players cannot be added after the game starts.");
+  if (room.players.length >= room.settings.maxPlayers) return roomError(state, room, "This room is full.");
+  if (!validDate(joinedAt)) return roomError(state, room, "Invalid join time.");
+
+  let slot = 1;
+  while (room.players.some((player) => player.id === botPlayerId(room.code, slot))) slot += 1;
+  const usedNames = new Set(room.players.map((player) => player.displayName.toLowerCase()));
+  const baseName = BOT_NAMES[(slot - 1) % BOT_NAMES.length];
+  let name = baseName;
+  let suffix = 2;
+  while (usedNames.has(name.toLowerCase())) name = `${baseName} ${suffix++}`;
+  const player = {
+    id: botPlayerId(room.code, slot), displayName: name, role: "player",
+    ready: true, isBot: true, joinedAt,
+  };
+  return updateRoom(state, room, { ...room, players: [...room.players, player] });
+}
+
+export function removeSimulatedPlayerInState(state, code, hostId, botId) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.hostId !== hostId) return roomError(state, room, "Only the host can remove simulated players.");
+  if (room.status !== "lobby") return roomError(state, room, "Players cannot be removed after the game starts.");
+  const bot = room.players.find((player) => player.id === botId);
+  if (!isBotPlayer(room, bot)) return roomError(state, room, "Simulated player not found.");
+  return updateRoom(state, room, {
+    ...room, players: room.players.filter((player) => player.id !== botId),
+  });
+}
+
+// Seeded guesses make repeated attempts stable across refreshes. The difficulty
+// affects computer accuracy, not the correctness of any human submission.
+export function createSimulatedAnswer(room, botId) {
+  const question = getRoomRoundQuestion(room);
+  if (!question) return null;
+  let hash = 2166136261;
+  for (const char of `${room.code}:${room.match.roundIndex}:${botId}`) {
+    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+  }
+  let seed = hash;
+  const random = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const chance = { beginner: 0.85, standard: 0.66, expert: 0.45 }[room.settings.difficulty];
+  const otherBooks = question.choices.filter((bookId) => bookId !== question.bookId);
+  const bookId = random() < chance || !otherBooks.length
+    ? question.bookId : otherBooks[Math.floor(random() * otherBooks.length)];
+  const chapter = random() < chance ? question.chapter : question.chapter + 1;
+  const answer = { questionId: question.id, bookId, chapter };
+  if (room.settings.exactVerse) answer.verse = random() < chance ? question.verse : question.verse + 1;
+  return answer;
+}
+
+export function simulateRoomAnswerInState(state, code, botId, {
+  answeredAt = new Date().toISOString(),
+} = {}) {
+  const room = getRoomByCode(state, code);
+  if (!room) return roomError(state, null, "Room not found.");
+  if (room.status !== "active" || !room.match) return roomError(state, room, "This round is not active.");
+  const bot = room.players.find((player) => player.id === botId);
+  if (!isBotPlayer(room, bot)) return roomError(state, room, "Simulated player not found.");
+  if (getRoomRoundResponses(room).some((response) => response.playerId === botId)) {
+    return { state, room, error: null }; // timers or multiple tabs may retry the same pitch
+  }
+  return recordRoomAnswerInState(state, code, botId, createSimulatedAnswer(room, botId), {
+    answeredAt, allowBot: true,
+  });
+}
+
+function pointsForAttempt(attempt, exactVerse) {
+  return Number(attempt.bookCorrect) + Number(attempt.chapterCorrect) +
+    (exactVerse ? Number(attempt.verseCorrect) : 0);
+}
+
+// Scores count only stored, graded answers. A skipped pitch earns zero, and
+// equal scores share a rank (without inventing a tie-breaker).
+export function getRoomStandings(room) {
+  if (!room?.match) return [];
+  const results = room.players.map((player, order) => {
+    const attempts = room.match.responses.filter((response) => response.playerId === player.id);
+    const bookCorrect = attempts.filter((response) => response.attempt.bookCorrect).length;
+    const chapterCorrect = attempts.filter((response) => response.attempt.chapterCorrect).length;
+    const verseCorrect = attempts.filter((response) => response.attempt.verseCorrect).length;
+    return {
+      playerId: player.id, name: player.displayName, isBot: player.isBot === true,
+      isHost: player.id === room.hostId, order,
+      answered: attempts.length,
+      bookCorrect, chapterCorrect, verseCorrect,
+      points: attempts.reduce((sum, response) => sum + pointsForAttempt(response.attempt, room.settings.exactVerse), 0),
+      possiblePoints: room.questionIds.length * (room.settings.exactVerse ? 3 : 2),
+    };
+  }).sort((a, b) => b.points - a.points || a.order - b.order);
+  let rank = 0;
+  return results.map((player, index) => {
+    if (index === 0 || player.points !== results[index - 1].points) rank = index + 1;
+    const { order, ...standing } = player;
+    return { ...standing, rank };
+  });
+}
+
+export function getCompletedRoomHistory(rooms, playerId = null, guestByRoom = {}, limit = 10) {
+  if (!Array.isArray(rooms)) return [];
+  return rooms.filter((room) => room?.status === "complete" && room.match?.completedAt)
+    .flatMap((room) => {
+      const who = playerId || guestByRoom?.[room.code];
+      if (!who) return [];
+      const standing = getRoomStandings(room).find((entry) => entry.playerId === who);
+      if (!standing || standing.isBot) return [];
+      return [{ code: room.code, name: room.name, finishedAt: room.match.completedAt,
+        challengeId: room.settings.challengeId, rank: standing.rank, playerCount: room.players.length,
+        points: standing.points, possiblePoints: standing.possiblePoints,
+        answered: standing.answered, pitches: room.questionIds.length }];
+    })
+    .sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt) || a.code.localeCompare(b.code))
+    .slice(0, limit);
 }
 
 export function advanceRoomRoundInState(state, code, hostId, {

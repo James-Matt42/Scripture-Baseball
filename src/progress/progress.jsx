@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getChallengeQuestions } from "../challenges/catalog.js";
 import { usePractice } from "../play/PracticeContext";
+import { useRooms } from "../rooms/RoomContext";
 import { formatScriptureReference } from "../scripture/questions.js";
 import { getProgressReport } from "./progressReport.js";
 
@@ -67,6 +68,7 @@ function PassageList({ passages, empty }) {
 
 export function Progress() {
   const { recordedAttempts, history, favorites, startChallenge } = usePractice();
+  const { completedGames } = useRooms();
   const progress = useMemo(
     () => getProgressReport({ attempts: recordedAttempts, history }),
     [recordedAttempts, history],
@@ -175,6 +177,30 @@ export function Progress() {
         ) : <p className={`${panel} text-stone-600`}>No finished innings yet. Your current practice still counts toward the overview above.</p>}
       </section>
 
+      <section className="space-y-4" aria-labelledby="multiplayer-history-heading">
+        <h2 id="multiplayer-history-heading" className="text-2xl font-bold text-green-950">Recent multiplayer games</h2>
+        <p className="text-sm text-stone-600">Finished games for this local profile or guest seat, including simulated opponents.</p>
+        {completedGames.length ? (
+          <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm">
+            <table className="w-full min-w-[550px] text-left text-sm [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">
+              <caption className="sr-only">Ten most recently completed local multiplayer games</caption>
+              <thead><tr><th scope="col">Finished</th><th scope="col">Game</th><th scope="col">Place</th><th scope="col">Pitches</th><th scope="col">Points</th></tr></thead>
+              <tbody>
+                {completedGames.map((game) => (
+                  <tr key={game.code}>
+                    <td>{new Date(game.finishedAt).toLocaleDateString()}</td>
+                    <td><Link className="font-semibold text-green-800 underline" to={`/game?code=${game.code}`}>{game.name}</Link></td>
+                    <td>#{game.rank} of {game.playerCount}</td>
+                    <td>{game.answered}/{game.pitches}</td>
+                    <td>{game.points}/{game.possiblePoints}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <p className={`${panel} text-stone-600`}>No completed multiplayer games yet. <Link className="font-semibold text-green-800 underline" to="/create-game">Create a game</Link> to try a local match.</p>}
+      </section>
+
       <section className="grid gap-5 md:grid-cols-2" aria-label="Improvements and milestones">
         <article className={panel}>
           <h2 className="text-xl font-bold text-green-950">Comeback passages ({progress.comebacks.length})</h2>
@@ -198,7 +224,7 @@ export function Progress() {
         </article>
       </section>
 
-      <p className="text-sm text-stone-600">Progress is saved in this browser for the active local profile. Multiplayer results will be added when game sessions are implemented.</p>
+      <p className="text-sm text-stone-600">Practice and multiplayer results are stored locally for this browser's active profile or guest. Multiplayer history is retained while its room records remain saved.</p>
     </main>
   );
 }

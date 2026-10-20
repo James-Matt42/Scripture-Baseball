@@ -2,6 +2,10 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useAccount } from "../account/AccountContext";
 import {
   claimGuestRoomSeatInState,
+  addSimulatedPlayerInState,
+  removeSimulatedPlayerInState,
+  simulateRoomAnswerInState,
+  getCompletedRoomHistory,
   createRoomInState,
   forgetRoomGuest,
   generateGuestPlayerId,
@@ -131,6 +135,28 @@ export function RoomProvider({ children }) {
     return result;
   }, [roomState]);
 
+  const addSimulatedPlayer = useCallback((code, hostId) => {
+    const result = addSimulatedPlayerInState(roomState, code, hostId);
+    if (!result.error) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
+  const removeSimulatedPlayer = useCallback((code, hostId, botId) => {
+    const result = removeSimulatedPlayerInState(roomState, code, hostId, botId);
+    if (!result.error) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
+  const simulateOpponentAnswer = useCallback((code, botId) => {
+    const result = simulateRoomAnswerInState(roomState, code, botId);
+    if (!result.error && result.state !== roomState) setRoomState(result.state);
+    return result;
+  }, [roomState]);
+
+  const completedGames = useMemo(() => getCompletedRoomHistory(
+    roomState.rooms, activeProfile?.id ?? null, guestState.byRoom,
+  ), [roomState.rooms, activeProfile?.id, guestState.byRoom]);
+
   const findRoom = useCallback((code) => getRoomByCode(roomState, code), [roomState]);
   const findGuestRoomPlayer = useCallback((code) => {
     const room = getRoomByCode(roomState, code);
@@ -157,8 +183,13 @@ export function RoomProvider({ children }) {
     startMatch,
     answerRound,
     advanceRound,
+    addSimulatedPlayer,
+    removeSimulatedPlayer,
+    simulateOpponentAnswer,
+    completedGames,
   }), [roomState, isSaved, createRoom, joinRoom, findRoom, findMyRoomPlayer, findGuestRoomPlayer,
-    setMyReady, startMatch, answerRound, advanceRound]);
+    setMyReady, startMatch, answerRound, advanceRound, addSimulatedPlayer,
+    removeSimulatedPlayer, simulateOpponentAnswer, completedGames]);
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;
 }

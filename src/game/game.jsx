@@ -4,14 +4,14 @@ import { getChallengeById } from "../challenges/catalog.js";
 import { ScriptureQuestion } from "../components/ScriptureQuestion";
 import { RoomInvitation } from "../rooms/RoomInvitation";
 import { useRooms } from "../rooms/RoomContext";
-import { getRoomRoundQuestion, getRoomRoundResponses } from "../rooms/roomState.js";
+import { getRoomRoundQuestion, getRoomRoundResponses, getRoomStandings } from "../rooms/roomState.js";
 import { formatScriptureReference } from "../scripture/questions.js";
 
 const panel = "rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6";
 const action = "inline-flex cursor-pointer items-center justify-center rounded-lg bg-scripture-green px-5 py-3 font-semibold text-white hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 disabled:cursor-not-allowed disabled:opacity-50";
 const secondary = "inline-flex cursor-pointer items-center justify-center rounded-lg border border-green-800 px-5 py-3 font-semibold text-green-900 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300";
 
-function PlayerList({ room, roundResponses = [] }) {
+function PlayerList({ room, roundResponses = [], onRemoveBot }) {
   const submitted = new Set(roundResponses.map((response) => response.playerId));
   return (
     <ul className="mt-3 grid gap-2 sm:grid-cols-2" aria-label="Room players">
@@ -19,11 +19,18 @@ function PlayerList({ room, roundResponses = [] }) {
         <li key={player.id} className="flex items-center justify-between gap-3 rounded-lg bg-amber-50 px-4 py-3">
           <span className="font-semibold text-stone-800">
             {player.displayName}{player.id === room.hostId ? " (Host)" : ""}
+            {player.isBot && <span className="ml-1 text-xs font-normal text-stone-600">(Simulated)</span>}
           </span>
-          <span className="text-sm text-stone-600">
+          <span className="flex items-center gap-2 text-sm text-stone-600">
             {room.status === "lobby" ? (player.ready ? "Ready" : "Not ready")
               : room.status === "active" ? (submitted.has(player.id) ? "Answered" : "Waiting")
                 : "Finished"}
+            {player.isBot && onRemoveBot && (
+              <button className="rounded px-2 py-1 text-red-800 underline hover:bg-red-50" type="button"
+                onClick={() => onRemoveBot(player.id)} aria-label={`Remove simulated player ${player.displayName}`}>
+                Remove
+              </button>
+            )}
           </span>
         </li>
       ))}
@@ -31,14 +38,30 @@ function PlayerList({ room, roundResponses = [] }) {
   );
 }
 
-function RoomLobby({ room, myPlayer, setMyReady, startMatch, onError }) {
+function RoomLobby({ room, myPlayer, setMyReady, startMatch, addSimulatedPlayer, removeSimulatedPlayer, onError }) {
+  const isHost = myPlayer?.id === room.hostId;
   const allReady = room.players.length > 0 && room.players.every((player) => player.ready);
   return (
     <>
       <section className={panel} aria-labelledby="lobby-heading">
         <h2 id="lobby-heading" className="text-2xl font-bold text-green-950">Lobby</h2>
         <p className="mt-2 text-stone-700">{room.players.length} / {room.settings.maxPlayers} players</p>
-        <PlayerList room={room} />
+        <PlayerList room={room} onRemoveBot={isHost ? (botId) => {
+          const result = removeSimulatedPlayer(room.code, myPlayer.id, botId);
+          if (result.error) onError(result.error);
+        } : null} />
+        {isHost && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button className={secondary} type="button" disabled={room.players.length >= room.settings.maxPlayers}
+              onClick={() => {
+                const result = addSimulatedPlayer(room.code, myPlayer.id);
+                if (result.error) onError(result.error);
+              }}>
+              Add Simulated Player
+            </button>
+            <span className="text-sm text-stone-600">Computer players automatically answer each pitch.</span>
+          </div>
+        )}
         {myPlayer ? (
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button className={secondary} type="button" onClick={() => {
@@ -47,13 +70,13 @@ function RoomLobby({ room, myPlayer, setMyReady, startMatch, onError }) {
             }}>
               {myPlayer.ready ? "Not Ready" : "I'm Ready"}
             </button>
-            {myPlayer.id === room.hostId && (
+            {isHost && (
               <button className={action} type="button" disabled={!allReady} onClick={() => {
                 const result = startMatch(room.code, myPlayer.id);
                 if (result.error) onError(result.error);
               }}>Start Game</button>
             )}
-            {myPlayer.id === room.hostId && !allReady && (
+            {isHost && !allReady && (
               <span className="text-sm text-stone-600">Waiting for players to ready up.</span>
             )}
           </div>
@@ -73,6 +96,44 @@ function RoomLobby({ room, myPlayer, setMyReady, startMatch, onError }) {
   );
 }
 
+function Standings({ room, myPlayerId }) {
+  const standings = getRoomStandings(room);
+  if (!standings.length) return null;
+  return (
+    <section className={panel} aria-labelledby="standings-heading">
+      <h2 id="standings-heading" className="text-xl font-bold text-green-950">
+        {room.status === "complete" ? "Final Standings" : "Live Standings"}
+      </h2>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[520px] text-left text-sm">
+          <caption className="sr-only">Players ranked by points; tied scores share a place.</caption>
+          <thead className="bg-green-900 text-white">
+            <tr><th scope="col" className="p-3">Place</th><th scope="col" className="p-3">Player</th>
+              <th scope="col" className="p-3">Answered</th><th scope="col" className="p-3">Book</th>
+              <th scope="col" className="p-3">Chapter</th>
+              {room.settings.exactVerse && <th scope="col" className="p-3">Verse</th>}
+              <th scope="col" className="p-3">Points</th></tr>
+          </thead>
+          <tbody>
+            {standings.map((player) => (
+              <tr key={player.playerId} className={`border-b border-stone-200 ${player.playerId === myPlayerId ? "bg-green-50" : ""}`}>
+                <td className="p-3">{player.rank}</td>
+                <th scope="row" className="p-3 font-semibold">{player.name}{player.isBot ? " (Simulated)" : ""}{player.playerId === myPlayerId ? " (You)" : ""}</th>
+                <td className="p-3">{player.answered}/{room.questionIds.length}</td>
+                <td className="p-3">{player.bookCorrect}</td>
+                <td className="p-3">{player.chapterCorrect}</td>
+                {room.settings.exactVerse && <td className="p-3">{player.verseCorrect}</td>}
+                <td className="p-3 font-semibold">{player.points}/{player.possiblePoints}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {room.status === "active" && <p className="mt-2 text-sm text-stone-600">Standings update as pitches are submitted.</p>}
+    </section>
+  );
+}
+
 function PlayerResult({ response, question, exactVerse }) {
   const attempt = response.attempt;
   return (
@@ -87,13 +148,27 @@ function PlayerResult({ response, question, exactVerse }) {
   );
 }
 
-function RoomRounds({ room, myPlayer, answerRound, advanceRound, onError }) {
+function RoomRounds({ room, myPlayer, answerRound, advanceRound, simulateOpponentAnswer, onError }) {
   const question = getRoomRoundQuestion(room);
   const roundResponses = getRoomRoundResponses(room);
   const myResponse = myPlayer && roundResponses.find((response) => response.playerId === myPlayer.id);
   const unanswered = room.players.filter((player) => !roundResponses.some((response) => response.playerId === player.id));
   const isHost = myPlayer?.id === room.hostId;
   const isLastRound = room.match.roundIndex + 1 === room.questionIds.length;
+  const pendingBot = unanswered.find((player) => player.isBot);
+  const pendingBotId = pendingBot?.id;
+  const roundIndex = room.match.roundIndex;
+
+  // The host's open game view drives the local simulation. Timers are scoped
+  // to the round and cleared on navigation or advancement; submissions are idempotent.
+  useEffect(() => {
+    if (!pendingBotId || !isHost) return undefined;
+    const timeout = setTimeout(() => {
+      const result = simulateOpponentAnswer(room.code, pendingBotId);
+      if (result.error) onError(result.error);
+    }, 900);
+    return () => clearTimeout(timeout);
+  }, [room.code, roundIndex, pendingBotId, isHost, simulateOpponentAnswer, onError]);
 
   return (
     <>
@@ -135,28 +210,40 @@ function RoomRounds({ room, myPlayer, answerRound, advanceRound, onError }) {
         )}
         {!isHost && myResponse && <p className="mt-4 text-stone-700">Waiting for the host to advance.</p>}
       </section>
+      <Standings room={room} myPlayerId={myPlayer?.id} />
     </>
   );
 }
 
 function RoomComplete({ room, myPlayer }) {
-  const myResponses = (room.match?.responses ?? []).filter((response) => response.playerId === myPlayer?.id);
-  const points = myResponses.reduce((sum, response) => sum + Number(response.attempt.bookCorrect) +
-    Number(response.attempt.chapterCorrect) + (room.settings.exactVerse ? Number(response.attempt.verseCorrect) : 0), 0);
+  const standings = getRoomStandings(room);
+  const personal = standings.find((standing) => standing.playerId === myPlayer?.id);
+  const winners = standings.filter((standing) => standing.rank === 1);
   return (
-    <section className={panel} aria-labelledby="finished-heading">
-      <h2 className="text-2xl font-bold text-green-950" id="finished-heading">Game complete</h2>
-      {myPlayer ? (
-        <p className="mt-3 text-stone-800">You answered {myResponses.length} of {room.questionIds.length} pitches and earned {points} points.</p>
-      ) : <p className="mt-3 text-stone-700">This match has finished.</p>}
-      <p className="mt-2 text-sm text-stone-600">Full standings and simulated opponents are not available in this local version yet.</p>
-      <Link className="mt-5 inline-block font-semibold text-green-800 underline" to="/create-game">Create another game</Link>
-    </section>
+    <>
+      <section className={panel} aria-labelledby="finished-heading">
+        <h2 className="text-2xl font-bold text-green-950" id="finished-heading">Game complete</h2>
+        <p className="mt-3 text-stone-800">
+          {winners.length > 1 ? "Tied for first" : "Winner"}: {winners.map((winner) => winner.name).join(", ")}
+        </p>
+        {personal && <p className="mt-2 text-stone-800">
+          You finished #{personal.rank} of {standings.length} with {personal.points}/{personal.possiblePoints} points
+          ({personal.answered}/{room.questionIds.length} pitches answered).
+        </p>}
+        <p className="mt-2 text-sm text-stone-600">Results are saved in this browser's local game history.</p>
+        <div className="mt-5 flex flex-wrap gap-5">
+          <Link className="font-semibold text-green-800 underline" to="/progress">View progress</Link>
+          <Link className="font-semibold text-green-800 underline" to="/create-game">Create another game</Link>
+        </div>
+      </section>
+      <Standings room={room} myPlayerId={myPlayer?.id} />
+    </>
   );
 }
 
 function GameRoom({ room }) {
-  const { findMyRoomPlayer, isSaved, setMyReady, startMatch, answerRound, advanceRound } = useRooms();
+  const { findMyRoomPlayer, isSaved, setMyReady, startMatch, answerRound, advanceRound,
+    addSimulatedPlayer, removeSimulatedPlayer, simulateOpponentAnswer } = useRooms();
   const myPlayer = findMyRoomPlayer(room.code);
   const [error, setError] = useState("");
 
@@ -175,15 +262,17 @@ function GameRoom({ room }) {
           <div><dt className="text-sm text-stone-600">Difficulty</dt><dd className="capitalize">{room.settings.difficulty}</dd></div>
           <div><dt className="text-sm text-stone-600">Length</dt><dd>{room.settings.length} pitches{room.settings.exactVerse ? " · Exact verse" : ""}</dd></div>
         </dl>
-        <p className="mt-3 text-sm text-stone-600">Local-only mock: players share this browser's room data. No remote multiplayer connection.</p>
+        <p className="mt-3 text-sm text-stone-600">Local-only mock: simulated players are computer-controlled, and room data stays in this browser. No online multiplayer connection.</p>
         {isSaved === false && <p role="alert" className="mt-4 rounded-lg bg-amber-50 p-3">Browser storage is unavailable. This game won't survive a refresh.</p>}
       </header>
 
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 font-semibold text-red-900">{error}</p>}
       {room.status === "lobby" ? (
-        <RoomLobby room={room} myPlayer={myPlayer} setMyReady={setMyReady} startMatch={startMatch} onError={setError} />
+        <RoomLobby room={room} myPlayer={myPlayer} setMyReady={setMyReady} startMatch={startMatch}
+          addSimulatedPlayer={addSimulatedPlayer} removeSimulatedPlayer={removeSimulatedPlayer} onError={setError} />
       ) : room.status === "active" && room.match ? (
-        <RoomRounds room={room} myPlayer={myPlayer} answerRound={answerRound} advanceRound={advanceRound} onError={setError} />
+        <RoomRounds room={room} myPlayer={myPlayer} answerRound={answerRound} advanceRound={advanceRound}
+          simulateOpponentAnswer={simulateOpponentAnswer} onError={setError} />
       ) : <RoomComplete room={room} myPlayer={myPlayer} />}
       <Link to="/create-game" className="inline-block font-semibold text-green-800 underline hover:text-green-950">Create another game</Link>
     </main>
