@@ -118,9 +118,9 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **All functionality implemented or mocked out** - I did not complete this part of the deliverable.
-- [ ] **Hooks** - I did not complete this part of the deliverable.
+- [x] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [x] **All functionality implemented or mocked out** - Several game types have been mocked out with example verses.
+- [x] **Hooks** - Local storage is loaded and modified with useState and useEffect. useContext is used for accounts, rooms, and practice. useMemo is used for the same and is used to keep from loading the same state many times.
 
 ## 🚀 Service deliverable
 
