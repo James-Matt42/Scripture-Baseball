@@ -1,0 +1,163 @@
+/* Native React adaptation of the original Scripture Baseball Book V6 physical model.
+   Original 42 pages x 12 ribbon segments and spine/cover occlusion are preserved.
+   Textures are separately packaged instead of embedding base64 images in a public HTML demo.
+   Everything is scoped to the book scene; there is no standalone dark stage or iframe. */
+.sb-book-scene {
+  --cover: url("../assets/invite-v6-cover.jpg");
+  --endpaper: url("../assets/invite-v6-endpaper.jpg");
+  --paper: url("../assets/invite-v6-paper.jpg");
+  --gilt: url("../assets/invite-v6-gilt.jpg");
+  --ink0: url("../assets/invite-v6-ink0.jpg");
+  --ink1: url("../assets/invite-v6-ink1.jpg");
+  --ink2: url("../assets/invite-v6-ink2.jpg");
+  --ink3: url("../assets/invite-v6-ink3.jpg");
+  position: relative; width: 1000px; height: 560px; transform-origin: top left;
+  overflow: hidden; isolation: isolate; pointer-events: none;
+  font-family: Georgia, serif; color: #214733;
+}
+.sb-book-scene #book-camera {position:absolute;left:195px;top:200px;width:900px;height:480px;z-index:18;transform-origin:center center;perspective:1350px;will-change:transform,opacity}
+.sb-book-scene #book-orientation {position:relative;width:900px;height:480px;transform:rotateX(13deg) rotateZ(-5deg);transform-style:preserve-3d;will-change:transform}
+.sb-book-scene #contact-shadow {position:absolute;width:810px;height:100px;left:73px;bottom:-43px;border-radius:50%;background:#000a;filter:blur(28px);transform:translateZ(-70px)}
+.sb-book-scene #book-body {position:absolute;inset:0;transform-style:preserve-3d}
+.sb-book-scene #right-leather {position:absolute;left:438px;top:3px;width:459px;height:460px;border-radius:10px 15px 16px 4px;border:8px solid #2b1b18;background:linear-gradient(121deg,#301d19,#65432d 65%,#291918);box-shadow:inset 0 0 0 2px #86613d, 13px 21px 17px #0006;transform:translateZ(-17px)}
+.sb-book-scene #left-leather {position:absolute;left:-4px;top:4px;width:454px;height:460px;border-radius:17px 5px 4px 15px;border:8px solid #2c1e1a;background:linear-gradient(119deg,#211816,#6d452f 58%,#281b18);box-shadow:inset 0 0 0 2px #b28a4e;opacity:0;transform:translateZ(-17px)}
+.sb-book-scene #page-stack {position:absolute;left:452px;top:18px;width:419px;height:423px;border-radius:3px 10px 10px 2px;background:repeating-linear-gradient(0deg,#b99153 0px,#efd399 1px,#9c7642 2px,#e0bb7e 3px);border:5px solid #d3aa67;box-shadow:9px 11px 5px #070706b8,inset -12px 0 16px #6e4921,inset 6px 0 10px #fff0c1;transform:translateZ(0)}
+.sb-book-scene #page-stack::before {content:"";position:absolute;left:0;right:0;bottom:-17px;height:18px;transform:rotateX(-66deg);transform-origin:top;background:var(--gilt) center/auto 100%;box-shadow:0 3px 4px #0008;border-bottom:2px solid #70502a}
+.sb-book-scene #page-stack::after {content:"";position:absolute;right:-18px;top:3px;bottom:3px;width:18px;transform-origin:left;transform:rotateY(70deg);background:var(--gilt) center/100% auto;box-shadow:2px 0 3px #0009}
+.sb-book-scene #spine {position:absolute;left:414px;top:8px;width:47px;height:459px;border-radius:21px 6px 6px 21px;background:linear-gradient(90deg,#1a1413,#4d2c27 24%,#875735 49%,#3d2623 79%,#181314);box-shadow:-5px 9px 10px #0009,inset 0 0 0 2px #624125;transform:translateZ(4px)}
+.sb-book-scene #spine::after {content:"";position:absolute;inset:19px 5px;background:repeating-linear-gradient(180deg,transparent 0px,transparent 59px,#aa834a 61px,#ead49c 63px,#7b5228 65px,transparent 68px);border-left:1px solid #b38b55;border-right:1px solid #b38b55;opacity:.75}
+.sb-book-scene #opened-left {position:absolute;left:8px;top:17px;width:442px;height:429px;background:var(--paper) center/cover;box-shadow:inset 0 0 38px #9e764d88;opacity:0;transform:translateZ(8px);border-radius:13px 2px 2px 13px;overflow:hidden}
+.sb-book-scene #opened-left::before {content:"";position:absolute;inset:23px;border:1px solid #b2996e9c}
+.sb-book-scene #opened-left::after {content:"";position:absolute;right:0;top:0;bottom:0;width:70px;background:linear-gradient(90deg,transparent,#71523e55)}
+.sb-book-scene #right-page {position:absolute;left:451px;top:20px;width:419px;height:421px;background:var(--paper) center/cover;border-radius:2px 9px 9px 2px;transform:translateZ(10px);box-shadow:inset 18px 0 37px #73533872,inset -12px 0 19px #b18e6970;overflow:hidden}
+.sb-book-scene #right-page::after {content:"";position:absolute;left:0;top:0;bottom:0;width:48px;background:linear-gradient(90deg,#644a3466,transparent)}
+.sb-book-scene #under-final {position:absolute;left:451px;top:19px;width:419px;height:422px;background:var(--paper) center/cover;border-radius:2px 9px 9px 2px;transform:translateZ(14px);display:flex;align-items:center;flex-direction:column;padding:27px 23px 14px;color:#463126;text-align:center}
+.sb-book-scene #under-final .mini-top {font:9px Arial,sans-serif;letter-spacing:.25em;color:#84634b}
+.sb-book-scene #under-final .mini-heading {font:26px Georgia,serif;margin:13px 0 8px}
+.sb-book-scene #under-final .mini-qr {width:218px;height:218px;background:white;border:8px solid #fff;box-shadow:0 2px 7px #42302244}
+.sb-book-scene #under-final .mini-code-label {font:9px Arial,sans-serif;letter-spacing:.18em;margin:9px 0 4px}
+.sb-book-scene #under-final .mini-code {font:bold 25px Arial,sans-serif;letter-spacing:.18em;color:#1a2426}
+.sb-book-scene #under-final .mini-qr svg {width:100%;height:100%;display:block;shape-rendering:crispEdges}
+.sb-book-scene .leaf {position:absolute;left:450px;top:19px;width:421px;height:423px;transform-style:preserve-3d;pointer-events:none}
+.sb-book-scene .sheet-strip {position:absolute;left:0;top:0;height:423px;transform-style:preserve-3d;transform-origin:left 50%}
+.sb-book-scene .sheet-face {position:absolute;inset:0;backface-visibility:hidden;background-repeat:no-repeat;background-size:421px 423px;border-top:1px solid #e7d2ae;border-bottom:1px solid #bdaa86;box-shadow:none}
+.sb-book-scene .sheet-front {transform:translateZ(.22px)}
+.sb-book-scene .sheet-back {transform:rotateY(180deg) translateZ(.22px)}
+/* Shade flat page *faces*, not their 3D parent strips: filters on the parent
+   flatten back/front faces and can make leaves disappear at browser zoom. */
+.sb-book-scene .sheet-front::before, .sb-book-scene .sheet-back::before,
+.sb-book-scene .sheet-front::after, .sb-book-scene .sheet-back::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+}
+.sb-book-scene .sheet-front::before, .sb-book-scene .sheet-back::before {
+  background: rgba(255,255,255,var(--paper-highlight,0));
+}
+.sb-book-scene .sheet-front::after, .sb-book-scene .sheet-back::after {
+  background: rgba(0,0,0,var(--paper-shadow,0));
+}
+.sb-book-scene .leaf.variant0 .sheet-front {background-image:var(--ink0)}
+.sb-book-scene .leaf.variant0 .sheet-back {background-image:var(--ink1)}
+.sb-book-scene .leaf.variant1 .sheet-front {background-image:var(--ink2)}
+.sb-book-scene .leaf.variant1 .sheet-back {background-image:var(--ink3)}
+.sb-book-scene .leaf.variant2 .sheet-front {background-image:var(--ink1)}
+.sb-book-scene .leaf.variant2 .sheet-back {background-image:var(--ink0)}
+.sb-book-scene .leaf.variant3 .sheet-front {background-image:var(--ink3)}
+.sb-book-scene .leaf.variant3 .sheet-back {background-image:var(--ink2)}
+.sb-book-scene #hinge-core {position:absolute;left:432px;top:9px;width:35px;height:456px;background:linear-gradient(90deg,#180f11 0%,#34221d 18%,#6d4a35 44%,#3c291f 67%,#1a1312 100%);border-radius:17px;box-shadow:inset -6px 0 9px #0a0604c0,0 0 2px #130b0b;transform:translateZ(15px)}
+.sb-book-scene #sewn-gutter {position:absolute;left:428px;top:9px;width:31px;height:454px;background:linear-gradient(90deg,#211814,#54362d 33%,#865b3a 53%,#3a271f 80%,#150f12);border-left:2px solid #bb955d;border-right:1px solid #271611;border-radius:14px;box-shadow:inset 4px 0 6px #09060677,inset -7px 0 9px #1a0c0b9a;transform:translateZ(82px);pointer-events:none}
+.sb-book-scene #sewn-gutter::before {content:"";position:absolute;inset:19px 8px;background:repeating-linear-gradient(180deg,transparent 0,transparent 63px,#d5a971 64px,#ead4a5 65px,#34201b 67px,transparent 71px);opacity:.5}
+.sb-book-scene #cover {position:absolute;left:446px;top:0;width:452px;height:469px;transform-origin:0 50%;transform-style:preserve-3d;will-change:transform}
+.sb-book-scene .cover-face {position:absolute;inset:0;backface-visibility:hidden;border-radius:6px 14px 15px 5px;border:9px solid #241817;box-shadow:inset 0 0 0 2px #a17d4b,0 10px 19px #0009;overflow:hidden}
+.sb-book-scene .cover-front {background:linear-gradient(130deg,#3e211420,transparent 45%,#05030455),var(--cover) center/100% 100%;}
+.sb-book-scene .cover-front::before {content:"";position:absolute;inset:8px;border:2px solid #bd955786;box-shadow:inset 0 0 0 2px #22151080,0 0 0 2px #331e16cc;pointer-events:none}
+.sb-book-scene .cover-front::after {content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 17%,#e5a74c10,transparent 48%),linear-gradient(105deg,#0004,transparent 15%,transparent 78%,#0004);pointer-events:none}
+.sb-book-scene .cover-inside {transform:rotateY(180deg) translateZ(1px);border-radius:14px 5px 5px 14px;background:var(--endpaper) center/cover;box-shadow:inset 0 0 0 10px #321d1d,inset 0 0 0 13px #ad8455,inset 0 0 50px #0e0b0a7f}
+.sb-book-scene .cover-inside::after {content:"";position:absolute;inset:25px;border:1px solid #cba66eaa;box-shadow:0 0 0 6px #a3825027}
+.sb-book-scene .cover-inside .insignia {position:absolute;left:110px;top:155px;width:220px;text-align:center;color:#c49d66b8;font:32px Georgia,serif;letter-spacing:.24em;text-shadow:0 1px 0 #1b0f0e}
+.sb-book-scene #cover .cover-thickness {position:absolute;left:0;right:0;bottom:-9px;height:11px;transform-origin:top;transform:rotateX(88deg);background:linear-gradient(#6a432c,#1c1113);box-shadow:0 2px 2px #0006}
+.sb-book-scene #bookmark {position:absolute;left:784px;top:443px;width:25px;height:83px;transform:translateZ(-14px) rotate(-7deg);background:linear-gradient(90deg,#311f48,#63426e 35%,#3c2857);clip-path:polygon(0 0,100% 0,100% 100%,50% 87%,0 100%);box-shadow:3px 5px 4px #0007;opacity:1}
+/* filter on a preserve-3d cover flattens its two faces in Chromium,
+   making the outside lettering appear mirrored on the inside. The existing
+   face box shadows provide depth without flattening the 3D book. */
+.sb-book-scene .cover-front {box-shadow:inset 0 0 0 2px #8c633a, inset 0 0 26px #1a0b0d91}
+.sb-book-scene .cover-front::before {border:2px solid #d7b47779;inset:7px;box-shadow:inset 0 0 0 2px #231612aa,0 0 0 3px #38241588}
+.sb-book-scene #opened-left {box-shadow:inset 0 0 38px #9e764d88,0 3px 1px #e4cfa6;}
+.sb-book-scene #page-stack {box-shadow:9px 11px 5px #070706b8,inset -12px 0 16px #6e4921,inset 6px 0 10px #fff0c1,0 0 0 1px #b48f58}
+.sb-book-scene .leaf {will-change:transform}
+.sb-book-scene #left-stack-edges {position:absolute;left:21px;top:30px;width:413px;height:407px;border-radius:14px 1px 1px 12px;box-shadow:inset 0 -7px 0 #b88f5a,0 7px 10px #17100d48; background:repeating-linear-gradient(180deg,#f8dfaa 0px,#bd985e .7px,#f0d6ab 1.4px,#9a7349 2px,#f1d1a0 3.5px);transform:translateZ(10px);opacity:0;pointer-events:none;}
+.sb-book-scene #left-stack-edges::before {content:"";position:absolute;inset:3px 4px 7px 4px;background:var(--paper) center/cover;border-radius:8px 1px 1px 5px;box-shadow:inset -28px 0 26px #6c45302c}
+.sb-book-scene #cover .cover-front {background:linear-gradient(118deg,#bd875012,transparent 30%,#08030242),var(--cover) center/100% 100%;box-shadow:inset 0 0 15px #1b0d0d94, 0 9px 17px #0008;border:8px solid #32241e}
+.sb-book-scene #cover .cover-front::before {inset:6px;border:0;box-shadow:inset 0 0 0 1px #25161383,inset 0 0 0 5px #704e3525;opacity:.65}
+.sb-book-scene #cover .cover-front::after {background:linear-gradient(100deg,#11090683,transparent 11%,transparent 84%,#16090445),radial-gradient(ellipse at 28% 22%,#d1a37515,transparent 55%)}
+.sb-book-scene #cover .cover-inside {box-shadow:inset 0 0 0 11px #30221e,inset 0 0 0 13px #70544155,inset 0 0 38px #130c0c80}
+.sb-book-scene #cover .cover-inside::after {display:none}
+.sb-book-scene #cover .cover-inside .insignia {display:none}
+.sb-book-scene #cover .cover-thickness {background:linear-gradient(#79533c,#291c17)}
+.sb-book-scene #spine {background:linear-gradient(90deg,#191415 0%,#281d1b 8%,#422e27 23%,#50372b 42%,#352621 75%,#181416 100%);box-shadow:-5px 9px 10px #0009,inset 0 0 0 1px #6e4c3a}
+.sb-book-scene #spine::after {inset:12px 4px;background:repeating-linear-gradient(180deg,transparent 0,transparent 58px,#1c1514 59px,#221716 61px,#8160499c 65px,#2d1e1a 70px,transparent 76px);border:0;opacity:.88}
+.sb-book-scene #sewn-gutter {background:linear-gradient(90deg,#221715,#3c281f 33%,#533a2b 53%,#33241e 80%,#150f12);border-left:1px solid #7d5a3c80}
+.sb-book-scene #sewn-gutter::before {opacity:.15}
+.sb-book-scene #right-leather, .sb-book-scene #left-leather {border-color:#30231f;background:linear-gradient(119deg,#231915,#674a37 58%,#251b19);box-shadow:inset 0 0 0 1px #80583b6b,5px 14px 17px #0009}
+.sb-book-scene #bookmark {background:linear-gradient(90deg,#183f33,#237260 37%,#135040 75%,#0d3029);left:791px;width:24px;transform:translateZ(-14px) rotate(-8deg);box-shadow:2px 4px 7px #0009}
+.sb-book-scene #page-stack {border-color:#b18b5e;background:repeating-linear-gradient(0deg,#997446 0px,#debb87 1px,#9a744a 2px,#d8b780 3px)}
+.sb-book-scene #page-stack, .sb-book-scene #right-page, .sb-book-scene #under-final, .sb-book-scene .leaf {left:466px}
+.sb-book-scene #page-stack {width:419px}
+.sb-book-scene #right-page, .sb-book-scene #under-final {width:419px}
+.sb-book-scene #spine {background-image:linear-gradient(90deg,#0e0a0a 0%,#3a2520b0 18%,#3a2820a0 48%,#190f0edd 100%),url("../assets/invite-v6-spine.jpg");background-size:100% 100%,100% 100%;background-blend-mode:normal,multiply;}
+.sb-book-scene #spine-shield {position:absolute;left:410px;top:5px;width:65px;height:463px;
+ border-radius:23px 11px 12px 24px;
+ border:1px solid #1b1110;
+ background:linear-gradient(90deg,#0d0909 0%,#2c1c18 9%,#50342a 25%,#473025 48%,#261a17 77%,#0f0b0b 94%,#080707 100%);
+ box-shadow:inset 9px 0 7px #0a0605a8,inset -9px 0 9px #100908db,-4px 2px 7px #070403b3,6px 3px 8px #09050497;
+ transform:translateZ(105px);pointer-events:none;
+ backface-visibility:hidden;}
+.sb-book-scene #spine-shield::before {content:"";position:absolute;inset:6px 3px 7px;
+ background:repeating-linear-gradient(180deg,transparent 0,transparent 57px,#100a0966 60px,#906c4e43 64px,#110a0a70 68px,transparent 74px);
+ box-shadow:inset 4px 0 9px #a16d3832,inset -7px 0 7px #07040380;border-radius:15px 5px 7px 15px;}
+.sb-book-scene #spine-shield::after {content:"";position:absolute;right:2px;top:8px;bottom:8px;width:8px;border-radius:3px;background:linear-gradient(90deg,#231714,#090707);box-shadow:-4px 0 7px #0c0808a8}
+.sb-book-scene #hinge-core {width:42px;left:431px;background:linear-gradient(90deg,#0c0909,#33231d 30%,#4b3025 56%,#110c0b);}
+.sb-book-scene #sewn-gutter {width:38px;left:429px;background:linear-gradient(90deg,#1a1110,#4d3329 40%,#271a16 78%,#0d0909);}
+/* The book is the content; remove the V6 demo's theatrical stage, headings and navigation. */
+.sb-book-frame { width: 100%; max-width: 1000px; margin-inline: auto; }
+.sb-book-viewport { width: 100%; position: relative; overflow: hidden; }
+.sb-book-scene #book-camera { left: 50px; top: 25px; }
+.sb-book-scene #under-final { color: #1c3e2b; padding-top: 35px; }
+.sb-book-scene #under-final .mini-top { color: #7f643e; letter-spacing: .23em; }
+.sb-book-scene #under-final .mini-heading { font: normal 27px/1.15 Georgia, serif; margin: 12px 0 12px; color: #18472e; }
+.sb-book-scene #under-final .mini-qr { width: 224px; height: 224px; padding: 0; border: 7px solid white; border-radius: 4px; box-sizing: border-box; background: #fff; }
+.sb-book-scene #under-final .mini-code-label { margin: 10px 0 3px; color: #715635; }
+.sb-book-scene #under-final .mini-code { font-size: 29px; color: #193a28; }
+.sb-book-scene #opened-left { background: var(--paper) center / cover; }
+.sb-book-scene .cover-front { background: linear-gradient(110deg,#082d1fd0,#1b5036b8 58%,#042417dd), var(--cover) center / 100% 100%; background-blend-mode: multiply; }
+.sb-book-scene .sb-book-cover-mark { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; color: #d5b77e; text-shadow: 0 2px 9px #071710aa; border-radius: inherit; }
+.sb-book-scene .sb-book-cover-mark strong { font: normal 56px/1.05 Georgia, serif; letter-spacing: -.02em; }
+.sb-book-scene .sb-book-cover-mark span { margin-top: 17px; font: 12px Georgia, serif; letter-spacing: .22em; text-transform: uppercase; }
+.sb-book-scene .sb-book-cover-mark::before,.sb-book-scene .sb-book-cover-mark::after { content: ''; position: absolute; top: 22px; bottom: 22px; left: 19px; right: 19px; border: 1px solid #d5b77e70; border-radius: 3px 8px 10px 2px; }
+.sb-book-scene .sb-book-cover-mark::after { inset: 28px 25px; border-color: #bfa77b3b; }
+/* Transparent final text on the curved, accumulated paper stack: no flat overlay sheets. */
+.sb-book-scene #open-message {
+ position: absolute; top: 44px; left: 45px; height: 354px; width: 355px;
+ transform: translateZ(116px); text-align: center; padding: 53px 20px 18px;
+ opacity: 0; pointer-events: none; will-change: opacity;
+}
+.sb-book-scene #open-message .book-kicker { font: bold 11px/1.5 Arial, sans-serif; letter-spacing: .22em; color: #8b683c; }
+.sb-book-scene #open-message .book-heading { font: normal 44px/1.08 Georgia, serif; color: #18472e; margin: 24px 0 16px; }
+.sb-book-scene #open-message .book-rule { width: 132px; height: 1px; background: #b69d74; margin: 23px auto; }
+.sb-book-scene #open-message .book-caption { font: italic 20px/1.6 Georgia, serif; color: #624e39; }
+.sb-book-scene .sheet-face, .sb-book-scene #under-final .mini-qr svg { shape-rendering: auto; }
+.sb-book-controls { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: -3px; }
+.sb-book-controls button { cursor: pointer; border-radius: 8px; padding: 7px 13px; border: 1px solid #bbac92; color: #174b31; background: #fffdf7; font: 600 13px/1.3 system-ui, sans-serif; }
+.sb-book-controls button:hover { background: #edf5e9; border-color: #5d8969; }
+.sb-book-controls button:focus-visible { outline: 3px solid #8dbb8c; outline-offset: 2px; }
+.sb-book-hint { color: #746453; font: 13px/1.5 system-ui,sans-serif; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+ .sb-book-scene .leaf, .sb-book-scene .sheet-strip, .sb-book-scene #cover { will-change: auto; }
+ .sb-book-controls { display: none; }
+}
+
+
+/* Soft daylight shadow works on the application's white/cream cards. */
+.sb-book-scene #contact-shadow { background: #32201650; width: 740px; height: 75px; left: 94px; bottom: -15px; filter: blur(25px); }
+/* Gently clear the ink immediately behind the text without hiding the curved leaf stack. */
+.sb-book-scene #open-message::before { content: ''; position: absolute; inset: 4px -14px; z-index: -1; border-radius: 48%; background: radial-gradient(ellipse at center, #fff8dfb8 0%, #fff8df7c 46%, transparent 73%); filter: blur(12px); }
+.sb-book-scene #open-message .book-caption { color: #4e3f2d; }

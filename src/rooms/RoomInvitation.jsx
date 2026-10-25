@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InvitationQR } from '../qr/InvitationQR.jsx';
 import { DEFAULT_INVITATION_QR_PRESET, INVITATION_QR_PRESETS } from '../qr/invitationQr.js';
@@ -10,8 +10,7 @@ export function RoomInvitation({ code }) {
   const url = getInvitationUrl(code, typeof window === 'undefined' ? '' : window.location.origin);
   const [copyMessage, setCopyMessage] = useState('');
   const [presetId, setPresetId] = useState(DEFAULT_INVITATION_QR_PRESET);
-  const [showBook, setShowBook] = useState(false);
-  const qrRef = useRef(null);
+  const [showBook, setShowBook] = useState(true);
 
   useEffect(() => setCopyMessage(''), [url]);
 
@@ -71,25 +70,25 @@ export function RoomInvitation({ code }) {
         </div>
         <div className="grid justify-items-center gap-2">
           <div className="w-full max-w-[230px] rounded-lg border border-stone-200 bg-white p-2">
-            <InvitationQR url={url} presetId={presetId} svgRef={qrRef} className="block w-full" />
+            <InvitationQR url={url} presetId={presetId} className="block w-full" />
           </div>
           <p className="text-center text-xs text-stone-700">Scan to open this invitation</p>
         </div>
       </div>
       <div className="grid gap-3 border-t border-stone-200 pt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-stone-700">Optional host-screen animation</p>
+          <p className="text-sm font-semibold text-green-950">Your book invitation</p>
           <button
             type="button"
             aria-expanded={showBook}
             onClick={() => setShowBook((previous) => !previous)}
             className="rounded-lg border border-green-800 px-4 py-2 font-semibold text-green-900 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
           >
-            {showBook ? 'Hide book reveal' : 'Open animated book'}
+            {showBook ? 'Hide book' : 'Show book'}
           </button>
         </div>
         {showBook && (
-          <ScriptureBaseballBookIntro joinUrl={url} joinCode={code} qrRef={qrRef} presetId={presetId} />
+          <ScriptureBaseballBookIntro joinUrl={url} joinCode={code} presetId={presetId} />
         )}
       </div>
       <p className="text-sm text-stone-600">
