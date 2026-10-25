@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* Only scan the app, never the source-only QR Studio designer. */
+@import "tailwindcss" source("../src");
 
 @theme {
   --color-scripture-green: #14532d;

@@ -6,8 +6,11 @@
   "scripts": {
     "test": "node --test",
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "npm run qr:presets && vite build",
+    "preview": "vite preview",
+    "qr:presets": "node tools/compile-qr-presets.mjs",
+    "qr:presets:check": "node tools/compile-qr-presets.mjs --check",
+    "qr:studio": "node tools/qr-studio/scripts/build.mjs"
   },
   "repository": {
     "type": "git",
