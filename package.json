@@ -4,7 +4,7 @@
   "description": "[My Notes](notes.md)",
   "main": "index.js",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test 'src/**/*.test.js'",
     "dev": "vite",
     "build": "npm run qr:presets && vite build",
     "preview": "vite preview",
