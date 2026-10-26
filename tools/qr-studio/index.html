@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="An offline-first QR code designer. Text, Micro QR, rectangular QR, rich gradients and on-device downloads.">
+  <title>QR Studio — local QR design editor</title>
+  <link rel="stylesheet" href="./ui/studio.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="branding"><span class="brand-icon" aria-hidden="true">▦</span>
+        <div><strong>QR Studio</strong><span>Design freely. Generate privately.</span></div>
+      </div>
+      <div class="top-actions">
+        <span class="privacy-badge"><span class="tiny-dot"></span> Fully local</span>
+        <button type="button" class="icon-button" id="undo" title="Undo (Ctrl/⌘ Z)" aria-label="Undo">↶</button>
+        <button type="button" class="icon-button" id="redo" title="Redo (Ctrl/⌘ Shift Z)" aria-label="Redo">↷</button>
+        <button type="button" class="top-button" id="saveDesign" title="Save the entire QR design as a reusable JSON file">Save design</button>
+        <button type="button" class="top-button" id="loadDesign">Load design</button>
+        <input type="file" id="designFile" accept="application/json,.json" hidden>
+      </div>
+    </div>
+  </header>
+
+  <main class="studio-layout">
+    <div class="editor-column">
+      <section class="panel" aria-labelledby="contentHeading">
+        <div class="panel-heading"><div><span class="eyebrow">01 · DATA</span><h1 id="contentHeading">What should your QR contain?</h1><p>Choose the kind of content, then enter the details.</p></div></div>
+        <div class="work-mode" role="group" aria-label="Generate one QR code or a batch"><button type="button" id="modeSingle" class="selected">Single QR</button><button type="button" id="modeBatch">Batch QR codes</button></div>
+        <div id="singleContentArea"><div class="tabs" id="contentTabs" aria-label="Content type">
+          <button class="tab active" data-content-kind="text">Text</button><button class="tab" data-content-kind="url">URL</button>
+          <button class="tab" data-content-kind="wifi">Wi-Fi</button><button class="tab" data-content-kind="vcard">Contact</button>
+          <button class="tab" data-content-kind="email">Email</button><button class="tab" data-content-kind="sms">SMS</button>
+          <button class="tab" data-content-kind="phone">Phone</button><button class="tab" data-content-kind="geo">Location</button>
+        </div>
+        <div id="payloadFields" class="fields-stack"></div>
+        <p class="field-help" id="contentHint">All content is converted locally into scanner-readable text. It is never uploaded.</p></div>
+        <div id="batchContentArea" class="batch-area" hidden>
+          <div class="batch-source-tabs" role="group" aria-label="Batch input source"><button type="button" data-batch-source="paste" class="selected">Paste list</button><button type="button" data-batch-source="table">CSV / TSV</button><button type="button" data-batch-source="sequence">Number sequence</button></div>
+          <div data-batch-pane="paste" class="field"><label for="batchPaste">One payload per line</label><textarea id="batchPaste" spellcheck="false" placeholder="https://example.com/product/001&#10;https://example.com/product/002&#10;https://example.com/product/003"></textarea><p class="micro-help">Blank lines are ignored. Use CSV for multiline payloads and per-row filenames.</p></div>
+          <div data-batch-pane="table" class="batch-pane" hidden>
+            <div class="field"><label for="batchTableText">CSV or TSV contents</label><textarea id="batchTableText" spellcheck="false" placeholder="data,filename&#10;https://example.com/a,product-a"></textarea></div>
+            <div class="inline-buttons"><button type="button" id="batchChooseFile" class="subtle-button">Import local CSV / TSV</button><span id="batchTableName" class="micro-help">Or paste a table above</span></div><input type="file" id="batchFile" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain" hidden>
+            <div class="control-grid two-controls"><div class="field"><label for="batchDelimiter">Delimiter</label><select id="batchDelimiter"><option value=",">Comma (,)</option><option value="tab">Tab (TSV)</option><option value=";">Semicolon (;)</option></select></div><label class="toggle-label"><input type="checkbox" id="batchHeaders" checked>First row is headers</label></div>
+            <div id="batchColumnMapping" class="batch-column-map"></div>
+            <p class="micro-help">Map payload text and optional filename, QR type, format, encoding JSON, and style JSON. Imported files stay in this browser.</p>
+          </div>
+          <div data-batch-pane="sequence" class="batch-pane" hidden>
+            <div class="control-grid four-controls"><div class="field"><label for="seqStart">Start</label><input type="number" id="seqStart" value="1"></div><div class="field"><label for="seqEnd">End</label><input type="number" id="seqEnd" value="25"></div><div class="field"><label for="seqStep">Step</label><input type="number" id="seqStep" value="1"></div><div class="field"><label for="seqPad">Zero padding</label><input type="number" id="seqPad" min="0" max="12" value="3"></div></div>
+            <div class="field"><label for="seqTemplate">QR content template · use {number} or {index}</label><input id="seqTemplate" value="https://example.com/item/{number}"></div>
+            <div class="field"><label for="seqFilename">Per-file name template</label><input id="seqFilename" value="item-{number}"></div>
+          </div>
+          <div class="batch-summary"><strong id="batchCount">0 ready</strong><span id="batchInputError" role="alert"></span></div>
+          <div id="batchPreviewRows" class="batch-preview-rows" aria-label="Select an item to preview"></div><div id="batchPagination" class="batch-pagination" hidden><button id="batchPrev" type="button">← Previous</button><span id="batchPageLabel" aria-live="polite"></span><button id="batchNext" type="button">Next →</button></div>
+          <div class="batch-export"><div class="section-title">Generate downloadable ZIP</div><div class="control-grid two-controls"><div class="field"><label for="batchZipName">ZIP filename</label><input id="batchZipName" placeholder="Auto: qr-batch-date-time"></div><div class="field"><label for="batchExportFormat">QR image type</label><select id="batchExportFormat"><option value="svg">.svg · smallest, vector</option><option value="png">.png</option><option value="webp">.webp</option><option value="jpeg">.jpg</option><option value="pdf">.pdf · print</option><option value="eps">.eps · print</option></select></div></div>
+            <label class="toggle-label"><input id="batchManifest" type="checkbox" checked>Include CSV results manifest</label>
+            <label class="toggle-label" id="batchStreamRow" hidden><input id="batchStream" type="checkbox">Stream ZIP straight to a file (for large batches)</label>
+            <div class="batch-actions"><button id="batchGenerate" class="primary-button" type="button">↓ Generate ZIP</button><button id="batchCancel" class="subtle-button" type="button" hidden>Cancel</button><button id="batchRetry" class="subtle-button" type="button" hidden>Retry failed rows</button></div>
+            <progress id="batchProgress" value="0" max="1" hidden></progress><p class="micro-help" id="batchStatus" role="status">Generated files never leave this device. Batch jobs reuse the design shown in the preview.</p><ul id="batchErrors" class="batch-error-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="typeHeading">
+        <div class="panel-heading"><div><span class="eyebrow">02 · FORMAT</span><h2 id="typeHeading">Choose a QR type</h2><p>Standard QR works with the widest range of phone cameras.</p></div></div>
+        <div class="type-grid" role="group" aria-label="QR code type">
+          <button class="type-card selected" data-qr-kind="standard"><span class="type-visual standard-mark" aria-hidden="true">▦</span><span><strong>Standard</strong><small>Best compatibility</small></span><span class="selected-tick" aria-hidden="true">✓</span></button>
+          <button class="type-card" data-qr-kind="micro"><span class="type-visual micro-mark" aria-hidden="true">▣</span><span><strong>Micro</strong><small>Tiny QR symbols</small></span><span class="selected-tick" aria-hidden="true">✓</span></button>
+          <button class="type-card" data-qr-kind="rmqr"><span class="type-visual rectangular-mark" aria-hidden="true">▦</span><span><strong>Rectangular</strong><small>For narrow labels</small></span><span class="selected-tick" aria-hidden="true">✓</span></button>
+        </div>
+        <p class="inline-note" id="kindNote">Standard QR, versions 1–40, with the broadest scanner support.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="appearanceHeading">
+        <div class="panel-heading heading-with-action"><div><span class="eyebrow">03 · STYLE</span><h2 id="appearanceHeading">Make it yours</h2><p>Colors and shapes change the live QR immediately.</p></div><button type="button" class="text-button" id="resetLook">Reset style</button></div>
+        <div class="section-title">Style presets</div>
+        <div class="preset-gallery" id="presetGallery" role="group" aria-label="Color preset">
+          <button data-preset="classic" class="preset"><span class="preset-preview" style="background:linear-gradient(130deg,#111827 55%,#f8fafc 55%)"></span><small>Classic</small></button>
+          <button data-preset="indigo" class="preset"><span class="preset-preview" style="background:linear-gradient(130deg,#172554 55%,#e8edff 55%)"></span><small>Indigo</small></button>
+          <button data-preset="ocean" class="preset"><span class="preset-preview" style="background:linear-gradient(135deg,#124c82,#14b8a6)"></span><small>Ocean</small></button>
+          <button data-preset="sunset" class="preset"><span class="preset-preview" style="background:linear-gradient(135deg,#a21caf,#f97316)"></span><small>Sunset</small></button>
+          <button data-preset="forest" class="preset"><span class="preset-preview" style="background:linear-gradient(135deg,#064e3b,#a3e635)"></span><small>Forest</small></button>
+        </div>
+        <div class="section-title spaced">Module shape</div>
+        <div class="shape-gallery" id="shapeGallery" role="group" aria-label="Data module shape">
+          <button class="shape-tile selected" data-shape="square"><span class="shape-art shape-square" aria-hidden="true"></span><span>Square</span></button>
+          <button class="shape-tile" data-shape="rounded"><span class="shape-art shape-rounded" aria-hidden="true"></span><span>Rounded</span></button>
+          <button class="shape-tile" data-shape="circle"><span class="shape-art shape-circle" aria-hidden="true"></span><span>Dots</span></button>
+          <button class="shape-tile" data-shape="connected-rounded"><span class="shape-art shape-connected" aria-hidden="true"></span><span>Joined</span></button>
+          <button class="shape-tile" data-shape="diamond"><span class="shape-art shape-diamond" aria-hidden="true"></span><span>Diamond</span></button>
+          <button class="shape-tile" data-shape="horizontal"><span class="shape-art shape-horizontal" aria-hidden="true"></span><span>Bars</span></button>
+          <button class="shape-tile" data-shape="vertical"><span class="shape-art shape-vertical" aria-hidden="true"></span><span>Vertical</span></button>
+        </div>
+        <div class="control-grid two-controls spaced">
+          <div class="field"><div class="label-row"><label for="moduleScale">Module coverage</label><output id="moduleScaleValue">100%</output></div><input type="range" id="moduleScale" min="45" max="100" step="1" value="100"><p class="micro-help">Smaller creates more space between dots.</p></div>
+          <div class="field"><div class="label-row"><label for="cornerRadius">Corner rounding</label><output id="cornerRadiusValue">32%</output></div><input type="range" id="cornerRadius" min="0" max="50" step="1" value="32"><p class="micro-help">Affects rounded and connected modules.</p></div>
+        </div>
+        <div class="section-title spaced">Core colors</div>
+        <div class="quick-paints">
+          <div class="quick-paint-row"><div><strong>QR pattern</strong><span>Modules and default finder elements</span></div><div class="quick-paint-actions"><button class="swatch-button" id="quickDataColor" type="button" data-pick="data" aria-label="Pick QR pattern color"><span class="swatch-display"></span></button><button class="subtle-button" data-inspect="data">Edit</button></div></div>
+          <div class="quick-paint-row"><div><strong>Background</strong><span>Solid, gradient, or truly transparent</span></div><div class="quick-paint-actions"><button class="swatch-button" id="quickBgColor" type="button" data-pick="background" aria-label="Pick background color"><span class="swatch-display"></span></button><button class="subtle-button" data-inspect="background">Edit</button></div></div>
+        </div>
+        <div class="transparency-row"><label class="toggle-label"><input type="checkbox" id="transparentBg"><span>Transparent background</span></label><span class="micro-help">PNG · SVG · WebP</span></div>
+
+        <div class="color-lab" id="colorLab">
+          <div class="lab-header"><div><strong>Color & gradient editor</strong><p>Fine-tune any part of your QR code.</p></div><span class="lab-badge">Live</span></div>
+          <div class="control-grid two-controls">
+            <div class="field"><label for="paintArea">Editing</label><select id="paintArea">
+              <option value="data">Data modules</option><option value="background">Background</option>
+              <option value="finder">Finder frames</option><option value="finderCenter">Finder centers</option><option value="finderLight">Finder light areas</option>
+              <option value="timing">Timing pattern</option><option value="alignment">Alignment patterns</option>
+              <option value="format">Format information</option><option value="version">Version information</option>
+              <option value="separator">Finder separators</option><option value="darkModule">Fixed dark module</option>
+              <option value="quietZone">Quiet-zone border</option>
+            </select></div>
+            <div class="field"><label for="paintMode">Fill type</label><select id="paintMode"><option value="solid">Solid color</option><option value="linear">Linear gradient</option><option value="radial">Radial gradient</option><option value="transparent">Transparent</option></select></div>
+          </div>
+          <div id="inheritRow" class="inherit-row" hidden><label class="toggle-label"><input type="checkbox" id="customPaint">Override default color</label><button type="button" class="text-button" id="clearPaint">Use default</button></div>
+          <div id="paintEditor" class="paint-editor"></div>
+          <div class="lab-tip" id="labTip">Click a swatch to open the precision color picker. Dragging updates the code immediately.</div>
+        </div>
+
+        <details class="foldout" id="eyePanel"><summary><span><strong>Finder eye styling</strong><small>Outer frames, centers, and individual corners</small></span><span class="chevron">⌄</span></summary>
+          <div class="foldout-content">
+            <div class="control-grid two-controls"><div class="field"><label for="outerShape">Outer frame shape</label><select id="outerShape"><option value="square">Square</option><option value="rounded">Rounded</option><option value="circle">Circle</option></select></div>
+            <div class="field"><label for="innerShape">Center shape</label><select id="innerShape"><option value="square">Square</option><option value="rounded">Rounded</option><option value="circle">Circle</option></select></div></div>
+            <div class="field"><label for="individualEye">Individual eye override</label><select id="individualEye"><option value="all">All eyes (default)</option><option value="topLeft">Top-left</option><option value="topRight">Top-right</option><option value="bottomLeft">Bottom-left</option></select></div>
+            <div class="eye-custom-actions"><button type="button" class="subtle-button" id="eyeOuterEdit">Edit frame fill &amp; gradient</button><button type="button" class="subtle-button" id="eyeCenterEdit">Edit center fill &amp; gradient</button><button type="button" class="subtle-button" id="eyeLightEdit">Edit light areas</button><button type="button" class="text-button" id="clearEyeOverride">Clear selected override</button><button type="button" class="text-button" id="clearAllEyeOverrides">Clear all individual overrides</button></div>
+            <p class="micro-help" id="eyeNote">Shared finder paints and corner-specific overrides use the same color &amp; gradient editor. Use the selector above to target an individual eye.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="artworkHeading">
+        <div class="panel-heading"><div><span class="eyebrow">04 · CREATIVE LAYERS</span><h2 id="artworkHeading">Images & shadows</h2><p>Turn a local photograph into the background, QR pattern, or both. All changes are non-destructive.</p></div></div>
+        <div class="section-title">Photographic artwork</div>
+        <div class="artwork-drop" id="artworkDrop">
+          <div id="artworkEmpty" class="artwork-empty"><span class="artwork-icon" aria-hidden="true">▧</span><div><strong>Add an image to your QR</strong><small>PNG, JPEG, WebP or GIF · up to 11 MB · stored locally</small></div><button type="button" id="chooseArtwork" class="subtle-button">Choose image</button></div>
+          <div id="artworkLoaded" class="artwork-loaded" hidden><img id="artworkThumb" alt="Current artwork"><div><strong id="artworkName">Image loaded</strong><small>Embedded in the QR design — never uploaded</small><div class="inline-buttons"><button type="button" class="subtle-button" id="replaceArtwork">Replace</button><button type="button" class="remove-button" id="removeArtwork">Remove image</button></div></div></div>
+        </div>
+        <input type="file" id="artworkFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        <div id="artworkSettings" class="artwork-settings" hidden>
+          <div class="section-title">How should the photograph be used?</div>
+          <div class="artwork-modes" role="group" aria-label="Image rendering mode">
+            <button type="button" data-artwork-mode="background"><span class="artwork-mode-symbol">▧</span><strong>Background</strong><small>Photo behind QR</small></button>
+            <button type="button" data-artwork-mode="modules"><span class="artwork-mode-symbol">▦</span><strong>Inside modules</strong><small>Photo in dark dots</small></button>
+            <button type="button" data-artwork-mode="dual"><span class="artwork-mode-symbol">▨</span><strong>Dual tone</strong><small>Picture in both</small></button>
+          </div>
+          <p id="artworkModeHint" class="micro-help"></p>
+          <div class="art-second-image"><div class="section-title">Optional separate QR-pattern image</div><div id="artSecondInfo" class="micro-help">The pattern currently reuses the background photo.</div><div class="inline-buttons"><button type="button" id="replaceArtSecond" class="subtle-button">Choose pattern image</button><button type="button" id="removeArtSecond" class="remove-button" hidden>Use background photo</button></div><input type="file" id="artSecondFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
+          <div class="control-grid two-controls"><div class="field"><label for="artworkLayer">Edit image layer</label><select id="artworkLayer"><option value="background">Background image</option><option value="data">QR pattern image</option></select></div><div class="field"><label for="artworkPositionPreset">Framing preset</label><select id="artworkPositionPreset"><option value="custom">Custom framing</option><option value="center">Center</option><option value="top">Top</option><option value="bottom">Bottom</option><option value="left">Left</option><option value="right">Right</option></select></div></div>
+          <p class="micro-help" id="artworkEditHint">Position, crop, rotation, and scale affect only the chosen image layer.</p>
+          <div class="control-grid two-controls">
+            <div class="field"><label for="artworkFit">Fit</label><select id="artworkFit"><option value="cover">Fill area (crop as needed)</option><option value="contain">Show entire picture</option></select></div>
+            <div class="field"><div class="label-row"><label for="artworkZoom">Scale</label><output id="artworkZoomValue">100%</output></div><input type="range" id="artworkZoom" min="50" max="250" step="5" value="100"></div>
+          </div>
+          <div class="control-grid two-controls">
+            <div class="field"><div class="label-row"><label for="artworkX">Horizontal position</label><output id="artworkXValue">50%</output></div><input type="range" id="artworkX" min="0" max="100" value="50"></div>
+            <div class="field"><div class="label-row"><label for="artworkY">Vertical position</label><output id="artworkYValue">50%</output></div><input type="range" id="artworkY" min="0" max="100" value="50"></div>
+          </div>
+          <div class="control-grid two-controls"><div class="field"><div class="label-row"><label for="artworkRotation">Rotation</label><output id="artworkRotationValue">0°</output></div><input type="range" id="artworkRotation" min="-180" max="180" step="5" value="0"></div><div class="field"><div class="label-row"><label for="artworkOpacity">Image opacity</label><output id="artworkOpacityValue">100%</output></div><input type="range" id="artworkOpacity" min="0" max="100" value="100"></div></div>
+          <div id="artworkBackgroundSettings" class="art-treatment">
+            <div class="section-title">Background treatment</div>
+            <div class="control-grid two-controls">
+              <div class="field"><div class="label-row"><label for="artBgBrightness">Brightness</label><output id="artBgBrightnessValue">125%</output></div><input id="artBgBrightness" data-art-control="background.brightness" type="range" min="20" max="180" step="5"></div>
+              <div class="field"><div class="label-row"><label for="artBgTint">Light overlay</label><output id="artBgTintValue">30%</output></div><input id="artBgTint" data-art-control="background.tintOpacity" type="range" min="0" max="90" step="5"></div>
+            </div>
+            <p class="micro-help">Brightening the background helps distinguish dark QR modules.</p>
+          </div>
+          <div id="artworkModuleSettings" class="art-treatment">
+            <div class="section-title">QR module treatment</div>
+            <div class="control-grid two-controls">
+              <div class="field"><div class="label-row"><label for="artDataBrightness">Brightness</label><output id="artDataBrightnessValue">55%</output></div><input id="artDataBrightness" data-art-control="data.brightness" type="range" min="15" max="180" step="5"></div>
+              <div class="field"><div class="label-row"><label for="artDataTint">Dark overlay</label><output id="artDataTintValue">45%</output></div><input id="artDataTint" data-art-control="data.tintOpacity" type="range" min="0" max="90" step="5"></div>
+            </div>
+            <p class="micro-help">Finder eyes remain protected and use their original fills. Image-filled modules may be harder to scan.</p>
+          </div>
+          <details class="foldout" id="artworkAdvanced"><summary><span><strong>Advanced image adjustments</strong><small>Contrast, saturation, blur and tint for each layer</small></span><span class="chevron">⌄</span></summary>
+            <div class="foldout-content"><p class="micro-help">These controls modify only the selected image layer. Your original upload is preserved.</p>
+              <div class="control-grid two-controls"><div class="field"><div class="label-row"><label for="artContrast">Contrast</label><output id="artContrastValue">100%</output></div><input type="range" id="artContrast" min="20" max="300" value="100"></div><div class="field"><div class="label-row"><label for="artSaturation">Saturation</label><output id="artSaturationValue">100%</output></div><input type="range" id="artSaturation" min="0" max="300" value="100"></div></div>
+              <div class="control-grid two-controls"><div class="field"><div class="label-row"><label for="artBlur">Blur</label><output id="artBlurValue">0.00 modules</output></div><input type="range" id="artBlur" min="0" max="200" value="0"></div><div class="field"><label for="artTintColor">Image tint</label><button type="button" id="artTintColor" class="subtle-button">Choose layer tint</button></div></div>
+              <div class="control-grid two-controls"><div class="field"><label for="artBlendMode">Image blend mode</label><select id="artBlendMode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></div>
+              <div class="field"><label for="artPosterize">Posterize colors</label><select id="artPosterize"><option value="0">None (full color)</option><option value="2">2 levels</option><option value="3">3 levels</option><option value="4">4 levels</option><option value="6">6 levels</option><option value="8">8 levels</option><option value="12">12 levels</option></select></div></div>
+              <p class="micro-help">Blend modes and posterization affect the actual exported artwork. Very aggressive effects may weaken QR contrast.</p>
+            </div>
+          </details>
+          <div class="contrast-protection"><label class="toggle-label"><input id="contrastProtect" type="checkbox">Contrast protection for photographic layers</label><div id="protectIntensity" class="field" hidden><div class="label-row"><label for="contrastStrength">Protection strength</label><output id="contrastStrengthValue">85%</output></div><input id="contrastStrength" type="range" min="40" max="100" value="85"></div><p class="micro-help">Constrains picture brightness separately within the dark and light QR areas. It reduces creative freedom to improve QR separation, but does not guarantee scanning.</p></div>
+          <div class="palette-tools"><button type="button" id="extractPalette" class="subtle-button">✦ Extract photo palette</button><button type="button" id="applyPhotoGradient" class="subtle-button" disabled>Use palette as QR gradient</button><div id="photoPalette" class="photo-palette" aria-live="polite"></div><p class="micro-help" id="paletteHint">Colors are extracted entirely in your browser from the chosen image.</p></div>
+        </div>
+        <div class="shadow-editor">
+          <div class="section-title spaced">Drop shadows & halos</div>
+          <div class="control-grid two-controls">
+            <div class="field"><label for="shadowTarget">Apply shadow to</label><select id="shadowTarget"><option value="modules">QR pattern</option><option value="finder">Finder eyes</option><option value="logo">Center logo</option></select></div>
+            <div class="field"><label for="shadowPreset">Shadow preset</label><select id="shadowPreset"><option value="none">None</option><option value="soft">Soft shadow</option><option value="hard">Crisp offset</option><option value="glow">Soft halo</option><option value="custom">Custom</option></select></div>
+          </div>
+          <div id="shadowControls" class="shadow-controls" hidden>
+            <div class="control-grid two-controls">
+              <div class="field"><div class="label-row"><label for="shadowOpacity">Opacity</label><output id="shadowOpacityValue">55%</output></div><input id="shadowOpacity" data-shadow="opacity" type="range" min="0" max="100" value="55"></div>
+              <div class="field"><div class="label-row"><label for="shadowBlur">Blur</label><output id="shadowBlurValue">0.18 modules</output></div><input id="shadowBlur" data-shadow="blur" type="range" min="0" max="15" step="1" value="3"><div class="shadow-exact"><input id="shadowBlurExact" type="number" step="0.01" min="0" max="1.5" aria-label="Precise blur in modules"><span>modules · fine adjustment</span></div></div>
+              <div class="field"><div class="label-row"><label for="shadowX">Horizontal offset</label><output id="shadowXValue">0.12</output></div><input id="shadowX" data-shadow="offsetX" type="range" min="-20" max="20" step="1" value="3"><div class="shadow-exact"><input id="shadowXExact" type="number" step="0.01" min="-2" max="2" aria-label="Precise horizontal offset in modules"><span>modules · fine adjustment</span></div></div>
+              <div class="field"><div class="label-row"><label for="shadowY">Vertical offset</label><output id="shadowYValue">0.12</output></div><input id="shadowY" data-shadow="offsetY" type="range" min="-20" max="20" step="1" value="3"><div class="shadow-exact"><input id="shadowYExact" type="number" step="0.01" min="-2" max="2" aria-label="Precise vertical offset in modules"><span>modules · fine adjustment</span></div></div>
+            </div>
+            <button type="button" id="shadowColor" class="subtle-button shadow-color-button"><span class="swatch-display"></span> Edit shadow color</button>
+          </div>
+          <p class="micro-help" id="shadowHint">Shadows are decorative. Adequate contrast and a clear quiet zone are still required.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="logoHeading">
+        <div class="panel-heading"><div><span class="eyebrow">05 · LOGO</span><h2 id="logoHeading">Add a logo</h2><p>Optional. A small transparent PNG generally scans best.</p></div></div>
+        <div class="logo-drop" id="logoDrop"><div class="logo-placeholder" id="logoPlaceholder"><span class="upload-icon" aria-hidden="true">↥</span><strong>Drop an image or choose a file</strong><small>PNG, JPEG, WebP, GIF · up to 11 MB · never uploaded</small><button type="button" id="chooseLogo" class="subtle-button">Choose logo</button></div>
+          <div class="logo-loaded" id="logoLoaded" hidden><img id="logoThumb" alt="Current logo"><div><strong id="logoName">Logo uploaded</strong><small>Image stored in this browser session</small><div class="inline-buttons"><button type="button" class="subtle-button" id="replaceLogo">Replace</button><button type="button" class="remove-button" id="removeLogo">Remove logo</button></div></div></div>
+        </div>
+        <input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        <div id="logoSettings" class="logo-settings" hidden>
+          <div class="control-grid two-controls"><div class="field"><div class="label-row"><label for="logoSize">Logo size</label><output id="logoSizeValue">16%</output></div><input id="logoSize" type="range" min="4" max="30" value="16"></div>
+          <div class="field"><div class="label-row"><label for="logoPadding">Space around logo</label><output id="logoPaddingValue">0.5</output></div><input id="logoPadding" type="range" min="0" max="4" step="0.1" value="0.5"></div></div>
+          <div class="control-grid two-controls"><div class="field"><label for="logoBacking">Backing behind logo</label><select id="logoBacking"><option value="match">Match QR background</option><option value="transparent">No backing</option><option value="white">White</option><option value="custom">Custom solid color</option></select></div>
+          <div class="field"><label for="logoRounding">Image corner rounding</label><input id="logoRounding" type="range" min="0" max="50" value="12"></div></div>
+          <div id="logoCustomColorRow" hidden><button id="logoCustomColor" class="subtle-button" type="button">Set backing color</button></div>
+          <label class="toggle-label"><input id="clearBehindLogo" type="checkbox" checked><span>Clear QR modules behind the logo</span></label>
+          <label class="toggle-label"><input id="removeLogoWhite" type="checkbox"><span>Remove near-white pixels from uploaded image</span></label>
+          <div id="whiteToleranceRow" class="field" hidden><div class="label-row"><label for="whiteTolerance">White-removal threshold</label><output id="whiteToleranceValue">245</output></div><input id="whiteTolerance" type="range" min="160" max="254" value="245"></div>
+          <p class="micro-help">Matching the QR background keeps gradients and transparency intact. White pixels already inside a JPG require the optional removal setting above.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="frameHeading">
+        <div class="panel-heading"><div><span class="eyebrow">06 · PRESENTATION</span><h2 id="frameHeading">Poster frame & caption</h2><p>Add a label outside the QR matrix, leaving the scanner's quiet zone intact.</p></div></div>
+        <label class="toggle-label"><input type="checkbox" id="frameEnabled"> Add a caption below the QR</label>
+        <div id="frameControls" class="fields-stack" hidden>
+          <div class="field"><label for="frameLabel">Caption text</label><input id="frameLabel" maxlength="60" placeholder="SCAN ME"></div>
+          <div class="control-grid two-controls">
+            <div class="field"><label for="frameFill">Caption background</label><input id="frameFill" type="color" value="#172554"></div>
+            <div class="field"><label for="frameTextColor">Caption text color</label><input id="frameTextColor" type="color" value="#ffffff"></div>
+          </div>
+          <div class="control-grid two-controls">
+            <div class="field"><label for="frameFontSize">Caption text size (modules)</label><input id="frameFontSize" type="number" step="0.2" min="0.75" max="6" value="2.4"></div>
+            <div class="field"><label for="framePadding">Caption padding (modules)</label><input id="framePadding" type="number" step="0.5" min="0" max="6" value="1.5"></div>
+          </div>
+          <p class="micro-help">The caption and its colored band are outside the QR, so they do not cover the encoded data.</p>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="motionHeading" id="motionSection">
+        <div class="panel-heading"><div><span class="eyebrow">07 · MOTION</span><h2 id="motionHeading">Motion &amp; atmosphere</h2>
+          <p>One flowing artwork behind and through your QR, with a still moment in every loop. The encoded pattern stays fixed.</p></div></div>
+        <div class="field"><label for="motionEffect">Effect</label>
+          <select id="motionEffect"><option value="none">None — static QR</option>
+            <optgroup label="Flowing aurora &amp; ocean"><option value="aurora-veils">Blue Veils · soft curtains</option><option value="aurora-ribbons">Blue Ribbons · flowing light</option><option value="aurora-northern">Northern Lights · green and violet</option><option value="ocean-crosscurrents">Ocean Crosscurrents · smooth currents</option></optgroup>
+            <optgroup label="Simple motion"><option value="wave">Color sweep through QR ink</option><option value="background">Moving background tint</option><option value="glow">Breathing halo</option></optgroup>
+          </select>
+        </div>
+        <div id="motionControls" class="motion-settings" hidden>
+          <div class="control-grid two-controls"><div class="field" id="motionColorField"><label for="motionColor">Wave / accent color</label><button type="button" id="motionColor" class="subtle-button shadow-color-button"><span class="swatch-display"></span> Edit highlight</button></div>
+          <div class="field"><label for="motionDuration">Moving time (seconds)</label><input type="number" id="motionDuration" min="0.8" max="30" step="0.2" value="4.8"></div></div>
+          <div class="field" id="motionPaletteField" hidden><div class="label-row"><label>Flowing ink palette</label><button type="button" class="text-button" id="motionPaletteReset">Reset palette</button></div>
+            <div id="motionPaletteSwatches" class="motion-palette" role="group" aria-label="Flowing ink colors"></div>
+            <p class="micro-help">The first swatch colors the base ink; the others color the moving ribbons. Click any swatch to edit live.</p>
+          </div>
+          <div class="field" id="motionHoldField"><div class="label-row"><label for="motionHold">Still hold after motion</label><output id="motionHoldValue">0.0s</output></div><input type="range" id="motionHold" min="0" max="20" step="0.5" value="0"/><p class="micro-help" id="motionCycleHint">Motion plays, then rests on a still frame, and repeats.</p></div>
+          <div class="field" id="motionHoldPhaseField" hidden><div class="label-row"><label for="motionHoldPhase">Frame to hold</label><output id="motionHoldPhaseValue">Start of loop</output></div><input type="range" id="motionHoldPhase" min="0" max="100" step="5" value="0"><p class="micro-help">The animation returns to this frame before pausing, so there is no jump between loops.</p></div>
+          <div class="field" id="motionCoverageField" hidden><label>Where the animation appears</label>
+            <div class="motion-targets"><label class="toggle-label"><input type="checkbox" id="motionInkCheck" checked><span>QR modules &amp; dark finder-eye shapes</span></label><label class="toggle-label"><input type="checkbox" id="motionBgCheck"><span>Backdrop / surrounding artwork</span></label></div>
+            <p id="motionCoverageTip" class="micro-help" role="status" aria-live="polite">Choose one or both targets. Neither changes QR dimensions or the moving field's coordinates.</p>
+            <select id="motionCoverage" hidden aria-label="Legacy coverage selection"><option value="both">Whole artwork + QR dark ink</option><option value="background">Background artwork only</option><option value="ink">QR dark ink only</option></select></div>
+          <div class="field" id="motionTransparentField" hidden><button class="subtle-button" type="button" id="motionTransparent">Make background transparent</button><p class="micro-help">Keep the current colors and pattern—only remove the background and quiet-zone fill. Check contrast against your intended surface.</p></div>
+          <div class="field" id="motionContrastField" hidden><label for="motionContrast">Scanning treatment</label>
+            <select id="motionContrast"><option value="protected">Scan-focused · darker ink &amp; contrast protection</option><option value="artistic">Artistic · more atmospheric color</option></select>
+            <p class="micro-help" id="motionContrastHint">Scan-focused darkens moving QR ink and keeps a light backing when background artwork is enabled. A transparent QR still needs a light surface.</p></div>
+          <div class="control-grid two-controls"><div class="field"><div class="label-row"><label for="motionStrength">Intensity</label><output id="motionStrengthValue">72%</output></div><input type="range" id="motionStrength" min="0" max="100" value="72"></div>
+          <div class="field" id="motionWidthField"><div class="label-row"><label for="motionWidth">Wave width</label><output id="motionWidthValue">38%</output></div><input type="range" id="motionWidth" min="8" max="100" value="38"></div></div>
+          <div class="field" id="motionAngleField"><div class="label-row"><label for="motionAngle">Sweep direction</label><output id="motionAngleValue">0°</output></div><input type="range" id="motionAngle" min="-180" max="180" step="5" value="0"></div>
+          <label class="toggle-label" id="motionEyesField"><input type="checkbox" id="motionProtectEyes" checked><span>Keep scanner landmarks still <small class="motion-help-inline">(finder eyes, timing and alignment; uncheck to animate their dark areas, never the blank eye rings)</small></span></label>
+          <div class="field" id="motionArtboardField" hidden><div class="label-row"><label for="motionArtboard">Outer artwork margin</label><output id="motionArtboardValue">8 modules</output></div><input type="range" id="motionArtboard" min="0" max="24" step="1" value="8"><p class="micro-help">The canvas grows only when you move this control—not when you change animation targets.</p></div>
+          <details id="motionAdvanced" class="foldout motion-advanced"><summary><span><strong>Fine-tune flowing artwork</strong><small>Ribbon detail, soft glow, and a calmer finish</small></span><span class="chevron">⌄</span></summary>
+            <div class="foldout-content"><div class="control-grid two-controls">
+              <div class="field"><div class="label-row"><label for="motionFieldScale">Field zoom</label><output id="motionFieldScaleValue">100%</output></div><input type="range" id="motionFieldScale" min="60" max="250" step="5" value="100"></div>
+              <div class="field"><div class="label-row"><label for="motionFieldRotation">Field rotation</label><output id="motionFieldRotationValue">0°</output></div><input type="range" id="motionFieldRotation" min="-180" max="180" step="5" value="0"></div>
+              <div class="field"><div class="label-row"><label for="motionDetail">Curtain detail</label><output id="motionDetailValue">58%</output></div><input type="range" id="motionDetail" min="0" max="100" value="58"></div>
+            <div class="field"><div class="label-row"><label for="motionGlow">Soft glow</label><output id="motionGlowValue">58%</output></div><input type="range" id="motionGlow" min="0" max="100" value="58"></div></div></div>
+          </details>
+          <p class="micro-help">Animation changes artwork, not the encoded QR matrix. Keep contrast high, pause to scan, and test on phones before publishing.</p>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="snapshotsHeading">
+        <div class="panel-heading"><div><span class="eyebrow">08 · HISTORY</span><h2 id="snapshotsHeading">Named design versions</h2><p>Compare a previous design or restore it later. Snapshots remain on this device.</p></div></div>
+        <div class="control-grid two-controls"><div class="field"><label for="snapshotName">Version name</label><input id="snapshotName" maxlength="60" placeholder="e.g. Ocean blue"></div><div class="field"><label>&nbsp;</label><button id="snapshotAdd" class="subtle-button" type="button">Save snapshot</button></div></div>
+        <div class="field"><label for="snapshotList">Saved in this browser</label><select id="snapshotList"><option value="">No snapshots</option></select></div>
+        <div class="inline-buttons"><button class="subtle-button" type="button" id="snapshotRestore">Restore</button><button class="subtle-button" type="button" id="snapshotCompare">Compare</button><button class="remove-button" type="button" id="snapshotDelete">Delete</button></div>
+        <p class="micro-help" id="snapshotStatus" role="status">Click Save snapshot to store a named version locally. Existing undo/redo remains available.</p>
+      </section>
+      <section class="panel" aria-labelledby="technicalHeading">
+        <div class="panel-heading"><div><span class="eyebrow">09 · ADVANCED</span><h2 id="technicalHeading">Technical settings</h2><p>Automatic values are recommended unless you need a specific QR specification.</p></div></div>
+        <div id="technicalOptions" class="fields-stack"></div>
+        <details id="structuredPanel" class="foldout"><summary><span><strong>Structured Append · linked QR sequence</strong><small>Split one long message across up to 16 symbols; requires a compatible scanner</small></span><span class="chevron">⌄</span></summary>
+          <div class="foldout-content">
+            <div class="control-grid two-controls"><div class="field"><label for="structuredCount">Number of symbols</label><select id="structuredCount"><option value="auto">Automatic</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option></select></div>
+              <div class="field"><label for="structuredFormat">Output format</label><select id="structuredFormat"><option value="svg">SVG</option><option value="png">PNG</option></select></div></div>
+            <button id="downloadStructured" type="button" class="subtle-button">Generate linked-symbol ZIP</button><p id="structuredStatus" class="micro-help" role="status">Standard QR only. Independent batch QR generation is available in the Content section.</p>
+          </div>
+        </details>
+        <details class="foldout" id="exportOptions"><summary><span><strong>Export precision</strong><small>File dimensions, safe borders, and image quality</small></span><span class="chevron">⌄</span></summary>
+          <div class="foldout-content">
+            <div class="control-grid two-controls"><div class="field"><label for="exportSize">Width of export (px)</label><input type="number" id="exportSize" min="64" max="8192" value="1024"></div>
+            <div class="field"><label for="quietZone">Quiet zone (modules)</label><input type="number" id="quietZone" min="0" max="32" value="4"></div></div>
+            <div class="field"><label for="fileQuality">JPEG / WebP quality <span class="label-muted" id="qualityValue">92%</span></label><input type="range" id="fileQuality" min="10" max="100" value="92"></div>
+            <div class="section-title">Physical print size</div>
+            <div class="control-grid two-controls"><div class="field"><label for="printWidthMm">Printed width (mm)</label><input type="number" id="printWidthMm" min="5" max="1500" step="1" value="50"></div>
+            <div class="field"><label for="printMarginMm">PDF/EPS outer margin (mm)</label><input type="number" id="printMarginMm" min="0" max="100" step="1" value="4"></div></div>
+            <label class="toggle-label"><input type="checkbox" id="svgPhysicalSize"> Include physical mm dimensions in SVG exports</label>
+            <p class="micro-help">SVG remains vector. PDF embeds the same rendered design as losslessly compressed RGB; EPS embeds a high-quality raster. JPEG/EPS and PDF flatten transparency to a white or selected matte. rMQR remains rectangular.</p>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <aside class="preview-column" aria-labelledby="previewHeading">
+      <div class="preview-card">
+        <div class="preview-title-row"><div><span class="eyebrow">YOUR CREATION</span><h2 id="previewHeading">Live preview</h2></div><span id="renderStatus" class="render-status"><span class="tiny-dot"></span> Ready</span></div>
+        <div class="preview-viewport backdrop-checker" id="previewViewport"><div class="qr-display" id="qrDisplay" aria-label="Generated QR preview" aria-live="polite"></div><div class="preview-error" id="previewError" hidden></div></div>
+        <div id="motionPlayback" class="motion-playback" hidden><button type="button" id="motionPlay" class="subtle-button" aria-label="Pause animation">Pause</button><div class="field"><label for="motionScrub">Preview time</label><input type="range" id="motionScrub" min="0" max="100" value="0" aria-label="Scrub animation timeline"></div><span id="motionPlayTime">0.0s</span></div>
+        <div class="preview-tools"><div><span>Preview on</span><div class="surface-segments" id="surfaceSegments" role="group" aria-label="Test preview background"><button data-surface="checker" class="surface-selected">Checker</button><button data-surface="light">Light</button><button data-surface="dark">Dark</button></div></div><div class="inline-buttons"><button type="button" class="text-button" id="inspectPreview" aria-pressed="false" title="Click a QR module to edit that component's paint">Inspect colors</button><button type="button" class="text-button" id="expandPreview">View larger ↗</button></div></div>
+        <p id="inspectHint" class="micro-help" hidden>Inspection enabled: click the QR pattern, an eye, or the background to jump to that color's editor. Press Esc to exit.</p>
+        <div id="comparisonPanel" class="comparison-panel" hidden><div class="comparison-title"><strong>Compare with saved snapshot</strong><button class="text-button" id="closeCompare" type="button">Close comparison</button></div><div class="comparison-grid"><div><small>Saved version</small><div id="comparisonBefore" class="comparison-svg"></div></div><div><small>Current design</small><div id="comparisonAfter" class="comparison-svg"></div></div></div></div>
+        <div class="code-info" id="codeInfo"><div><small>Type / Version</small><strong id="metaVersion">—</strong></div><div><small>Matrix</small><strong id="metaMatrix">—</strong></div><div><small>Correction</small><strong id="metaEcc">—</strong></div><div><small>Mask</small><strong id="metaMask">—</strong></div></div>
+        <div class="download-section"><div class="download-heading"><strong>Download</strong><span>Ready to save on your device</span></div>
+          <div class="download-row"><div class="field filename-field"><label for="filename">Filename</label><input id="filename" type="text" placeholder="Auto: qr-date-time" autocomplete="off" spellcheck="false"></div>
+            <div class="field format-field"><label for="format">Format</label><select id="format"><option value="png">.png</option><option value="svg">.svg</option><option value="animated-svg">.svg animated</option><option value="apng">.png animated (APNG)</option><option value="jpeg">.jpg</option><option value="webp">.webp</option><option value="pdf">.pdf</option><option value="eps">.eps</option></select></div>
+            <div class="field download-button-field"><label aria-hidden="true">&nbsp;</label><button id="download" class="primary-button" type="button"><span aria-hidden="true">↓</span> Download</button></div>
+          </div>
+          <div id="jpegMatteRow" class="jpeg-notice" hidden><span>JPEG cannot preserve transparency. Its background will be flattened to:</span><button type="button" id="jpegMatteButton" class="swatch-button" aria-label="Choose JPEG background color"><span class="swatch-display"></span></button></div>
+          <div id="apngOptions" class="apng-options" hidden>
+            <div class="field"><label for="apngSize">Animated image width</label><select id="apngSize"><option value="320">320 px · compact</option><option value="512" selected>512 px · balanced</option><option value="768">768 px · detailed</option></select></div>
+            <div class="field"><label for="apngFPS">Motion smoothness</label><select id="apngFPS"><option value="4">4 fps · quick</option><option value="6">6 fps</option><option value="8" selected>8 fps · balanced</option><option value="10">10 fps</option><option value="12">12 fps · more frames</option></select></div>
+            <p id="apngEstimate" class="micro-help" role="status" aria-live="polite"></p>
+            <p class="micro-help">APNG keeps transparency and the still hold. Rendering may take longer for detailed effects. Up to 120 moving frames.</p>
+          </div>
+          <button type="button" id="cancelAPNG" class="subtle-button" hidden>Cancel animation export</button>
+          <p id="downloadStatus" class="micro-help" role="status"></p>
+        </div>
+        <div class="readability-box"><div class="readability-heading"><span><strong>Readability checks</strong><small>Design guidance, not a scanning guarantee</small></span><button id="scanTest" class="subtle-button" type="button">Test in browser</button></div><p id="warningSummary" class="warning-summary" role="status"></p><ul id="warnings" class="warning-list" aria-label="Detailed readability warnings" tabindex="0"></ul><div id="rasterContrast" class="scan-result" aria-live="polite">Pixel contrast check runs after artwork changes.</div><div id="scanResult" class="scan-result" role="status"></div></div>
+        <p class="local-note"><span class="tiny-dot"></span> Your content and images stay on this device. No account, tracking, or server requests.</p>
+      </div>
+    </aside>
+  </main>
+
+  <div class="color-popover" id="colorPopover" hidden role="dialog" aria-label="Precision color picker">
+    <div class="color-popover-head"><strong id="pickerTitle">Choose color</strong><button type="button" class="x-button" id="closePicker" aria-label="Close color picker">×</button></div>
+    <div id="svPanel" class="sv-panel" role="slider" tabindex="0" aria-label="Color saturation and brightness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span id="svPointer"></span></div>
+    <div class="picker-slider-row"><label for="hueRange">Hue</label><input id="hueRange" type="range" min="0" max="360" value="225"></div>
+    <div class="picker-slider-row"><label for="alphaRange">Opacity</label><input id="alphaRange" type="range" min="0" max="100" value="100"></div>
+    <div class="picker-value-mode"><label for="pickerValueMode">Color values</label><select id="pickerValueMode"><option value="hex">HEX</option><option value="rgb">RGB</option><option value="hsl">HSL</option></select></div>
+    <div class="picker-value-row"><div id="pickerSwatch" class="picker-swatch" aria-label="Current color"></div>
+      <div class="picker-values"><div id="pickerHexGroup" class="field"><label for="pickerHex">HEX / HEX8</label><input id="pickerHex" type="text" spellcheck="false" autocomplete="off" aria-label="Hexadecimal color value"></div>
+        <div id="pickerRgbGroup" class="picker-channels" hidden><div class="field"><label for="pickerRed">Red</label><input type="number" id="pickerRed" min="0" max="255" step="1"></div><div class="field"><label for="pickerGreen">Green</label><input type="number" id="pickerGreen" min="0" max="255" step="1"></div><div class="field"><label for="pickerBlue">Blue</label><input type="number" id="pickerBlue" min="0" max="255" step="1"></div></div>
+        <div id="pickerHslGroup" class="picker-channels" hidden><div class="field"><label for="pickerHue">H°</label><input type="number" id="pickerHue" min="0" max="360" step="1"></div><div class="field"><label for="pickerSat">S%</label><input type="number" id="pickerSat" min="0" max="100" step="1"></div><div class="field"><label for="pickerLight">L%</label><input type="number" id="pickerLight" min="0" max="100" step="1"></div></div>
+      </div><span id="pickerAlphaText">100%</span></div>
+    <div class="picker-presets" id="pickerPresets" aria-label="Suggested colors"></div>
+    <div class="saved-paints-header"><span>My saved colors <small>(on this device)</small></span><button type="button" id="saveColor">+ Save color</button></div>
+    <div class="picker-presets saved-colors" id="savedColors" aria-label="Saved colors"></div>
+    <div class="picker-foot">Move your pointer or use arrow keys for live updates.</div>
+  </div>
+  <div id="previewModal" class="preview-modal" hidden role="dialog" aria-modal="true" aria-label="Enlarged QR preview"><div class="modal-inner"><div class="modal-head"><strong>Large preview</strong><button id="closePreview" type="button" class="x-button" aria-label="Close enlarged preview">×</button></div><div id="modalCode" class="modal-code"></div></div></div>
+  <script type="module" src="./ui/app.js"></script>
+</body>
+</html>

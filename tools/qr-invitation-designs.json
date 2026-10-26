@@ -1,0 +1,53 @@
+[
+  {
+    "id": "scripture",
+    "label": "Scripture green",
+    "errorCorrection": "M",
+    "style": {
+      "size": 384,
+      "quietZone": 4,
+      "shape": "square",
+      "moduleScale": 1,
+      "paints": {
+        "data": "#14532d",
+        "finder": "#052e16",
+        "finderCenter": "#052e16",
+        "background": "#ffffff"
+      }
+    }
+  },
+  {
+    "id": "antique",
+    "label": "Antique ink",
+    "errorCorrection": "M",
+    "style": {
+      "size": 384,
+      "quietZone": 4,
+      "shape": "square",
+      "moduleScale": 1,
+      "paints": {
+        "data": "#382e24",
+        "finder": "#211b15",
+        "finderCenter": "#211b15",
+        "background": "#ffffff"
+      }
+    }
+  },
+  {
+    "id": "classic",
+    "label": "Classic black",
+    "errorCorrection": "M",
+    "style": {
+      "size": 384,
+      "quietZone": 4,
+      "shape": "square",
+      "moduleScale": 1,
+      "paints": {
+        "data": "#1c211f",
+        "finder": "#1c211f",
+        "finderCenter": "#1c211f",
+        "background": "#ffffff"
+      }
+    }
+  }
+]

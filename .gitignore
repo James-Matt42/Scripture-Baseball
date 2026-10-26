@@ -3,3 +3,4 @@ simon-html/
 simon-html/*
 node_modules/
 package-lock.json
+docs/
