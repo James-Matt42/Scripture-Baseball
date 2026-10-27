@@ -2,6 +2,7 @@ import express from 'express';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { frontendDirectory, isClientRoute } from './staticFiles.js';
+import { scriptureRouter } from './routes/scripture.js';
 
 export function createApp({ staticDirectory = frontendDirectory() } = {}) {
   const app = express();
@@ -13,9 +14,25 @@ export function createApp({ staticDirectory = frontendDirectory() } = {}) {
     res.json({ status: 'ok' });
   });
 
+  // Scripture/challenge endpoints are public for guest gameplay. Authentication
+  // and persistent learner state are introduced in later service commits.
+  app.use('/api', scriptureRouter);
+
   // Unknown API paths must fail as APIs, never return the React HTML shell.
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'API endpoint not found' });
+  });
+
+  // Express's default error page is HTML; keep malformed JSON and unexpected
+  // backend failures in the API's JSON contract without exposing stack traces.
+  app.use('/api', (error, _req, res, next) => {
+    if (res.headersSent) return next(error);
+    const status = error?.status === 400 || error?.status === 413 ? error.status : 500;
+    res.status(status).json({
+      error: status === 400 ? 'Invalid JSON request body'
+        : status === 413 ? 'Request body too large'
+          : 'Internal service error',
+    });
   });
 
   // Vite builds to ../dist locally. deployService.sh publishes dist to public/.
