@@ -3,8 +3,13 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { frontendDirectory, isClientRoute } from './staticFiles.js';
 import { scriptureRouter } from './routes/scripture.js';
+import { createAuthRouter } from './routes/auth.js';
+import { createInMemoryUserStore } from './auth/userStore.js';
 
-export function createApp({ staticDirectory = frontendDirectory() } = {}) {
+export function createApp({
+  staticDirectory = frontendDirectory(),
+  userStore = createInMemoryUserStore(),
+} = {}) {
   const app = express();
 
   // Application routes added in later commits will use this JSON middleware.
@@ -14,9 +19,10 @@ export function createApp({ staticDirectory = frontendDirectory() } = {}) {
     res.json({ status: 'ok' });
   });
 
-  // Scripture/challenge endpoints are public for guest gameplay. Authentication
-  // and persistent learner state are introduced in later service commits.
+  // Scripture/challenge endpoints are public for guest gameplay. Registration
+  // is separate; authenticated sessions and learner state come in later commits.
   app.use('/api', scriptureRouter);
+  app.use('/api', createAuthRouter({ userStore }));
 
   // Unknown API paths must fail as APIs, never return the React HTML shell.
   app.use('/api', (_req, res) => {
