@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { checkScriptureAnswer, fetchScriptureQuestion } from "../api/scriptureApi.js";
 import { ScriptureQuestion } from "../components/ScriptureQuestion";
 import { getChallengeById } from "../challenges/catalog.js";
 import { getPracticeStats } from "./session";
@@ -26,10 +27,31 @@ export function Play() {
     startNewInning,
   } = usePractice();
 
-  const currentQuestion = questions[pitchIndex];
+  const questionId = questions[pitchIndex]?.id;
+  const [questionState, setQuestionState] = useState({ id: null, data: null, error: "", loading: true });
+  const [retryKey, setRetryKey] = useState(0);
+
+  useEffect(() => {
+    if (!questionId || isFinished) return;
+    const controller = new AbortController();
+    setQuestionState({ id: questionId, data: null, error: "", loading: true });
+    fetchScriptureQuestion(questionId, { signal: controller.signal }).then((question) => {
+      if (!controller.signal.aborted) {
+        setQuestionState({ id: questionId, data: question, error: "", loading: false });
+      }
+    }).catch((error) => {
+      if (!controller.signal.aborted) {
+        setQuestionState({ id: questionId, data: null, error: error.message, loading: false });
+      }
+    });
+    return () => controller.abort();
+  }, [questionId, isFinished, retryKey]);
+
+  // Never show the locally stored answer-bearing question as an API fallback.
+  const currentQuestion = questionState.id === questionId ? questionState.data : null;
   const challenge = getChallengeById(challengeId);
   const stats = getPracticeStats(attempts, questions.length, exactVerse);
-  const savedAttempt = attempts.find((attempt) => attempt.questionId === currentQuestion.id) ?? null;
+  const savedAttempt = attempts.find((attempt) => attempt.questionId === questionId) ?? null;
   const allAnswered = stats.completed === stats.totalPitches;
 
   return (
@@ -103,14 +125,25 @@ export function Play() {
             <button
               className="mb-4 rounded-lg border border-green-800 px-4 py-2 text-sm font-semibold text-green-900 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               type="button"
-              aria-pressed={favorites.includes(currentQuestion.id)}
-              onClick={() => toggleFavorite(currentQuestion.id)}
+              aria-pressed={favorites.includes(questionId)}
+              onClick={() => toggleFavorite(questionId)}
             >
-              {favorites.includes(currentQuestion.id) ? "★ Saved to favorites" : "☆ Save to favorites"}
+              {favorites.includes(questionId) ? "★ Saved to favorites" : "☆ Save to favorites"}
             </button>
-            <ScriptureQuestion
-              key={`${inning}-${currentQuestion.id}-${exactVerse}`}
+            {!currentQuestion && (
+              <div className="rounded-xl bg-amber-50 p-5" role="status">
+                {questionState.error && questionState.id === questionId ? (
+                  <>
+                    <p className="text-red-900" role="alert">Couldn't load this pitch: {questionState.error}</p>
+                    <button type="button" className={`mt-4 ${secondaryButton}`} onClick={() => setRetryKey((value) => value + 1)}>Retry loading passage</button>
+                  </>
+                ) : <p>Loading passage from scripture service…</p>}
+              </div>
+            )}
+            {currentQuestion && <ScriptureQuestion
+              key={`${inning}-${challengeId}-${currentQuestion.id}-${exactVerse}`}
               question={currentQuestion}
+              checkAnswer={checkScriptureAnswer}
               exactVerse={exactVerse}
               savedAttempt={savedAttempt}
               initialDraft={draft}
@@ -118,7 +151,7 @@ export function Play() {
               onAnswered={answerPitch}
               onNext={nextPitch}
               nextLabel={pitchIndex === questions.length - 1 ? "See Inning Results" : "Next Pitch"}
-            />
+            />}
           </article>
 
           <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="checkpoint-heading">

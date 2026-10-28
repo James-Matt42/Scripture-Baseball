@@ -1,19 +1,33 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { checkScriptureAnswer, fetchChallengeQuestions } from "../api/scriptureApi.js";
 import { Link, useNavigate } from "react-router-dom";
 import { navigateWithGetForm } from "../routing";
 import { ScriptureQuestion } from "../components/ScriptureQuestion";
-import { SAMPLE_QUESTIONS } from "../scripture/questions";
 
 export function Home() {
   const navigate = useNavigate();
   const [questionIndex, setQuestionIndex] = useState(0);
   const [guestAttempts, setGuestAttempts] = useState([]);
-  const currentQuestion = SAMPLE_QUESTIONS[questionIndex];
+  const [demo, setDemo] = useState({ questions: [], error: "", loading: true });
+  const [retryKey, setRetryKey] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setDemo({ questions: [], error: "", loading: true });
+    fetchChallengeQuestions("todays-lineup", {}, { signal: controller.signal }).then((result) => {
+      if (!controller.signal.aborted) {
+        setDemo({ questions: result.questions, error: "", loading: false });
+      }
+    }).catch((error) => {
+      if (!controller.signal.aborted) setDemo({ questions: [], error: error.message, loading: false });
+    });
+    return () => controller.abort();
+  }, [retryKey]);
+  const currentQuestion = demo.questions[questionIndex % demo.questions.length];
   const correctBooks = guestAttempts.filter((attempt) => attempt.bookCorrect).length;
   const correctChapters = guestAttempts.filter((attempt) => attempt.chapterCorrect).length;
 
   function nextPitch() {
-    setQuestionIndex((index) => (index + 1) % SAMPLE_QUESTIONS.length);
+    setQuestionIndex((index) => (index + 1) % demo.questions.length);
   }
 
   function handleJoinGame(event) {
@@ -38,14 +52,25 @@ export function Home() {
 
         <article className="rounded-xl border border-amber-200 bg-white p-4 shadow-md sm:p-6">
           <p className="mb-4 text-sm font-semibold text-green-900">
-            Guest demo · Passage {questionIndex + 1} of {SAMPLE_QUESTIONS.length}
+            Guest demo · Passage {currentQuestion ? (questionIndex % demo.questions.length) + 1 : "—"} of {demo.questions.length || "—"}
           </p>
-          <ScriptureQuestion
-            key={currentQuestion.id}
-            question={currentQuestion}
-            onAnswered={(attempt) => setGuestAttempts((attempts) => [...attempts, attempt])}
-            onNext={nextPitch}
-          />
+          {demo.loading && <p role="status">Loading guest pitches from scripture service…</p>}
+          {!demo.loading && demo.error && (
+            <div role="alert" className="rounded-lg bg-red-50 p-4 text-red-900">
+              <p>Could not load the sample game: {demo.error}</p>
+              <button type="button" className="mt-3 font-semibold underline" onClick={() => setRetryKey((value) => value + 1)}>Retry</button>
+            </div>
+          )}
+          {!demo.loading && !demo.error && !currentQuestion && <p role="status">No sample questions are available.</p>}
+          {currentQuestion && (
+            <ScriptureQuestion
+              key={`${questionIndex}-${currentQuestion.id}`}
+              question={currentQuestion}
+              checkAnswer={checkScriptureAnswer}
+              onAnswered={(attempt) => setGuestAttempts((attempts) => [...attempts, attempt])}
+              onNext={nextPitch}
+            />
+          )}
         </article>
 
         {guestAttempts.length > 0 && (
