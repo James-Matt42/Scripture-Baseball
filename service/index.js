@@ -5,10 +5,16 @@ import { frontendDirectory, isClientRoute } from './staticFiles.js';
 import { scriptureRouter } from './routes/scripture.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createInMemoryUserStore } from './auth/userStore.js';
+import { createInMemorySessionStore } from './auth/sessionStore.js';
+import { createSessionAuth } from './auth/authentication.js';
 
 export function createApp({
   staticDirectory = frontendDirectory(),
   userStore = createInMemoryUserStore(),
+  sessionStore = createInMemorySessionStore(),
+  // Caddy terminates TLS before proxying to port 4000. Never rely on req.secure
+  // alone in the production PM2 process; deployService.sh sets NODE_ENV.
+  secureCookies = process.env.NODE_ENV === 'production',
 } = {}) {
   const app = express();
 
@@ -19,10 +25,11 @@ export function createApp({
     res.json({ status: 'ok' });
   });
 
-  // Scripture/challenge endpoints are public for guest gameplay. Registration
-  // is separate; authenticated sessions and learner state come in later commits.
+  // Guest scripture APIs stay public; account endpoints require cookie sessions.
+  // Share the same auth guard with application routes added in later commits.
+  const sessionAuth = createSessionAuth({ userStore, sessionStore });
   app.use('/api', scriptureRouter);
-  app.use('/api', createAuthRouter({ userStore }));
+  app.use('/api', createAuthRouter({ userStore, sessionStore, sessionAuth, secureCookies }));
 
   // Unknown API paths must fail as APIs, never return the React HTML shell.
   app.use('/api', (_req, res) => {

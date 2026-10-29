@@ -26,6 +26,8 @@ test('deployment packages frontend and nested backend files without private sour
   await mkdir(join(backend, 'content', 'local'), { recursive: true });
   await mkdir(bin);
   await cp(join(projectRoot, 'deployService.sh'), join(project, 'deployService.sh'));
+  assert.match(await readFile(join(project, 'deployService.sh'), 'utf8'),
+    /NODE_ENV=production pm2 restart \$\{service\} --update-env/u);
   await writeFile(join(project, 'package-lock.json'), '{}');
   await writeFile(join(sandbox, 'key.pem'), 'test fixture only');
   await writeFile(join(backend, 'index.js'), 'console.log("service")');

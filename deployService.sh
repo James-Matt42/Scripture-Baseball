@@ -70,7 +70,7 @@ scp -r -i "$key" "$build_dir"/. "ubuntu@$hostname:services/$service/"
 
 printf '\n----> Installing server dependencies and restarting PM2\n'
 ssh -i "$key" "ubuntu@$hostname" <<ENDSSH
-bash -ic 'set -e; cd services/${service}; npm install --omit=dev; pm2 restart ${service}'
+bash -ic 'set -e; cd services/${service}; npm install --omit=dev; NODE_ENV=production pm2 restart ${service} --update-env'
 ENDSSH
 
 printf '\n----> Deployment complete: https://startup.%s\n' "$hostname"
