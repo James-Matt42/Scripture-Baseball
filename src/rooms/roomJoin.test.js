@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   ROOM_GUEST_STORAGE_KEY,
   claimGuestRoomSeatInState,
+  claimGuestRoomsForAccount,
+  adoptLegacyAccountRoomsInState,
+  getRoomAccountPlayerId,
   createInitialRoomGuestState,
   createInitialRoomState,
   createRoomInState,
@@ -226,4 +229,81 @@ test("Find Game accepts pasted and opened invitations without following arbitrar
   assert.equal(parseRoomInvitation("javascript:alert(1)"), "");
   assert.equal(parseRoomInvitation(""), "");
   assert.equal(parseRoomInvitation("x".repeat(3000)), "");
+});
+
+const serverUser = {
+  id: '4b5a9f7c-7b2b-4a71-8b24-118c885245e7',
+  displayName: 'Taylor',
+};
+
+test('verified account UUIDs are stable room identities and survive local-room reloads', () => {
+  const playerId = getRoomAccountPlayerId(serverUser.id);
+  assert.equal(playerId, `account-${serverUser.id}`);
+  assert.equal(getRoomAccountPlayerId('account-1'), null);
+  const created = createRoomInState(createInitialRoomState(), draft, {
+    generateCode: () => 'ABC234', hostProfileId: playerId,
+  });
+  assert.equal(created.room.hostId, playerId);
+  const store = memoryStorage();
+  saveRoomState(store, created.state);
+  assert.equal(loadRoomState(store).rooms[0].hostId, playerId);
+});
+
+test('sign-in upgrades an existing guest player seat without adding another player', () => {
+  const joined = joinRoomInState(makeRoom(), 'ABC234', {
+    playerId: guestId, displayName: 'Taylor', joinedAt: at,
+  });
+  const guestState = rememberRoomGuest(createInitialRoomGuestState(), 'ABC234', guestId);
+  const moved = claimGuestRoomsForAccount(joined.state, guestState, serverUser);
+  const accountPlayerId = getRoomAccountPlayerId(serverUser.id);
+  assert.deepEqual(moved.guestState.byRoom, {});
+  assert.equal(moved.roomState.rooms[0].players.length, 2);
+  assert.equal(moved.roomState.rooms[0].players[1].id, accountPlayerId);
+  assert.equal(moved.roomState.rooms[0].players[1].joinedAt, at);
+  assert.equal(moved.roomState.rooms[0].players[1].ready, false);
+  const repeat = claimGuestRoomsForAccount(moved.roomState, moved.guestState, serverUser);
+  assert.strictEqual(repeat.roomState, moved.roomState);
+  assert.strictEqual(repeat.guestState, moved.guestState);
+});
+
+test('sign-in preserves a guest host role, readiness, and room code', () => {
+  const guestState = rememberRoomGuest(createInitialRoomGuestState(), 'ABC234', 'guest-host-ABC234');
+  const moved = claimGuestRoomsForAccount(makeRoom(), guestState, serverUser);
+  const upgraded = moved.roomState.rooms[0];
+  assert.equal(upgraded.hostId, getRoomAccountPlayerId(serverUser.id));
+  assert.equal(upgraded.players[0].role, 'host');
+  assert.equal(upgraded.players[0].ready, true);
+  assert.equal(upgraded.players.length, 1);
+  assert.equal(upgraded.code, 'ABC234');
+});
+
+test('failed room-identity upgrade leaves the guest seat and mapping untouched', () => {
+  const joined = joinRoomInState(makeRoom({ maxPlayers: 4 }), 'ABC234', {
+    playerId: guestId, displayName: 'Guest', joinedAt: at,
+  });
+  const guestState = rememberRoomGuest(createInitialRoomGuestState(), 'ABC234', guestId);
+  const moved = claimGuestRoomsForAccount(joined.state, guestState, {
+    ...serverUser, displayName: 'Host', // conflicts with a different player
+  });
+  assert.strictEqual(moved.roomState, joined.state);
+  assert.strictEqual(moved.guestState, guestState);
+  assert.equal(moved.roomState.rooms[0].players[1].id, guestId);
+});
+
+test('verified account adopts existing local-profile room host without losing its history', () => {
+  const legacy = createRoomInState(createInitialRoomState(), draft, {
+    generateCode: () => 'ABC234', createdAt: at, hostProfileId: 'account-1',
+  });
+  const restored = adoptLegacyAccountRoomsInState(legacy.state, 'account-1', serverUser);
+  const accountPlayerId = getRoomAccountPlayerId(serverUser.id);
+  assert.equal(restored.rooms[0].hostId, accountPlayerId);
+  assert.equal(restored.rooms[0].players[0].id, accountPlayerId);
+  assert.equal(restored.rooms[0].players[0].ready, true);
+  assert.equal(restored.rooms[0].players.length, 1);
+  assert.equal(restored.rooms[0].code, 'ABC234');
+  const saved = memoryStorage();
+  saveRoomState(saved, restored);
+  assert.deepEqual(loadRoomState(saved), restored);
+  assert.strictEqual(adoptLegacyAccountRoomsInState(restored, 'account-1', serverUser), restored);
+  assert.strictEqual(adoptLegacyAccountRoomsInState(legacy.state, 'account-2', serverUser), legacy.state);
 });

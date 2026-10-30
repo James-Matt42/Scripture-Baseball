@@ -141,9 +141,9 @@ export function JoinGame() {
                     <button className={buttonClass} type="submit">Join as Guest</button>
                   </form>
                   <div className="space-y-3 rounded-lg bg-amber-50 p-4">
-                    <p className="font-semibold text-stone-800">Want to use a local profile?</p>
+                    <p className="font-semibold text-stone-800">Want to use your account?</p>
                     <Link className="font-semibold text-green-800 underline" to={`/account?code=${encodeURIComponent(room.code)}`}>
-                      Sign in or create a profile
+                      Sign in or create an account
                     </Link>
                     <p className="text-sm text-stone-600">You'll return to this invitation afterward.</p>
                   </div>

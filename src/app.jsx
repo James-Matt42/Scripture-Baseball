@@ -27,24 +27,29 @@ const navLinkClass = ({ isActive }) =>
 export default function App() {
   return (
     <AccountProvider>
-      <RoomProvider>
-        <AppWithAccount />
-      </RoomProvider>
+      <AppWithAccount />
     </AccountProvider>
   );
 }
 
 function AppWithAccount() {
-  const { activeProfile, preferences } = useAccount();
+  const { activeProfile, preferences, isRestoringSession } = useAccount();
+  // Do not mount local account/room practice stores until the cookie session
+  // is resolved: it avoids briefly writing guest state into the wrong slot.
+  if (isRestoringSession) {
+    return <main className="mx-auto max-w-3xl p-8" role="status">Restoring your session…</main>;
+  }
   const storageKey = getPracticeStorageKey(activeProfile?.id);
   return (
-    <PracticeProvider
-      key={storageKey}
-      storageKey={storageKey}
-      defaultExactVerse={preferences.answerDifficulty === "exact-verse"}
-    >
-      <Site />
-    </PracticeProvider>
+    <RoomProvider>
+      <PracticeProvider
+        key={storageKey}
+        storageKey={storageKey}
+        defaultExactVerse={preferences.answerDifficulty === "exact-verse"}
+      >
+        <Site />
+      </PracticeProvider>
+    </RoomProvider>
   );
 }
 

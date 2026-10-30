@@ -1,7 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAccount } from "../account/AccountContext";
+import { getMatchingLegacyProfile } from "../account/clientState.js";
 import {
   claimGuestRoomSeatInState,
+  claimGuestRoomsForAccount,
+  adoptLegacyAccountRoomsInState,
+  getRoomAccountPlayerId,
   addSimulatedPlayerInState,
   removeSimulatedPlayerInState,
   simulateRoomAnswerInState,
@@ -45,8 +49,21 @@ export function RoomProvider({ children }) {
     setIsSaved(saveRoomState(storage, roomState) && saveRoomGuestState(storage, guestState));
   }, [roomState, guestState]);
 
+  // Preserve guest seats (including lobby host/ready status and prior answers)
+  // on account login, even if the user does not revisit the invitation page.
+  useEffect(() => {
+    if (!activeProfile) return;
+    const legacyProfile = getMatchingLegacyProfile(browserStorage(), activeProfile);
+    const migrated = adoptLegacyAccountRoomsInState(roomState, legacyProfile?.id, activeProfile);
+    const upgraded = claimGuestRoomsForAccount(migrated, guestState, activeProfile);
+    if (upgraded.roomState !== roomState) setRoomState(upgraded.roomState);
+    if (upgraded.guestState !== guestState) setGuestState(upgraded.guestState);
+  }, [activeProfile?.id, activeProfile?.displayName, roomState, guestState]);
+
   const createRoom = useCallback((draft, hostProfileId) => {
-    const result = createRoomInState(roomState, draft, { hostProfileId });
+    const result = createRoomInState(roomState, draft, {
+      hostProfileId: getRoomAccountPlayerId(hostProfileId),
+    });
     if (result.room) {
       setRoomState(result.state);
       if (!hostProfileId) {
@@ -64,18 +81,21 @@ export function RoomProvider({ children }) {
     const guestId = guestState.byRoom[normalized];
     let result;
     if (activeProfile) {
+      const playerId = getRoomAccountPlayerId(activeProfile.id);
       // An account created after a guest joined inherits that exact seat.
       if (guestId && room.players.some((player) => player.id === guestId) &&
-        !room.players.some((player) => player.id === activeProfile.id)) {
+        !room.players.some((player) => player.id === playerId)) {
         result = claimGuestRoomSeatInState(roomState, normalized, guestId, {
-          playerId: activeProfile.id, displayName: activeProfile.displayName,
+          playerId, displayName: activeProfile.displayName,
         });
       } else {
         result = joinRoomInState(roomState, normalized, {
-          playerId: activeProfile.id, displayName: activeProfile.displayName,
+          playerId, displayName: activeProfile.displayName,
         });
       }
-      if (!result.error && guestId) setGuestState((previous) => forgetRoomGuest(previous, normalized));
+      if (!result.error && guestId && !result.room.players.some((player) => player.id === guestId)) {
+        setGuestState((previous) => forgetRoomGuest(previous, normalized));
+      }
     } else {
       let playerId = guestId;
       if (!playerId || !room.players.some((player) => player.id === playerId)) {
@@ -154,7 +174,7 @@ export function RoomProvider({ children }) {
   }, [roomState]);
 
   const completedGames = useMemo(() => getCompletedRoomHistory(
-    roomState.rooms, activeProfile?.id ?? null, guestState.byRoom,
+    roomState.rooms, getRoomAccountPlayerId(activeProfile?.id), guestState.byRoom,
   ), [roomState.rooms, activeProfile?.id, guestState.byRoom]);
 
   const findRoom = useCallback((code) => getRoomByCode(roomState, code), [roomState]);
@@ -166,9 +186,10 @@ export function RoomProvider({ children }) {
   const findMyRoomPlayer = useCallback((code) => {
     const room = getRoomByCode(roomState, code);
     if (!room) return null;
-    return activeProfile
-      ? room.players.find((player) => player.id === activeProfile.id) ?? null
-      : room.players.find((player) => player.id === guestState.byRoom[room.code]) ?? null;
+    const accountPlayer = activeProfile && room.players.find(
+      (player) => player.id === getRoomAccountPlayerId(activeProfile.id),
+    );
+    return accountPlayer || room.players.find((player) => player.id === guestState.byRoom[room.code]) || null;
   }, [roomState, guestState, activeProfile]);
 
   const value = useMemo(() => ({

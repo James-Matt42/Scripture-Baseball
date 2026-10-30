@@ -8,7 +8,15 @@ const MAX_SAVED_ROOMS = 40;
 const CODE_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const GUEST_PLAYER_PATTERN = /^guest-player-[A-HJ-NP-Z2-9]{10}$/;
-const ACCOUNT_PLAYER_PATTERN = /^account-[1-9]\d*$/;
+// The legacy local demo used account-1, account-2, ...; the server now
+// issues UUIDs. Encode either as a room-safe identity without treating it
+// as an authentication token.
+const SERVER_ACCOUNT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ACCOUNT_PLAYER_PATTERN = /^account-(?:[1-9]\d*|[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+
+export function getRoomAccountPlayerId(serverId) {
+  return SERVER_ACCOUNT_ID_PATTERN.test(serverId ?? '') ? `account-${serverId.toLowerCase()}` : null;
+}
 const BOT_NAMES = ["Miriam", "Ruth", "Ezra", "Leah", "Caleb", "Esther", "Nephi", "Abigail", "Daniel", "Naomi", "Isaiah"];
 
 function botPlayerId(code, slot) {
@@ -366,7 +374,7 @@ export function claimGuestRoomSeatInState(state, code, guestId, { playerId, disp
   const room = getRoomByCode(state, code);
   if (!room) return { state, room: null, player: null, error: "Room not found on this device." };
   if (!ACCOUNT_PLAYER_PATTERN.test(playerId ?? "")) {
-    return { state, room, player: null, error: "Sign in to a local profile first." };
+    return { state, room, player: null, error: "Sign in to an account first." };
   }
   const existing = room.players.find((player) => player.id === playerId);
   if (existing) return { state, room, player: existing, error: null };
@@ -395,6 +403,60 @@ export function claimGuestRoomSeatInState(state, code, guestId, { playerId, disp
     state: { ...state, rooms: state.rooms.map((item) => item.code === room.code ? updated : item) },
     room: updated, player, error: null,
   };
+}
+
+/** Preserve browser-only account rooms after signing in to a verified
+ * server account with the same email. This changes only local demo room IDs,
+ * never server-side identity or authorization. Keep old data if a different
+ * server user already occupies that room.
+ */
+export function adoptLegacyAccountRoomsInState(roomState, legacyPlayerId, user) {
+  const playerId = getRoomAccountPlayerId(user?.id);
+  if (!playerId || !/^account-[1-9]\d*$/.test(legacyPlayerId ?? '')) return roomState;
+  let changed = false;
+  const rooms = roomState.rooms.map((room) => {
+    const legacyPlayer = room.players.find((player) => player.id === legacyPlayerId);
+    if (!legacyPlayer || room.players.some((player) => player.id === playerId)) return room;
+    changed = true;
+    const isHost = room.hostId === legacyPlayerId;
+    const players = room.players.map((player) => player.id === legacyPlayerId
+      ? { ...player, id: playerId } : player);
+    return {
+      ...room,
+      ...(isHost ? { hostId: playerId } : {}),
+      players,
+      ...(room.match ? { match: {
+        ...room.match,
+        responses: room.match.responses.map((response) => response.playerId === legacyPlayerId
+          ? { ...response, playerId } : response),
+      } } : {}),
+    };
+  });
+  return changed ? { ...roomState, rooms } : roomState;
+}
+
+/** Claim existing local guest seats when a verified server user signs in.
+ * Failed transfers retain the original guest seat and guest mapping instead
+ * of silently removing room membership.
+ */
+export function claimGuestRoomsForAccount(roomState, guestState, user) {
+  const playerId = getRoomAccountPlayerId(user?.id);
+  if (!playerId) return { roomState, guestState };
+  let nextRooms = roomState;
+  let nextGuests = guestState;
+  for (const [code, guestId] of Object.entries(guestState.byRoom)) {
+    const room = getRoomByCode(nextRooms, code);
+    if (!room?.players.some((player) => player.id === guestId)) continue;
+    if (room.players.some((player) => player.id === playerId)) continue;
+    const result = claimGuestRoomSeatInState(nextRooms, code, guestId, {
+      playerId, displayName: user.displayName,
+    });
+    if (!result.error) {
+      nextRooms = result.state;
+      nextGuests = forgetRoomGuest(nextGuests, code);
+    }
+  }
+  return { roomState: nextRooms, guestState: nextGuests };
 }
 
 // Step 9: pure room transitions are shared by the UI and tests. Each action

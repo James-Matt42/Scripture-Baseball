@@ -13,10 +13,15 @@ const MAX_SAVED_INNINGS = 100;
 const MAX_QUESTIONS = 30;
 const STARTER_IDS = SAMPLE_QUESTIONS.map((question) => question.id);
 
+// Profile IDs from the old local demo remain readable, while real account
+// IDs are UUIDs issued by the backend. Neither is a credential.
 export function getPracticeStorageKey(profileId) {
-  return typeof profileId === "string" && /^account-[1-9]\d*$/.test(profileId)
-    ? `${PRACTICE_STORAGE_KEY}.${profileId}`
-    : PRACTICE_STORAGE_KEY;
+  const isLegacy = typeof profileId === "string" && /^account-[1-9]\d*$/.test(profileId);
+  const isServer = typeof profileId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(profileId);
+  return isLegacy ? `${PRACTICE_STORAGE_KEY}.${profileId}`
+    : isServer ? `${PRACTICE_STORAGE_KEY}.user-${profileId.toLowerCase()}`
+      : PRACTICE_STORAGE_KEY;
 }
 
 function isRecord(value) {

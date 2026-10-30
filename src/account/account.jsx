@@ -14,8 +14,12 @@ export function Account() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnToRoom = getInvitationPath(searchParams.get("code"));
-  const { activeProfile, preferences, isSaved, createProfile, signIn, signOut, updatePreferences } = useAccount();
+  const { activeProfile, preferences, isSaved, sessionError, createProfile, signIn, signOut, updatePreferences } = useAccount();
   const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
@@ -23,46 +27,71 @@ export function Account() {
   const [settings, setSettings] = useState(() => ({ ...preferences }));
   const [settingsMessage, setSettingsMessage] = useState("");
 
-  // Switching profiles swaps the visible form values for that profile's saved choices.
+  // Restore the correct form values when the authenticated user or guest changes.
   useEffect(() => {
     setSettings({ ...preferences });
   }, [preferences]);
 
-  function handleCreate(event) {
+  async function handleCreate(event) {
     event.preventDefault();
-    const result = createProfile({ displayName: newName, email: newEmail });
-    if (!result.ok) {
-      setAccountError(result.error);
+    if (submitting) return;
+    if (newPassword !== confirmPassword) {
+      setAccountError("Passwords do not match.");
       setAccountMessage("");
       return;
     }
+    setSubmitting(true);
     setAccountError("");
-    setAccountMessage(result.copiedGuestActivity
-      ? "Local profile created. Guest practice copied."
-      : "Local profile created.");
-    setNewName("");
-    setNewEmail("");
-    if (returnToRoom) navigate(returnToRoom);
-  }
-
-  function handleSignIn(event) {
-    event.preventDefault();
-    const result = signIn(signInEmail);
-    if (!result.ok) {
-      setAccountError(result.error);
-      setAccountMessage("");
-      return;
+    setAccountMessage("");
+    try {
+      const result = await createProfile({ displayName: newName, email: newEmail, password: newPassword });
+      setAccountMessage(result.copiedGuestActivity
+        ? "Account created and signed in. Your local practice was preserved on this device."
+        : "Account created and signed in.");
+      setNewName("");
+      setNewEmail("");
+      setNewPassword("");
+      setConfirmPassword("");
+      if (returnToRoom) navigate(returnToRoom);
+    } catch (error) {
+      setAccountError(error.message || "Could not create the account. Try again.");
+    } finally {
+      setSubmitting(false);
     }
-    setAccountError("");
-    setAccountMessage("Signed in to this browser's saved profile.");
-    setSignInEmail("");
-    if (returnToRoom) navigate(returnToRoom);
   }
 
-  function handleSignOut() {
-    signOut();
-    setAccountMessage("Signed out. Guest practice is available.");
+  async function handleSignIn(event) {
+    event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setAccountError("");
+    setAccountMessage("");
+    try {
+      await signIn(signInEmail, signInPassword);
+      setAccountMessage("Signed in successfully.");
+      setSignInEmail("");
+      setSignInPassword("");
+      if (returnToRoom) navigate(returnToRoom);
+    } catch (error) {
+      setAccountError(error.message || "Could not sign in. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSignOut() {
+    if (submitting) return;
+    setSubmitting(true);
+    setAccountError("");
+    setAccountMessage("");
+    try {
+      await signOut();
+      setAccountMessage("Signed out. Guest practice remains available on this device.");
+    } catch (error) {
+      setAccountError(error.message || "Could not sign out. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function savePracticePreferences(event) {
@@ -88,14 +117,14 @@ export function Account() {
       <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
         <h1 className="text-3xl font-bold text-green-950">Account</h1>
         <p className="max-w-xl text-stone-700">
-          Local demo profiles only. No passwords, secure login, or cross-device syncing.
+          Real account registration and sign-in. Accounts and sessions are temporary until the database phase; practice, preferences, and demo rooms still live on this device.
         </p>
       </header>
 
       {returnToRoom && (
         <p className="rounded-lg bg-green-50 p-3 text-stone-800">
           <Link className="font-semibold text-green-800 underline" to={returnToRoom}>Return to room invitation</Link>
-          {" "}after choosing a local profile.
+          {" "}after signing in or creating an account. Your existing guest room seat is preserved.
         </p>
       )}
 
@@ -104,38 +133,51 @@ export function Account() {
           Browser storage is unavailable. Changes may be lost on refresh.
         </p>
       )}
+      {sessionError && !activeProfile && (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-stone-800" role="alert">
+          Could not restore your account session: {sessionError} You can continue playing as a guest.
+        </p>
+      )}
       {accountError && <p className="rounded-lg bg-amber-50 p-3 text-stone-800" role="alert">{accountError}</p>}
       {accountMessage && <p className="rounded-lg bg-green-50 p-3 text-green-950" role="status">{accountMessage}</p>}
 
       {activeProfile ? (
         <section className="grid gap-4 rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="signed-in-heading">
-          <h2 className="text-2xl font-bold text-green-950" id="signed-in-heading">Your local profile</h2>
+          <h2 className="text-2xl font-bold text-green-950" id="signed-in-heading">Your account</h2>
           <p>Signed in as <strong>{activeProfile.displayName}</strong></p>
           <dl className="grid gap-2 text-stone-700">
             <div><dt className="font-semibold">Email</dt><dd>{activeProfile.email}</dd></div>
             <div><dt className="font-semibold">Created</dt><dd>{activeProfile.createdAt ? new Date(activeProfile.createdAt).toLocaleDateString() : "Unknown"}</dd></div>
           </dl>
           <p><Link className="font-semibold text-green-800 hover:text-green-950" to="/progress">View your learning progress</Link></p>
-          <div><button className={secondaryButton} type="button" onClick={handleSignOut}>Sign Out</button></div>
+          <div><button className={secondaryButton} type="button" onClick={handleSignOut} disabled={submitting}>
+            {submitting ? "Signing out…" : "Sign Out"}</button></div>
         </section>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="sign-in-heading">
-            <h2 className="text-2xl font-bold text-green-950" id="sign-in-heading">Open a saved profile</h2>
-            <p className="mt-2 text-sm text-stone-600">Enter an email used on this browser. No password is required.</p>
+            <h2 className="text-2xl font-bold text-green-950" id="sign-in-heading">Sign in</h2>
+            <p className="mt-2 text-sm text-stone-600">Use the email and password you registered with.</p>
             <form className="mt-4 grid gap-4" onSubmit={handleSignIn}>
               <div className="grid gap-2">
                 <label className="font-semibold text-stone-700" htmlFor="sign-in-email">Email</label>
                 <input className={inputClass} id="sign-in-email" name="email" type="email" autoComplete="email"
                   value={signInEmail} onChange={(event) => setSignInEmail(event.target.value)} required />
               </div>
-              <div><button className={primaryButton} type="submit">Sign In Locally</button></div>
+              <div className="grid gap-2">
+                <label className="font-semibold text-stone-700" htmlFor="sign-in-password">Password</label>
+                <input className={inputClass} id="sign-in-password" name="password" type="password"
+                  autoComplete="current-password" value={signInPassword}
+                  onChange={(event) => setSignInPassword(event.target.value)} required />
+              </div>
+              <div><button className={primaryButton} type="submit" disabled={submitting}>
+                {submitting ? "Signing in…" : "Sign In"}</button></div>
             </form>
           </section>
 
           <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="create-account-heading">
-            <h2 className="text-2xl font-bold text-green-950" id="create-account-heading">Create a local profile</h2>
-            <p className="mt-2 text-sm text-stone-600">Your guest practice is copied into the new profile.</p>
+            <h2 className="text-2xl font-bold text-green-950" id="create-account-heading">Create an account</h2>
+            <p className="mt-2 text-sm text-stone-600">Your guest practice can be carried into your new account on this device.</p>
             <form className="mt-4 grid gap-4" onSubmit={handleCreate}>
               <div className="grid gap-2">
                 <label className="font-semibold text-stone-700" htmlFor="display-name">Display name</label>
@@ -143,11 +185,25 @@ export function Account() {
                   maxLength={40} value={newName} onChange={(event) => setNewName(event.target.value)} required />
               </div>
               <div className="grid gap-2">
-                <label className="font-semibold text-stone-700" htmlFor="create-email">Email (local identifier)</label>
+                <label className="font-semibold text-stone-700" htmlFor="create-email">Email</label>
                 <input className={inputClass} id="create-email" name="email" type="email" autoComplete="email"
                   value={newEmail} onChange={(event) => setNewEmail(event.target.value)} required />
               </div>
-              <div><button className={primaryButton} type="submit">Create Profile</button></div>
+              <div className="grid gap-2">
+                <label className="font-semibold text-stone-700" htmlFor="create-password">Password (at least 8 characters)</label>
+                <input className={inputClass} id="create-password" name="new-password" type="password"
+                  autoComplete="new-password" minLength={8} value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)} required />
+                <p className="text-xs text-stone-600">Passwords are hashed by the server. Maximum 72 UTF-8 bytes.</p>
+              </div>
+              <div className="grid gap-2">
+                <label className="font-semibold text-stone-700" htmlFor="confirm-password">Confirm password</label>
+                <input className={inputClass} id="confirm-password" name="confirm-password" type="password"
+                  autoComplete="new-password" minLength={8} value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)} required />
+              </div>
+              <div><button className={primaryButton} type="submit" disabled={submitting}>
+                {submitting ? "Creating account…" : "Create Account"}</button></div>
             </form>
           </section>
         </div>
@@ -155,7 +211,7 @@ export function Account() {
 
       <section className="grid gap-4 rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="preferences-heading">
         <h2 className="text-2xl font-bold text-green-950" id="preferences-heading">Practice preferences</h2>
-        <p className="text-sm text-stone-600">Saved for {activeProfile ? activeProfile.displayName : "guest practice"} on this device.</p>
+        <p className="text-sm text-stone-600">Saved for {activeProfile ? activeProfile.displayName : "guest practice"} on this device. Account-wide synchronization comes in the next service commits.</p>
         <form className="grid gap-4" onSubmit={savePracticePreferences}>
           <fieldset className="grid gap-3 rounded-lg border border-stone-200 bg-amber-50 p-4">
             <legend className="font-semibold text-green-950">Default answer difficulty</legend>
