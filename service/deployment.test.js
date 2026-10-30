@@ -23,6 +23,7 @@ test('deployment packages frontend and nested backend files without private sour
   await mkdir(join(backend, 'routes'), { recursive: true });
   await mkdir(join(backend, 'domain'), { recursive: true });
   await mkdir(join(backend, 'auth'), { recursive: true });
+  await mkdir(join(backend, 'progress'), { recursive: true });
   await mkdir(join(backend, 'content', 'local'), { recursive: true });
   await mkdir(bin);
   await cp(join(projectRoot, 'deployService.sh'), join(project, 'deployService.sh'));
@@ -35,6 +36,7 @@ test('deployment packages frontend and nested backend files without private sour
   await writeFile(join(backend, 'routes', 'questions.js'), 'export const questions = [];');
   await writeFile(join(backend, 'domain', 'questions.js'), 'export const sample = true;');
   await writeFile(join(backend, 'auth', 'registration.js'), 'export const registration = true;');
+  await writeFile(join(backend, 'progress', 'progressStore.js'), 'export const progress = true;');
   await writeFile(join(backend, 'index.test.js'), 'throw new Error("do not deploy tests")');
   await writeFile(join(backend, '.env'), 'PRIVATE_KEY=do-not-deploy');
   await writeFile(join(backend, 'content', 'local', 'scriptures.json'), '{"private":true}');
@@ -72,6 +74,7 @@ exit 4
   assert.match(await readFile(join(captured, 'routes', 'questions.js'), 'utf8'), /questions/);
   assert.match(await readFile(join(captured, 'domain', 'questions.js'), 'utf8'), /sample/);
   assert.match(await readFile(join(captured, 'auth', 'registration.js'), 'utf8'), /registration/);
+  assert.match(await readFile(join(captured, 'progress', 'progressStore.js'), 'utf8'), /progress/);
 
   for (const excluded of ['.env', 'index.test.js', 'content/local/scriptures.json']) {
     await assert.rejects(access(join(captured, excluded)), { code: 'ENOENT' });

@@ -7,18 +7,21 @@ import { createAuthRouter } from './routes/auth.js';
 import { createInMemoryUserStore } from './auth/userStore.js';
 import { createInMemorySessionStore } from './auth/sessionStore.js';
 import { createSessionAuth } from './auth/authentication.js';
+import { createInMemoryProgressStore } from './progress/progressStore.js';
+import { createProgressRouter } from './routes/progress.js';
 
 export function createApp({
   staticDirectory = frontendDirectory(),
   userStore = createInMemoryUserStore(),
   sessionStore = createInMemorySessionStore(),
+  progressStore = createInMemoryProgressStore(),
   // Caddy terminates TLS before proxying to port 4000. Never rely on req.secure
   // alone in the production PM2 process; deployService.sh sets NODE_ENV.
   secureCookies = process.env.NODE_ENV === 'production',
 } = {}) {
   const app = express();
 
-  // Application routes added in later commits will use this JSON middleware.
+  // Protect the authentication, scripture, and progress APIs with one JSON body limit.
   app.use(express.json({ limit: '64kb' }));
 
   app.get('/api/health', (_req, res) => {
@@ -30,6 +33,7 @@ export function createApp({
   const sessionAuth = createSessionAuth({ userStore, sessionStore });
   app.use('/api', scriptureRouter);
   app.use('/api', createAuthRouter({ userStore, sessionStore, sessionAuth, secureCookies }));
+  app.use('/api', createProgressRouter({ sessionAuth, progressStore }));
 
   // Unknown API paths must fail as APIs, never return the React HTML shell.
   app.use('/api', (_req, res) => {
