@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchChallengeQuestions, fetchChallenges } from "../api/scriptureApi.js";
+import { fetchAccountChallengeQuestions } from "../api/progressApi.js";
 import { VOLUME_OPTIONS } from "../account/accountState.js";
 import { useAccount } from "../account/AccountContext";
 import { usePractice } from "../play/PracticeContext";
@@ -9,14 +10,13 @@ import { getChallengeQuestions } from "./catalog.js";
 const cardClass = "flex h-full flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:shadow-md";
 const actionClass = "inline-flex w-fit items-center rounded-lg bg-scripture-green px-4 py-2 font-semibold text-white hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 disabled:cursor-wait disabled:opacity-50";
 
-function ChallengeCard({ challenge, attempts, favorites, onStart, startingId, volume = "" }) {
-  // The authenticated application-data API has not been built yet. Retain the
-  // existing device-local personal collections without claiming they are server
-  // collections; public challenge metadata and decks come from the API.
+function ChallengeCard({ challenge, attempts, favorites, onStart, startingId, volume = "", signedIn = false, personalLoading = false }) {
+  // Counts use the merged account/server history; the actual personal deck
+  // must still be retrieved from the authenticated endpoint before playing.
   const localQuestions = challenge.personalized
     ? getChallengeQuestions(challenge.id, attempts, favorites, volume) : null;
-  const count = challenge.personalized ? localQuestions.length : challenge.questionCount;
-  const disabled = count === 0;
+  const count = challenge.personalized ? (personalLoading ? null : localQuestions.length) : challenge.questionCount;
+  const disabled = count === 0 || !!(challenge.personalized && personalLoading);
   const starting = startingId === challenge.id;
   return (
     <article className={cardClass}>
@@ -27,10 +27,10 @@ function ChallengeCard({ challenge, attempts, favorites, onStart, startingId, vo
         </span>
       </div>
       <p className="flex-1 leading-6 text-stone-700">{challenge.description}</p>
-      <p className="text-sm capitalize text-stone-600">{challenge.difficulty} difficulty{challenge.personalized ? " · saved on this device" : ""}</p>
+      <p className="text-sm capitalize text-stone-600">{challenge.difficulty} difficulty{challenge.personalized ? (signedIn ? " · account collection" : " · saved on this device") : ""}</p>
       {disabled ? (
         <p className="text-sm font-medium text-stone-600" role="status">
-          {challenge.id === "my-favorites" ? "Bookmark a passage while playing to build this set."
+          {personalLoading ? 'Loading your account history…' : challenge.id === "my-favorites" ? "Bookmark a passage while playing to build this set."
             : challenge.id === "my-misses" || challenge.id === "weak-areas"
               ? "Practice a few pitches first to unlock this set."
               : "No passages available for this selection."}
@@ -46,8 +46,8 @@ function ChallengeCard({ challenge, attempts, favorites, onStart, startingId, vo
 
 export function Challenges() {
   const navigate = useNavigate();
-  const { preferences } = useAccount();
-  const { recordedAttempts, favorites, startChallenge } = usePractice();
+  const { preferences, activeProfile } = useAccount();
+  const { recordedAttempts, favorites, startChallenge, syncStatus, syncError, retrySync } = usePractice();
   const [filters, setFilters] = useState(() => ({
     volume: preferences.preferredVolume || "", category: "", difficulty: "",
   }));
@@ -85,13 +85,15 @@ export function Challenges() {
     setStartError("");
     try {
       const questions = challenge.personalized
-        ? getChallengeQuestions(challenge.id, recordedAttempts, favorites, volume)
+        ? activeProfile
+          ? (await fetchAccountChallengeQuestions(challenge.id, volume)).questions
+          : getChallengeQuestions(challenge.id, recordedAttempts, favorites, volume)
         : (await fetchChallengeQuestions(challenge.id, volume ? { volume } : {})).questions;
       if (!questions.length) {
         setStartError("No playable passages are available in that challenge yet.");
         return;
       }
-      startChallenge(challenge.id, questions);
+      startChallenge(challenge.id, questions, { authenticatedDeck: !!(activeProfile && challenge.personalized) });
       navigate("/play");
     } catch (error) {
       // Never replace a failed public deck fetch with answer-bearing local data.
@@ -105,7 +107,10 @@ export function Challenges() {
     { id: "recommended", title: "Recommended", challenges: catalog.items.filter((item) => item.section === "recommended") },
     { id: "personal", title: "Your challenges", challenges: catalog.items.filter((item) => item.section === "personal") },
   ];
-  const cardProps = { attempts: recordedAttempts, favorites, onStart: launchChallenge, startingId };
+  const cardProps = { attempts: recordedAttempts, favorites, onStart: launchChallenge,
+    startingId, signedIn: !!activeProfile,
+    personalLoading: !!activeProfile && syncStatus === 'syncing',
+  };
 
   return (
     <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
@@ -115,6 +120,13 @@ export function Challenges() {
         <p className="mt-1 text-sm text-stone-500">Curated starter collection served by Scripture Baseball.</p>
       </header>
 
+      {activeProfile && syncStatus === 'syncing' && <p role="status">Loading your account challenges…</p>}
+      {activeProfile && syncError && (
+        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+          Account history could not finish syncing: {syncError}
+          <button className="ml-3 font-semibold underline" type="button" onClick={retrySync}>Retry sync</button>
+        </div>
+      )}
       {startError && <p className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-900" role="alert">{startError}</p>}
       {catalog.loading && <p role="status">Loading challenge recommendations…</p>}
       {catalog.error && (

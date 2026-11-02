@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { getChallengeQuestions } from "../challenges/catalog.js";
+import { fetchAccountChallengeQuestions } from "../api/progressApi.js";
+import { useAccount } from "../account/AccountContext.jsx";
 import { usePractice } from "../play/PracticeContext";
 import { useRooms } from "../rooms/RoomContext";
 import { formatScriptureReference } from "../scripture/questions.js";
@@ -67,7 +69,10 @@ function PassageList({ passages, empty }) {
 }
 
 export function Progress() {
-  const { recordedAttempts, history, favorites, startChallenge } = usePractice();
+  const navigate = useNavigate();
+  const { activeProfile } = useAccount();
+  const { recordedAttempts, history, favorites, startChallenge, syncStatus, syncError, retrySync } = usePractice();
+  const [startError, setStartError] = useState('');
   const { completedGames } = useRooms();
   const progress = useMemo(
     () => getProgressReport({ attempts: recordedAttempts, history }),
@@ -75,10 +80,24 @@ export function Progress() {
   );
   const hasPractice = progress.pitches > 0;
 
-  function practiceWeakBook(area) {
-    const available = getChallengeQuestions("my-misses", recordedAttempts, favorites);
-    const requested = new Set(area.questionIds);
-    startChallenge("my-misses", available.filter(({ id }) => requested.has(id)));
+  async function practiceWeakBook(event, area) {
+    if (!activeProfile) {
+      const available = getChallengeQuestions('my-misses', recordedAttempts, favorites);
+      const requested = new Set(area.questionIds);
+      startChallenge('my-misses', available.filter(({ id }) => requested.has(id)));
+      return;
+    }
+    event.preventDefault();
+    setStartError('');
+    try {
+      const { questions } = await fetchAccountChallengeQuestions('my-misses');
+      const requested = new Set(area.questionIds);
+      const selected = questions.filter((question) => requested.has(question.id));
+      if (!selected.length) throw new Error('These passages are no longer in your missed set.');
+      startChallenge('my-misses', selected, { authenticatedDeck: true });
+      // Redirect after the asynchronous authenticated deck is ready.
+      navigate('/play');
+    } catch (error) { setStartError(`Could not load this practice set: ${error.message}`); }
   }
 
   return (
@@ -86,11 +105,21 @@ export function Progress() {
       <header className={`${panel} md:flex md:items-start md:justify-between md:gap-6`}>
         <div>
           <h1 className="text-3xl font-bold text-green-950">Your Progress</h1>
-          <p className="mt-2 text-stone-700">Your saved solo practice, including pitches from the current inning.</p>
+          <p className="mt-2 text-stone-700">{activeProfile
+            ? 'Account-backed attempts, including any pitches waiting to sync from this device.'
+            : 'Your saved solo practice, including pitches from the current inning.'}</p>
         </div>
         <Link to="/play" className={`${actionLink} mt-4 shrink-0 md:mt-0`}>Practice now</Link>
       </header>
 
+      {activeProfile && syncStatus === 'syncing' && <p role="status">Loading your account progress…</p>}
+      {activeProfile && syncError && (
+        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <p>Practice remains saved locally, but account sync needs attention: {syncError}</p>
+          <button className="mt-2 font-semibold underline" type="button" onClick={retrySync}>Retry account sync</button>
+        </div>
+      )}
+      {startError && <p className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-900" role="alert">{startError}</p>}
       {!hasPractice && (
         <section className="rounded-xl border border-amber-200 bg-amber-50 p-5" role="status">
           <h2 className="text-lg font-bold text-green-950">No practice recorded yet</h2>
@@ -144,7 +173,7 @@ export function Progress() {
                 <h3 className="text-lg font-bold text-green-950">{area.label}</h3>
                 <p className="mt-2 text-sm text-stone-700">{area.needsReview} {area.needsReview === 1 ? "passage needs" : "passages need"} review.</p>
                 <p className="mt-2 text-sm text-stone-600">Book {area.bookAccuracy}% · Chapter {area.chapterAccuracy}%</p>
-                <Link to="/play" className={`${actionLink} mt-4`} onClick={() => practiceWeakBook(area)}>Practice these passages</Link>
+                <Link to="/play" className={`${actionLink} mt-4`} onClick={(event) => practiceWeakBook(event, area)}>Practice these passages</Link>
               </article>
             ))}
           </div>
@@ -154,7 +183,7 @@ export function Progress() {
       </section>
 
       <section className="space-y-4" aria-labelledby="recent-heading">
-        <h2 id="recent-heading" className="text-2xl font-bold text-green-950">Recent solo innings</h2>
+        <h2 id="recent-heading" className="text-2xl font-bold text-green-950">Recent innings saved on this device</h2>
         {progress.recentInnings.length ? (
           <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm">
             <table className="w-full min-w-[650px] text-left text-sm [&_th]:bg-green-900 [&_th]:px-4 [&_th]:py-3 [&_th]:text-white [&_td]:border-b [&_td]:border-stone-200 [&_td]:px-4 [&_td]:py-3">

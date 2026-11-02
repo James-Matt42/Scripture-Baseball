@@ -12,7 +12,7 @@ export const SERVER_USER_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 export function initialClientSettings(guestPreferences = DEFAULT_PREFERENCES) {
-  return { version: 1, guestPreferences: normalizePreferences(guestPreferences), byUser: {} };
+  return { version: 1, guestPreferences: normalizePreferences(guestPreferences), byUser: {}, pendingByUser: {} };
 }
 
 export function normalizeClientSettings(value) {
@@ -23,10 +23,16 @@ export function normalizeClientSettings(value) {
       if (SERVER_USER_ID_PATTERN.test(id)) byUser[id] = normalizePreferences(preferences);
     }
   }
+  const pendingByUser = {};
+  if (isRecord(value.pendingByUser)) {
+    for (const [id, preferences] of Object.entries(value.pendingByUser).slice(0, 100)) {
+      if (SERVER_USER_ID_PATTERN.test(id)) pendingByUser[id] = normalizePreferences(preferences);
+    }
+  }
   return {
     version: 1,
     guestPreferences: normalizePreferences(value.guestPreferences),
-    byUser,
+    byUser, pendingByUser,
   };
 }
 
@@ -85,7 +91,11 @@ export function updateClientPreferences(state, userId, changes) {
   if (JSON.stringify(current) === JSON.stringify(next)) return state;
   if (!userId) return { ...state, guestPreferences: next };
   if (!SERVER_USER_ID_PATTERN.test(userId)) return state;
-  return { ...state, byUser: { ...state.byUser, [userId]: next } };
+  return {
+    ...state,
+    byUser: { ...state.byUser, [userId]: next },
+    pendingByUser: { ...state.pendingByUser, [userId]: next },
+  };
 }
 
 /**
@@ -110,4 +120,23 @@ export function copyLocalPracticeOnRegistration(storage, user) {
   } catch {
     return false;
   }
+}
+
+// Never overwrite unsent changes with a stale server response.
+export function acceptServerPreferences(state, userId, preferences) {
+  if (!SERVER_USER_ID_PATTERN.test(userId) || state.pendingByUser?.[userId]) return state;
+  const next = normalizePreferences(preferences);
+  return { ...state, byUser: { ...state.byUser, [userId]: next } };
+}
+
+// A successful PATCH only confirms the exact version sent; a newer local edit
+// stays pending and will be sent next.
+export function confirmServerPreferences(state, userId, submitted, serverPreferences) {
+  if (JSON.stringify(state.pendingByUser?.[userId]) !== JSON.stringify(submitted)) return state;
+  const pendingByUser = { ...state.pendingByUser };
+  delete pendingByUser[userId];
+  return {
+    ...state, pendingByUser,
+    byUser: { ...state.byUser, [userId]: normalizePreferences(serverPreferences) },
+  };
 }

@@ -243,6 +243,17 @@ export function practiceReducer(state, action) {
         },
       };
 
+    case "replace-favorites": {
+      const favorites = normalizeFavorites(action.favorites);
+      return JSON.stringify(favorites) === JSON.stringify(state.favorites) ? state : { ...state, favorites };
+    }
+
+    case "merge-favorites": {
+      const incoming = normalizeFavorites(action.favorites);
+      const favorites = normalizeFavorites([...state.favorites, ...incoming]);
+      return JSON.stringify(favorites) === JSON.stringify(state.favorites) ? state : { ...state, favorites };
+    }
+
     case "toggle-favorite": {
       if (!getQuestionById(action.questionId)) return state;
       const favorites = state.favorites.includes(action.questionId)
@@ -254,7 +265,11 @@ export function practiceReducer(state, action) {
     case "start-challenge": {
       const challenge = getChallengeById(action.challengeId);
       if (!challenge || !Array.isArray(action.questionIds)) return state;
-      const available = new Set(getChallengeQuestions(challenge.id, getRecordedAttempts(state), state.favorites).map((item) => item.id));
+      // Authenticated personal decks have already been filtered by the server;
+      // local-only attempts cannot enumerate another device's misses.
+      const available = new Set((action.authenticatedDeck
+        ? SAMPLE_QUESTIONS : getChallengeQuestions(challenge.id, getRecordedAttempts(state), state.favorites))
+        .map((item) => item.id));
       const questionIds = [...new Set(action.questionIds.filter((id) => available.has(id)))].slice(0, MAX_QUESTIONS);
       if (!questionIds.length) return state;
       // Choosing a challenge before the first scored pitch should not

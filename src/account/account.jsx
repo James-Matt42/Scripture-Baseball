@@ -14,7 +14,7 @@ export function Account() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnToRoom = getInvitationPath(searchParams.get("code"));
-  const { activeProfile, preferences, isSaved, sessionError, createProfile, signIn, signOut, updatePreferences } = useAccount();
+  const { activeProfile, preferences, isSaved, sessionError, createProfile, signIn, signOut, updatePreferences, preferencesPending, preferencesError, retryPreferences } = useAccount();
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -100,7 +100,7 @@ export function Account() {
       answerDifficulty: settings.answerDifficulty,
       preferredVolume: settings.preferredVolume,
     });
-    setSettingsMessage("Practice preferences saved.");
+    setSettingsMessage(activeProfile ? "Practice preferences saved locally; syncing to your account." : "Guest preferences saved on this device.");
   }
 
   function saveNotificationPreferences(event) {
@@ -109,7 +109,7 @@ export function Account() {
       practiceReminders: settings.practiceReminders,
       gameNotifications: settings.gameNotifications,
     });
-    setSettingsMessage("Notification choices saved.");
+    setSettingsMessage(activeProfile ? "Notification choices saved locally; syncing to your account." : "Guest notification choices saved on this device.");
   }
 
   return (
@@ -117,7 +117,7 @@ export function Account() {
       <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
         <h1 className="text-3xl font-bold text-green-950">Account</h1>
         <p className="max-w-xl text-stone-700">
-          Real account registration and sign-in. Accounts and sessions are temporary until the database phase; practice, preferences, and demo rooms still live on this device.
+          Real account registration and sign-in. Accounts and sessions are temporary until the database phase; signed-in attempts, favorites, and preferences use account services; temporary server data still resets on restart. Demo rooms remain on this device.
         </p>
       </header>
 
@@ -211,7 +211,7 @@ export function Account() {
 
       <section className="grid gap-4 rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="preferences-heading">
         <h2 className="text-2xl font-bold text-green-950" id="preferences-heading">Practice preferences</h2>
-        <p className="text-sm text-stone-600">Saved for {activeProfile ? activeProfile.displayName : "guest practice"} on this device. Account-wide synchronization comes in the next service commits.</p>
+        <p className="text-sm text-stone-600">{activeProfile ? "Synced with your signed-in account when the service is available." : "Guest preferences are stored on this device."}</p>
         <form className="grid gap-4" onSubmit={savePracticePreferences}>
           <fieldset className="grid gap-3 rounded-lg border border-stone-200 bg-amber-50 p-4">
             <legend className="font-semibold text-green-950">Default answer difficulty</legend>
@@ -242,7 +242,7 @@ export function Account() {
 
       <section className="grid gap-4 rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="notifications-heading">
         <h2 className="text-2xl font-bold text-green-950" id="notifications-heading">Notifications</h2>
-        <p className="text-sm text-stone-600">Choices are saved locally; notifications are not sent yet.</p>
+        <p className="text-sm text-stone-600">Preferences sync to the account service when signed in; actual notifications are not sent yet.</p>
         <form className="grid gap-4" onSubmit={saveNotificationPreferences}>
           <label className="flex items-start gap-3 font-semibold text-stone-700">
             <input type="checkbox" className="mt-1 size-4 accent-scripture-green" checked={settings.practiceReminders}
@@ -258,6 +258,15 @@ export function Account() {
         </form>
       </section>
       {settingsMessage && <p className="rounded-lg bg-green-50 p-3 text-green-950" role="status">{settingsMessage}</p>}
+      {activeProfile && preferencesPending && !preferencesError && (
+        <p className="text-sm text-stone-700" role="status">Saving account preferences…</p>
+      )}
+      {activeProfile && preferencesError && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-stone-800" role="alert">
+          <p>Could not confirm account preferences. Your local selections are retained: {preferencesError}</p>
+          <button type="button" className="mt-2 font-semibold underline" onClick={retryPreferences}>Retry syncing preferences</button>
+        </div>
+      )}
     </main>
   );
 }

@@ -64,8 +64,11 @@ export function getProgressReport({ attempts = [], history = [], now = new Date(
   const timeline = savedAttempts.flatMap((attempt, index) => {
     const question = getQuestionById(attempt?.questionId);
     if (!question) return [];
-    const finishedAt = archived[index]?.questionId === attempt.questionId
-      ? archived[index].finishedAt : null;
+    // Server attempts carry their own timestamps; local archived pitches used
+    // the inning finish time before they were synced. Do not infer a remote
+    // device's practice date from a different device's inning history.
+    const finishedAt = dateOrNull(attempt?.answeredAt) ?? dateOrNull(attempt?.recordedAt) ??
+      (archived[index]?.questionId === attempt.questionId ? archived[index].finishedAt : null);
     return [{ attempt, question, finishedAt }];
   });
 

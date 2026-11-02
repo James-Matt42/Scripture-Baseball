@@ -18,6 +18,7 @@ export function Play() {
     toggleFavorite,
     history,
     isSaved,
+    syncStatus, syncError, retrySync,
     saveDraft,
     setExactVerse,
     answerPitch,
@@ -113,6 +114,14 @@ export function Play() {
           </p>
         )}
       </section>
+
+      {syncStatus === 'syncing' && <p className="text-sm text-stone-600" role="status">Syncing your account practice…</p>}
+      {syncStatus === 'error' && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4" role="alert">
+          <p>Your pitches remain on this device, but could not sync to your account: {syncError}</p>
+          <button type="button" className="mt-2 font-semibold underline" onClick={retrySync}>Retry account sync</button>
+        </div>
+      )}
 
       {!isFinished ? (
         <>

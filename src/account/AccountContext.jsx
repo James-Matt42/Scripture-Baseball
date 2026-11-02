@@ -1,6 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { loginAccount, logoutAccount, registerAccount, restoreAccountSession, AuthRequestError } from '../api/authApi.js';
+import { fetchAccountPreferences, patchAccountPreferences } from '../api/progressApi.js';
 import {
+  acceptServerPreferences,
+  confirmServerPreferences,
   copyLocalPracticeOnRegistration,
   ensureUserPreferences,
   getClientPreferences,
@@ -25,6 +28,9 @@ export function AccountProvider({ children }) {
   const [session, setSession] = useState({ user: null, checking: true, error: '' });
   const [settings, setSettings] = useState(() => loadClientSettings(browserStorage()));
   const [isSaved, setIsSaved] = useState(null);
+  const [preferencesError, setPreferencesError] = useState('');
+  const [preferencesRetry, setPreferencesRetry] = useState(0);
+  const preferenceQueue = useRef(Promise.resolve());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -59,6 +65,7 @@ export function AccountProvider({ children }) {
     }
     const copiedGuestActivity = copyLocalPracticeOnRegistration(browserStorage(), user);
     setSettings((previous) => ensureUserPreferences(previous, user, browserStorage()));
+    setPreferencesError('');
     setSession({ user, checking: false, error: '' });
     return { ok: true, copiedGuestActivity };
   }, []);
@@ -66,6 +73,7 @@ export function AccountProvider({ children }) {
   const signIn = useCallback(async (email, password) => {
     const user = await loginAccount({ email, password });
     setSettings((previous) => ensureUserPreferences(previous, user, browserStorage()));
+    setPreferencesError('');
     setSession({ user, checking: false, error: '' });
     return { ok: true };
   }, []);
@@ -73,13 +81,48 @@ export function AccountProvider({ children }) {
   const signOut = useCallback(async () => {
     // Do not claim sign-out succeeded if the server did not revoke the token.
     await logoutAccount();
+    setPreferencesError('');
     setSession({ user: null, checking: false, error: '' });
     return { ok: true };
   }, []);
 
+  const refreshPreferences = useCallback(async (userId) => {
+    try {
+      const { preferences } = await fetchAccountPreferences();
+      setSettings((previous) => acceptServerPreferences(previous, userId, preferences));
+      setPreferencesError('');
+      return preferences;
+    } catch (error) {
+      setPreferencesError(error.message);
+      throw error;
+    }
+  }, []);
+
   const updatePreferences = useCallback((changes) => {
     setSettings((previous) => updateClientPreferences(previous, session.user?.id, changes));
+    setPreferencesError('');
   }, [session.user?.id]);
+
+  // Serialize PATCH requests, because several fast preference edits must not
+  // reach the server out of order. A failed write remains in localStorage and
+  // is retried explicitly; fetching preferences never clobbers pending edits.
+  const pendingPreferences = session.user?.id ? settings.pendingByUser?.[session.user.id] : null;
+  useEffect(() => {
+    const userId = session.user?.id;
+    if (!userId || !pendingPreferences) return;
+    const submitted = { ...pendingPreferences };
+    let active = true;
+    const next = preferenceQueue.current.then(() => active ? patchAccountPreferences(submitted) : null);
+    preferenceQueue.current = next.catch(() => {});
+    next.then((result) => {
+      if (!active) return;
+      setSettings((previous) => confirmServerPreferences(previous, userId, submitted, result.preferences));
+      setPreferencesError('');
+    }).catch((error) => {
+      if (active) setPreferencesError(error.message);
+    });
+    return () => { active = false; };
+  }, [session.user?.id, pendingPreferences, preferencesRetry]);
 
   const value = useMemo(() => ({
     activeProfile: session.user,
@@ -87,11 +130,19 @@ export function AccountProvider({ children }) {
     sessionError: session.error,
     preferences: getClientPreferences(settings, session.user?.id),
     isSaved,
+    preferencesPending: !!pendingPreferences,
+    preferencesError,
+    retryPreferences: () => {
+      if (pendingPreferences) setPreferencesRetry((count) => count + 1);
+      else if (session.user) refreshPreferences(session.user.id).catch(() => {});
+    },
+    refreshPreferences,
     createProfile,
     signIn,
     signOut,
     updatePreferences,
-  }), [session, settings, isSaved, createProfile, signIn, signOut, updatePreferences]);
+  }), [session, settings, isSaved, pendingPreferences, preferencesError,
+    refreshPreferences, createProfile, signIn, signOut, updatePreferences]);
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 }

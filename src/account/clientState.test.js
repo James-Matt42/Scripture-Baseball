@@ -6,7 +6,7 @@ import {
 } from '../play/practiceState.js';
 import { ACCOUNTS_STORAGE_KEY, accountReducer, createInitialAccountState, saveAccountState } from './accountState.js';
 import {
-  CLIENT_SETTINGS_KEY, SERVER_USER_ID_PATTERN, copyLocalPracticeOnRegistration,
+  CLIENT_SETTINGS_KEY, SERVER_USER_ID_PATTERN, acceptServerPreferences, confirmServerPreferences, copyLocalPracticeOnRegistration,
   ensureUserPreferences, getMatchingLegacyProfile, getClientPreferences, initialClientSettings, loadClientSettings,
   normalizeClientSettings, saveClientSettings, updateClientPreferences,
 } from './clientState.js';
@@ -45,7 +45,7 @@ test('old browser-only profiles cannot restore authentication in new settings', 
   assert.equal(saveAccountState(store, legacy), true);
   assert.ok(store.getItem(ACCOUNTS_STORAGE_KEY));
   const prefs = loadClientSettings(store);
-  assert.deepEqual(Object.keys(prefs), ['version', 'guestPreferences', 'byUser']);
+  assert.deepEqual(Object.keys(prefs), ['version', 'guestPreferences', 'byUser', 'pendingByUser']);
   assert.deepEqual(prefs.byUser, {});
   assert.equal(JSON.stringify(prefs).includes('activeProfileId'), false);
   assert.equal(saveClientSettings(store, prefs), true);
@@ -127,4 +127,32 @@ test('legacy account matching requires a validated server ID and an exact normal
   assert.equal(getMatchingLegacyProfile(store, user).id, 'account-1');
   assert.equal(getMatchingLegacyProfile(store, { ...user, id: 'fake-id' }), null);
   assert.equal(getMatchingLegacyProfile(store, { ...user, email: 'other@example.com' }), null);
+});
+
+test('unsent signed-in preference edits survive reloads and supersede stale server settings', () => {
+  const store = storage();
+  let state = ensureUserPreferences(initialClientSettings(), user, store);
+  state = updateClientPreferences(state, uuid, { answerDifficulty: 'exact-verse' });
+  const pending = state.pendingByUser[uuid];
+  assert.equal(pending.answerDifficulty, 'exact-verse');
+  assert.equal(saveClientSettings(store, state), true);
+  state = loadClientSettings(store);
+  assert.strictEqual(acceptServerPreferences(state, uuid, { answerDifficulty: 'book-chapter' }), state);
+  state = updateClientPreferences(state, uuid, { preferredVolume: 'new-testament' });
+  assert.strictEqual(confirmServerPreferences(state, uuid, pending, pending), state,
+    'an earlier request must not clear a newer edit');
+  const final = state.pendingByUser[uuid];
+  state = confirmServerPreferences(state, uuid, final, final);
+  assert.equal(state.pendingByUser[uuid], undefined);
+  state = acceptServerPreferences(state, uuid, { ...final, preferredVolume: 'old-testament' });
+  assert.equal(state.byUser[uuid].preferredVolume, 'old-testament');
+  assert.equal(state.guestPreferences.preferredVolume, '');
+});
+
+test('malformed pending preference IDs are ignored without leaking across accounts', () => {
+  const state = normalizeClientSettings({ version: 1, pendingByUser: {
+    'not-a-user': { answerDifficulty: 'exact-verse' }, [uuid]: { preferredVolume: 'old-testament' },
+  } });
+  assert.deepEqual(Object.keys(state.pendingByUser), [uuid]);
+  assert.equal(state.pendingByUser[uuid].preferredVolume, 'old-testament');
 });
