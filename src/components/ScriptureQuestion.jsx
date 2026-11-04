@@ -6,6 +6,7 @@ import {
   gradeExactVerse,
 } from "../scripture/questions";
 import { restoredStageRequest, toPracticeAttempt } from "../api/scriptureApi.js";
+import { BibleTranslationComparison } from "../translation/BibleTranslationComparison.jsx";
 
 const primaryButton =
   "w-full cursor-pointer rounded-lg bg-scripture-green px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto disabled:cursor-not-allowed disabled:opacity-50";
@@ -321,6 +322,7 @@ export function ScriptureQuestion({
               {nextLabel}
             </button>
           )}
+          {correctReference && <BibleTranslationComparison reference={correctReference} />}
         </section>
       )}
 

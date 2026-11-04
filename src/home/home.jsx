@@ -131,22 +131,20 @@ export function Home() {
         </p>
       </section>
 
-      {/*
-        Bible API will later provide optional alternate translations for
-        Old Testament and New Testament passages.
-      */}
       <section className="rounded-xl bg-white p-6 shadow-sm" aria-labelledby="translations-heading">
         <h2 id="translations-heading">Compare Bible translations</h2>
 
         <p>
-          When a question comes from the Old or New Testament, you will be
-          able to compare the passage with another Bible translation after
-          answering.
+          After answering an Old or New Testament pitch, choose “Show alternate translation”
+          to see the passage in the World English Bible. Comparison is optional and
+          never changes your score. Try a Bible-based game in the{" "}
+          <Link className="font-semibold text-green-800 hover:text-green-950" to="/challenges">challenge catalog</Link>.
         </p>
 
-        <p>
-          Alternate translation data will be provided by{" "}
-          <a className="font-semibold text-green-800 hover:text-green-950" href="https://bible-api.com/">Bible API</a>.
+        <p className="mt-2">
+          Alternate text is retrieved on demand from{" "}
+          <a className="font-semibold text-green-800 hover:text-green-950" href="https://bible-api.com/">Bible API</a>;
+          your main scripture game works even if that service is unavailable.
         </p>
       </section>
     </main>
