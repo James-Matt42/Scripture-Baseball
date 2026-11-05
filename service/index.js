@@ -1,3 +1,4 @@
+
 import express from 'express';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -75,7 +76,14 @@ export function createApp({
 // Export the app without opening a port so HTTP tests can use ephemeral ports.
 export const app = createApp();
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// PM2's fork-mode wrapper imports this module instead of making it argv[1].
+// Match PM2's actual application entrypoint as well as direct Node launches.
+// Ordinary imports (including HTTP tests) must not start a listener.
+const entrypoint = fileURLToPath(import.meta.url);
+const directlyInvoked = process.argv[1] && resolve(process.argv[1]) === entrypoint;
+const pm2Invoked = process.env.pm_exec_path && resolve(process.env.pm_exec_path) === entrypoint;
+
+if (directlyInvoked || pm2Invoked) {
   const port = Number(process.argv[2] ?? 4000);
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
