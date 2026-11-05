@@ -126,14 +126,14 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **Node.js/Express HTTP service** - I did not complete this part of the deliverable.
-- [ ] **Static middleware for frontend** - I did not complete this part of the deliverable.
-- [ ] **Calls to third party endpoints** - I did not complete this part of the deliverable.
-- [ ] **Backend service endpoints** - I did not complete this part of the deliverable.
-- [ ] **Frontend calls service endpoints** - I did not complete this part of the deliverable.
-- [ ] **Supports registration, login, logout, and restricted endpoint** - I did not complete this part of the deliverable.
-- [ ] **Uses BCrypt to hash passwords** - I did not complete this part of the deliverable.
+- [x] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [x] **Node.js/Express HTTP service** - Express handles the routing.
+- [x] **Static middleware for frontend** - Express static hosting is implemented.
+- [x] **Calls to third party endpoints** - After a pitch in the Bible, the player can optionally request to see the same verse from the World English Bible (we may add more translations). This uses the `bible-api.com` api.
+- [x] **Backend service endpoints** - All the backend service endpoints have been implemented. These include endpoints for questions and answers, as well as progress, preferences, favorites, etc.
+- [x] **Frontend calls service endpoints** - The frontend calls the service endpoints to load the relevant parts of the page.
+- [x] **Supports registration, login, logout, and restricted endpoint** - Registration, login, logout, and restricted endpoints have all been implemented.
+- [x] **Uses BCrypt to hash passwords** - BCrypt is used for passwords.
 
 ## 🚀 DB deliverable
 
