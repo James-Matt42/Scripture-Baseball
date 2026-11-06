@@ -1,5 +1,6 @@
 
 import express from 'express';
+import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { frontendDirectory, isClientRoute } from './staticFiles.js';
@@ -10,6 +11,7 @@ import { createInMemorySessionStore } from './auth/sessionStore.js';
 import { createSessionAuth } from './auth/authentication.js';
 import { createInMemoryProgressStore } from './progress/progressStore.js';
 import { createProgressRouter } from './routes/progress.js';
+import { createMongoConnection, mongoConfigFromEnv } from './db/mongo.js';
 
 export function createApp({
   staticDirectory = frontendDirectory(),
@@ -76,6 +78,31 @@ export function createApp({
 // Export the app without opening a port so HTTP tests can use ephemeral ports.
 export const app = createApp();
 
+/**
+ * Open MongoDB (when configured) and verify its indexes BEFORE accepting HTTP.
+ * The existing in-memory stores are intentionally left in place for DB-01;
+ * DB-02 through DB-05 will switch them to MongoDB adapters.
+ */
+export async function startServer({
+  port = 4000,
+  application = app,
+  mongo = createMongoConnection(mongoConfigFromEnv()),
+} = {}) {
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new RangeError('The service port must be an integer between 0 and 65535');
+  }
+
+  await mongo.connect();
+  try {
+    const server = application.listen(port);
+    await once(server, 'listening');
+    return { server, mongo };
+  } catch (error) {
+    await mongo.close();
+    throw error;
+  }
+}
+
 // PM2's fork-mode wrapper imports this module instead of making it argv[1].
 // Match PM2's actual application entrypoint as well as direct Node launches.
 // Ordinary imports (including HTTP tests) must not start a listener.
@@ -90,8 +117,34 @@ if (directlyInvoked || pm2Invoked) {
     console.error('The service port must be an integer between 1 and 65535.');
     process.exitCode = 1;
   } else {
-    app.listen(port, () => {
+    startServer({ port }).then(({ server, mongo }) => {
       console.log(`Scripture Baseball service listening on port ${port}`);
+      let shuttingDown = false;
+      const shutdown = async () => {
+        if (shuttingDown) return;
+        shuttingDown = true;
+        try {
+          await new Promise((resolve, reject) => {
+            server.close((error) => error ? reject(error) : resolve());
+          });
+        } catch {
+          console.error('Service HTTP shutdown failed');
+          process.exitCode = 1;
+        } finally {
+          try {
+            await mongo.close();
+          } catch {
+            console.error('Service MongoDB shutdown failed');
+            process.exitCode = 1;
+          }
+        }
+      };
+      process.once('SIGTERM', shutdown);
+      process.once('SIGINT', shutdown);
+    }).catch((error) => {
+      // MongoDB initialization deliberately sanitizes driver error messages.
+      console.error(`Scripture Baseball service startup failed: ${error.message}`);
+      process.exitCode = 1;
     });
   }
 }
