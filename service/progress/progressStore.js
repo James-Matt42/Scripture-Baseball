@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { getQuestionById, getQuestionVolume, gradeBookAndChapter, gradeExactVerse } from '../domain/questions.js';
 import { DEFAULT_PREFERENCES, MAX_FAVORITES, ProgressError } from './validation.js';
 
-const MAX_ATTEMPTS_PER_USER = 5000;
-const MAX_IMPORTS_PER_USER = 100;
+export const MAX_ATTEMPTS_PER_USER = 5000;
+export const MAX_IMPORTS_PER_USER = 100;
 
 function hashContent(value) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -15,7 +15,13 @@ function contentKey(attempt) {
   return [attempt.questionId, attempt.bookId, attempt.chapter, attempt.verse ?? null, attempt.challengeId];
 }
 
-function gradeAttempt(attempt, source, now) {
+/** Stable guess identity, excluding unverified client timestamps and source. */
+export function sameAttemptAnswers(left, right) {
+  return hashContent(contentKey(left)) === hashContent(contentKey(right));
+}
+
+/** Grade a validated guess using server-owned question answers. */
+export function gradeAttempt(attempt, source, now) {
   const question = getQuestionById(attempt.questionId);
   const base = gradeBookAndChapter(question, attempt.bookId, attempt.chapter);
   const grades = attempt.verse === undefined ? base : gradeExactVerse(question, base, attempt.verse);
@@ -92,7 +98,7 @@ export function createInMemoryProgressStore({ now = Date.now } = {}) {
 
   function conflictingAttempt(record, attempt) {
     const existing = record.attemptIndex.get(attempt.id);
-    if (existing && hashContent(contentKey(existing)) !== hashContent(contentKey(attempt))) {
+    if (existing && !sameAttemptAnswers(existing, attempt)) {
       throw new ProgressError('An attempt with this ID already has different answers', 409);
     }
     return existing;

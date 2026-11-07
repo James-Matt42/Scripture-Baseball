@@ -13,6 +13,7 @@ import { createInMemorySessionStore } from './sessionStore.js';
 function fakeUsersDatabase() {
   const rows = new Map();
   const sessionRows = new Map();
+  const attemptRows = new Map();
   const calls = [];
   const users = {
     async findOne(query, { projection }) {
@@ -50,10 +51,43 @@ function fakeUsersDatabase() {
       return { deletedCount: sessionRows.delete(filter.tokenDigest) ? 1 : 0 };
     },
   };
+  const attemptKey = ({ userId, id }) => JSON.stringify([userId, id]);
+  const publicAttempt = (document) => {
+    if (!document) return null;
+    const { userId, _id, ...fields } = document;
+    return { ...fields };
+  };
+  const attempts = {
+    async findOne(filter) {
+      return publicAttempt(attemptRows.get(attemptKey(filter)));
+    },
+    find(filter) {
+      return { sort() { return {
+        async toArray() {
+          return [...attemptRows.values()].filter((row) => row.userId === filter.userId)
+            .map(publicAttempt);
+        },
+      }; } };
+    },
+    async countDocuments(filter) {
+      return [...attemptRows.values()].filter((row) => row.userId === filter.userId).length;
+    },
+    async insertOne(document) {
+      const key = attemptKey(document);
+      if (attemptRows.has(key)) {
+        const error = new Error('E11000 duplicate attempt');
+        error.code = 11000;
+        throw error;
+      }
+      attemptRows.set(key, { ...document });
+      return { acknowledged: true };
+    },
+  };
   return {
-    rows, sessionRows, calls,
+    rows, sessionRows, attemptRows, calls,
     collection(name) {
       if (name === 'users') return users;
+      if (name === 'attempts') return attempts;
       assert.equal(name, 'sessions');
       return sessions;
     },
@@ -250,4 +284,101 @@ test('HTTP authorization fails closed on session database errors', async (t) => 
     assert.equal(result.response.status, 500);
     assert.deepEqual(result.body, { error: 'Internal service error' });
   }
+});
+
+
+test('Mongo-backed HTTP practice history and personalized misses survive service restart', async (t) => {
+  const database = fakeUsersDatabase();
+  const first = await startWithDb(t, database);
+  const registration = await request(first.baseUrl, '/api/auth/register', {
+    method: 'POST', body: account,
+  });
+  assert.equal(registration.response.status, 201);
+  const login = await request(first.baseUrl, '/api/auth/login', { method: 'POST', body: account });
+  const cookie = login.response.headers.get('set-cookie')?.split(';')[0];
+  const guess = {
+    id: 'client-stable:1', questionId: '2-nephi-2-25',
+    bookId: 'alma', chapter: 2, challengeId: 'todays-lineup',
+    userId: 'forged-account-id', bookCorrect: true,
+  };
+  const created = await request(first.baseUrl, '/api/account/attempts', {
+    method: 'POST', cookie, body: guess,
+  });
+  assert.equal(created.response.status, 201);
+  assert.equal(created.body.attempt.bookCorrect, false);
+  assert.equal(database.attemptRows.size, 1);
+  assert.equal([...database.attemptRows.values()][0].userId, registration.body.user.id);
+
+  await new Promise((resolve) => first.server.close(resolve));
+  const second = await startWithDb(t, database);
+  const progress = await request(second.baseUrl, '/api/account/progress', { cookie });
+  assert.equal(progress.response.status, 200);
+  assert.equal(progress.body.summary.totalAttempts, 1);
+  assert.equal(progress.body.summary.bookCorrect, 0);
+  assert.equal(progress.body.summary.chapterCorrect, 1);
+  assert.equal(progress.body.attempts[0].userId, undefined);
+  assert.equal(progress.body.attempts[0]._id, undefined);
+
+  const replay = await request(second.baseUrl, '/api/account/attempts', {
+    method: 'POST', cookie, body: guess,
+  });
+  assert.equal(replay.response.status, 200);
+  assert.equal(replay.body.created, false);
+  const conflict = await request(second.baseUrl, '/api/account/attempts', {
+    method: 'POST', cookie, body: { ...guess, chapter: 3 },
+  });
+  assert.equal(conflict.response.status, 409);
+  const misses = await request(second.baseUrl, '/api/account/challenges/my-misses/questions', { cookie });
+  assert.equal(misses.response.status, 200);
+  assert.equal(misses.body.total, 1);
+
+  const another = { ...account, email: 'another@example.com', displayName: 'Another' };
+  await request(second.baseUrl, '/api/auth/register', { method: 'POST', body: another });
+  const otherLogin = await request(second.baseUrl, '/api/auth/login', { method: 'POST', body: another });
+  const otherCookie = otherLogin.response.headers.get('set-cookie')?.split(';')[0];
+  const other = await request(second.baseUrl, '/api/account/progress', { cookie: otherCookie });
+  assert.equal(other.body.summary.totalAttempts, 0);
+});
+
+test('Mongo-backed HTTP guest attempts survive restart while import receipts await DB-05', async (t) => {
+  const database = fakeUsersDatabase();
+  const first = await startWithDb(t, database);
+  await request(first.baseUrl, '/api/auth/register', { method: 'POST', body: account });
+  const login = await request(first.baseUrl, '/api/auth/login', { method: 'POST', body: account });
+  const cookie = login.response.headers.get('set-cookie')?.split(';')[0];
+  const imported = await request(first.baseUrl, '/api/account/import', { method: 'POST', cookie, body: {
+    importId: 'guest:2026',
+    attempts: [{ id: 'guest:1', questionId: '2-nephi-2-25', bookId: 'alma', chapter: 2,
+      challengeId: 'todays-lineup', answeredAt: '2026-10-01T00:00:00.000Z' }],
+    favorites: ['alma-32-21'],
+  } });
+  assert.equal(imported.response.status, 200);
+  assert.equal(imported.body.importedCount, 1);
+  await new Promise((resolve) => first.server.close(resolve));
+  const second = await startWithDb(t, database);
+  const progress = await request(second.baseUrl, '/api/account/progress', { cookie });
+  assert.equal(progress.response.status, 200);
+  assert.equal(progress.body.attempts.length, 1);
+  assert.equal(progress.body.attempts[0].source, 'guest-import');
+  assert.equal(progress.body.attempts[0].bookCorrect, false);
+});
+
+test('Mongo attempt query errors remain generic JSON failures over HTTP', async (t) => {
+  const database = fakeUsersDatabase();
+  const { baseUrl } = await startWithDb(t, database);
+  await request(baseUrl, '/api/auth/register', { method: 'POST', body: account });
+  const login = await request(baseUrl, '/api/auth/login', { method: 'POST', body: account });
+  const cookie = login.response.headers.get('set-cookie')?.split(';')[0];
+  database.collection('attempts').findOne = async () => {
+    throw new Error('private-db: credentials');
+  };
+  const failure = await request(baseUrl, '/api/account/attempts', {
+    method: 'POST', cookie, body: {
+      id: 'first', questionId: '2-nephi-2-25', bookId: 'alma', chapter: 2,
+      challengeId: null,
+    },
+  });
+  assert.equal(failure.response.status, 500);
+  assert.deepEqual(failure.body, { error: 'Internal service error' });
+  assert.equal(JSON.stringify(failure.body).includes('private-db'), false);
 });

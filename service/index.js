@@ -12,6 +12,7 @@ import { createInMemorySessionStore } from './auth/sessionStore.js';
 import { createMongoSessionStore } from './auth/mongoSessionStore.js';
 import { createSessionAuth } from './auth/authentication.js';
 import { createInMemoryProgressStore } from './progress/progressStore.js';
+import { createMongoProgressStore } from './progress/mongoProgressStore.js';
 import { createProgressRouter } from './routes/progress.js';
 import { createMongoConnection, mongoConfigFromEnv } from './db/mongo.js';
 
@@ -82,8 +83,9 @@ export const app = createApp();
 
 /**
  * Open MongoDB (when configured) and verify its indexes BEFORE accepting HTTP.
- * DB-02/03 select MongoDB user and session stores when connected. Until
- * DB-04/05, authenticated progress still uses its in-memory store.
+ * DB-02/03 select persistent users/sessions when connected. DB-04 also
+ * persists graded attempts; favorites, preferences and import receipts
+ * become durable in DB-05.
  */
 export async function startServer({
   port = 4000,
@@ -101,6 +103,7 @@ export async function startServer({
     const activeApp = application ?? createApp({
       userStore: database ? createMongoUserStore(database) : createInMemoryUserStore(),
       sessionStore: database ? createMongoSessionStore(database) : createInMemorySessionStore(),
+      progressStore: database ? createMongoProgressStore(database) : createInMemoryProgressStore(),
     });
     const server = activeApp.listen(port);
     await once(server, 'listening');
