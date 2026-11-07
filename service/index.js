@@ -83,9 +83,8 @@ export const app = createApp();
 
 /**
  * Open MongoDB (when configured) and verify its indexes BEFORE accepting HTTP.
- * DB-02/03 select persistent users/sessions when connected. DB-04 also
- * persists graded attempts; favorites, preferences and import receipts
- * become durable in DB-05.
+ * When MongoDB is configured, user accounts, hashed sessions, attempts,
+ * favorites, preferences and atomic guest imports all persist across restarts.
  */
 export async function startServer({
   port = 4000,

@@ -6,6 +6,7 @@ import { createMongoUserStore } from './mongoUserStore.js';
 import { DuplicateEmailError } from './validation.js';
 import { createApp, startServer } from '../index.js';
 import { createInMemorySessionStore } from './sessionStore.js';
+import { fakeMongoProgressDatabase } from '../progress/fakeMongoProgressDatabase.testSupport.js';
 
 // An in-process stand-in for the MongoDB collection operations used by DB-02.
 // Live Atlas and a process restart against a real database must be tested at
@@ -13,7 +14,8 @@ import { createInMemorySessionStore } from './sessionStore.js';
 function fakeUsersDatabase() {
   const rows = new Map();
   const sessionRows = new Map();
-  const attemptRows = new Map();
+  const progressDb = fakeMongoProgressDatabase();
+  const attemptRows = progressDb.attemptRows;
   const calls = [];
   const users = {
     async findOne(query, { projection }) {
@@ -51,45 +53,12 @@ function fakeUsersDatabase() {
       return { deletedCount: sessionRows.delete(filter.tokenDigest) ? 1 : 0 };
     },
   };
-  const attemptKey = ({ userId, id }) => JSON.stringify([userId, id]);
-  const publicAttempt = (document) => {
-    if (!document) return null;
-    const { userId, _id, ...fields } = document;
-    return { ...fields };
-  };
-  const attempts = {
-    async findOne(filter) {
-      return publicAttempt(attemptRows.get(attemptKey(filter)));
-    },
-    find(filter) {
-      return { sort() { return {
-        async toArray() {
-          return [...attemptRows.values()].filter((row) => row.userId === filter.userId)
-            .map(publicAttempt);
-        },
-      }; } };
-    },
-    async countDocuments(filter) {
-      return [...attemptRows.values()].filter((row) => row.userId === filter.userId).length;
-    },
-    async insertOne(document) {
-      const key = attemptKey(document);
-      if (attemptRows.has(key)) {
-        const error = new Error('E11000 duplicate attempt');
-        error.code = 11000;
-        throw error;
-      }
-      attemptRows.set(key, { ...document });
-      return { acknowledged: true };
-    },
-  };
   return {
-    rows, sessionRows, attemptRows, calls,
+    rows, sessionRows, attemptRows, calls, client: progressDb.client,
     collection(name) {
       if (name === 'users') return users;
-      if (name === 'attempts') return attempts;
-      assert.equal(name, 'sessions');
-      return sessions;
+      if (name === 'sessions') return sessions;
+      return progressDb.collection(name);
     },
   };
 }
@@ -340,7 +309,7 @@ test('Mongo-backed HTTP practice history and personalized misses survive service
   assert.equal(other.body.summary.totalAttempts, 0);
 });
 
-test('Mongo-backed HTTP guest attempts survive restart while import receipts await DB-05', async (t) => {
+test('Mongo-backed HTTP guest imports, preferences and favorites survive service restart', async (t) => {
   const database = fakeUsersDatabase();
   const first = await startWithDb(t, database);
   await request(first.baseUrl, '/api/auth/register', { method: 'POST', body: account });
@@ -350,7 +319,7 @@ test('Mongo-backed HTTP guest attempts survive restart while import receipts awa
     importId: 'guest:2026',
     attempts: [{ id: 'guest:1', questionId: '2-nephi-2-25', bookId: 'alma', chapter: 2,
       challengeId: 'todays-lineup', answeredAt: '2026-10-01T00:00:00.000Z' }],
-    favorites: ['alma-32-21'],
+    favorites: ['alma-32-21'], preferences: { answerDifficulty: 'exact-verse' },
   } });
   assert.equal(imported.response.status, 200);
   assert.equal(imported.body.importedCount, 1);
@@ -361,6 +330,21 @@ test('Mongo-backed HTTP guest attempts survive restart while import receipts awa
   assert.equal(progress.body.attempts.length, 1);
   assert.equal(progress.body.attempts[0].source, 'guest-import');
   assert.equal(progress.body.attempts[0].bookCorrect, false);
+  const storedFavorites = await request(second.baseUrl, '/api/account/favorites', { cookie });
+  assert.deepEqual(storedFavorites.body.favorites, ['alma-32-21']);
+  const storedPreferences = await request(second.baseUrl, '/api/account/preferences', { cookie });
+  assert.equal(storedPreferences.body.preferences.answerDifficulty, 'exact-verse');
+  const sameImport = await request(second.baseUrl, '/api/account/import', {
+    method: 'POST', cookie, body: {
+      importId: 'guest:2026',
+      attempts: [{ id: 'guest:1', questionId: '2-nephi-2-25', bookId: 'alma', chapter: 2,
+        challengeId: 'todays-lineup', answeredAt: '2026-10-01T00:00:00.000Z' }],
+      favorites: ['alma-32-21'], preferences: { answerDifficulty: 'exact-verse' },
+    },
+  });
+  assert.equal(sameImport.response.status, 200);
+  assert.equal(sameImport.body.replayed, true);
+  assert.equal(sameImport.body.importedCount, 1);
 });
 
 test('Mongo attempt query errors remain generic JSON failures over HTTP', async (t) => {
@@ -381,4 +365,42 @@ test('Mongo attempt query errors remain generic JSON failures over HTTP', async 
   assert.equal(failure.response.status, 500);
   assert.deepEqual(failure.body, { error: 'Internal service error' });
   assert.equal(JSON.stringify(failure.body).includes('private-db'), false);
+});
+
+test('Mongo-backed HTTP favorites and preferences survive restart and reject cross-account leakage', async (t) => {
+  const database = fakeUsersDatabase();
+  const first = await startWithDb(t, database);
+  await request(first.baseUrl, '/api/auth/register', { method: 'POST', body: account });
+  const login = await request(first.baseUrl, '/api/auth/login', { method: 'POST', body: account });
+  const readerCookie = login.response.headers.get('set-cookie')?.split(';')[0];
+  const replace = await request(first.baseUrl, '/api/account/favorites', {
+    method: 'PUT', cookie: readerCookie, body: { favorites: ['alma-32-21', '2-nephi-2-25'] },
+  });
+  assert.equal(replace.response.status, 200);
+  assert.deepEqual(replace.body.favorites, ['alma-32-21', '2-nephi-2-25']);
+  const update = await request(first.baseUrl, '/api/account/preferences', {
+    method: 'PATCH', cookie: readerCookie,
+    body: { preferredVolume: 'new-testament', gameNotifications: false },
+  });
+  assert.equal(update.response.status, 200);
+  assert.equal(update.body.preferences.preferredVolume, 'new-testament');
+
+  await new Promise((resolve) => first.server.close(resolve));
+  const second = await startWithDb(t, database);
+  const savedFavorites = await request(second.baseUrl, '/api/account/favorites', { cookie: readerCookie });
+  assert.deepEqual(savedFavorites.body.favorites, ['alma-32-21', '2-nephi-2-25']);
+  const savedPreferences = await request(second.baseUrl, '/api/account/preferences', { cookie: readerCookie });
+  assert.equal(savedPreferences.body.preferences.preferredVolume, 'new-testament');
+  assert.equal(savedPreferences.body.preferences.gameNotifications, false);
+
+  const otherAccount = { ...account, email: 'other-reader@example.com' };
+  await request(second.baseUrl, '/api/auth/register', { method: 'POST', body: otherAccount });
+  const otherLogin = await request(second.baseUrl, '/api/auth/login', {
+    method: 'POST', body: otherAccount,
+  });
+  const otherCookie = otherLogin.response.headers.get('set-cookie')?.split(';')[0];
+  assert.deepEqual((await request(second.baseUrl, '/api/account/favorites', { cookie: otherCookie })).body,
+    { favorites: [] });
+  assert.equal((await request(second.baseUrl, '/api/account/preferences', { cookie: otherCookie }))
+    .body.preferences.preferredVolume, '');
 });
