@@ -12,6 +12,7 @@ import { createInMemorySessionStore } from './sessionStore.js';
 // release time; this fake exercises the adapter's contracts without secrets.
 function fakeUsersDatabase() {
   const rows = new Map();
+  const sessionRows = new Map();
   const calls = [];
   const users = {
     async findOne(query, { projection }) {
@@ -35,11 +36,26 @@ function fakeUsersDatabase() {
       return { insertedId: document._id };
     },
   };
+  const sessions = {
+    async insertOne(document) {
+      assert.ok(document.expiresAt instanceof Date);
+      sessionRows.set(document.tokenDigest, { ...document });
+      return { acknowledged: true };
+    },
+    async findOne(filter) {
+      const session = sessionRows.get(filter.tokenDigest);
+      return session && session.expiresAt > filter.expiresAt.$gt ? { ...session } : null;
+    },
+    async deleteOne(filter) {
+      return { deletedCount: sessionRows.delete(filter.tokenDigest) ? 1 : 0 };
+    },
+  };
   return {
-    rows, calls,
+    rows, sessionRows, calls,
     collection(name) {
-      assert.equal(name, 'users');
-      return users;
+      if (name === 'users') return users;
+      assert.equal(name, 'sessions');
+      return sessions;
     },
   };
 }
@@ -172,6 +188,63 @@ test('async identity lookups protect account endpoints and propagate failures sa
   await once(server, 'listening');
   const baseUrl = `http://127.0.0.1:${server.address().port}`;
   const cookie = `sb_session=${token}`;
+  for (const path of ['/api/auth/session', '/api/account/me', '/api/account/progress']) {
+    const result = await request(baseUrl, path, { cookie });
+    assert.equal(result.response.status, 500);
+    assert.deepEqual(result.body, { error: 'Internal service error' });
+  }
+});
+
+
+test('Mongo-backed HTTP sessions survive a server restart and logout revokes them', async (t) => {
+  const database = fakeUsersDatabase();
+  const first = await startWithDb(t, database);
+  await request(first.baseUrl, '/api/auth/register', { method: 'POST', body: account });
+  const login = await request(first.baseUrl, '/api/auth/login', { method: 'POST', body: account });
+  const cookie = login.response.headers.get('set-cookie')?.split(';')[0];
+  assert.equal(login.response.status, 200);
+  assert.match(cookie, /^sb_session=/u);
+  assert.equal(database.sessionRows.size, 1);
+  const onlySession = [...database.sessionRows.values()][0];
+  assert.ok(!JSON.stringify(onlySession).includes(cookie.split('=')[1]));
+
+  await new Promise((resolve) => first.server.close(resolve));
+  // startServer creates fresh store adapters for the second app instance.
+  const second = await startWithDb(t, database);
+  const restored = await request(second.baseUrl, '/api/auth/session', { cookie });
+  assert.equal(restored.response.status, 200);
+  assert.deepEqual(restored.body, { user: login.body.user });
+  assert.equal((await request(second.baseUrl, '/api/account/me', { cookie })).response.status, 200);
+
+  const rotation = await request(second.baseUrl, '/api/auth/login', {
+    method: 'POST', body: account, cookie,
+  });
+  assert.equal(rotation.response.status, 200);
+  const newCookie = rotation.response.headers.get('set-cookie')?.split(';')[0];
+  assert.notEqual(newCookie, cookie);
+  assert.equal(database.sessionRows.size, 1);
+  assert.equal((await request(second.baseUrl, '/api/account/me', { cookie })).response.status, 401);
+  assert.equal((await request(second.baseUrl, '/api/account/me', { cookie: newCookie })).response.status, 200);
+
+  const logout = await request(second.baseUrl, '/api/auth/logout', {
+    method: 'POST', cookie: newCookie,
+  });
+  assert.equal(logout.response.status, 204);
+  assert.equal(database.sessionRows.size, 0);
+  assert.equal((await request(second.baseUrl, '/api/account/me', { cookie: newCookie })).response.status, 401);
+});
+
+test('HTTP authorization fails closed on session database errors', async (t) => {
+  const database = fakeUsersDatabase();
+  const { baseUrl } = await startWithDb(t, database);
+  await request(baseUrl, '/api/auth/register', { method: 'POST', body: account });
+  const login = await request(baseUrl, '/api/auth/login', { method: 'POST', body: account });
+  const cookie = login.response.headers.get('set-cookie')?.split(';')[0];
+  assert.equal(login.response.status, 200);
+
+  database.collection('sessions').findOne = async () => {
+    throw new Error('private-db-host: secret credentials');
+  };
   for (const path of ['/api/auth/session', '/api/account/me', '/api/account/progress']) {
     const result = await request(baseUrl, path, { cookie });
     assert.equal(result.response.status, 500);

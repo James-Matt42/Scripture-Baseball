@@ -9,6 +9,7 @@ import { createAuthRouter } from './routes/auth.js';
 import { createInMemoryUserStore } from './auth/userStore.js';
 import { createMongoUserStore } from './auth/mongoUserStore.js';
 import { createInMemorySessionStore } from './auth/sessionStore.js';
+import { createMongoSessionStore } from './auth/mongoSessionStore.js';
 import { createSessionAuth } from './auth/authentication.js';
 import { createInMemoryProgressStore } from './progress/progressStore.js';
 import { createProgressRouter } from './routes/progress.js';
@@ -81,8 +82,8 @@ export const app = createApp();
 
 /**
  * Open MongoDB (when configured) and verify its indexes BEFORE accepting HTTP.
- * DB-02 selects the MongoDB user store when connected. Until DB-03 through
- * DB-05, sessions and progress still use their in-memory stores.
+ * DB-02/03 select MongoDB user and session stores when connected. Until
+ * DB-04/05, authenticated progress still uses its in-memory store.
  */
 export async function startServer({
   port = 4000,
@@ -99,6 +100,7 @@ export async function startServer({
     // remains a standalone in-memory fixture for Service-phase HTTP tests.
     const activeApp = application ?? createApp({
       userStore: database ? createMongoUserStore(database) : createInMemoryUserStore(),
+      sessionStore: database ? createMongoSessionStore(database) : createInMemorySessionStore(),
     });
     const server = activeApp.listen(port);
     await once(server, 'listening');
