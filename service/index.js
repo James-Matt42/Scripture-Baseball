@@ -7,6 +7,7 @@ import { frontendDirectory, isClientRoute } from './staticFiles.js';
 import { scriptureRouter } from './routes/scripture.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createInMemoryUserStore } from './auth/userStore.js';
+import { createMongoUserStore } from './auth/mongoUserStore.js';
 import { createInMemorySessionStore } from './auth/sessionStore.js';
 import { createSessionAuth } from './auth/authentication.js';
 import { createInMemoryProgressStore } from './progress/progressStore.js';
@@ -80,21 +81,26 @@ export const app = createApp();
 
 /**
  * Open MongoDB (when configured) and verify its indexes BEFORE accepting HTTP.
- * The existing in-memory stores are intentionally left in place for DB-01;
- * DB-02 through DB-05 will switch them to MongoDB adapters.
+ * DB-02 selects the MongoDB user store when connected. Until DB-03 through
+ * DB-05, sessions and progress still use their in-memory stores.
  */
 export async function startServer({
   port = 4000,
-  application = app,
+  application,
   mongo = createMongoConnection(mongoConfigFromEnv()),
 } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
     throw new RangeError('The service port must be an integer between 0 and 65535');
   }
 
-  await mongo.connect();
+  const database = await mongo.connect();
   try {
-    const server = application.listen(port);
+    // Build the production app only after DB initialization. The exported app
+    // remains a standalone in-memory fixture for Service-phase HTTP tests.
+    const activeApp = application ?? createApp({
+      userStore: database ? createMongoUserStore(database) : createInMemoryUserStore(),
+    });
+    const server = activeApp.listen(port);
     await once(server, 'listening');
     return { server, mongo };
   } catch (error) {

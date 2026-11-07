@@ -16,9 +16,9 @@ export async function registerUser(input, { store, hashPassword }) {
 
   // Skip expensive hashing if the account already exists. The store's own
   // atomic uniqueness check still protects against concurrent registration.
-  if (store.findByEmail(email)) throw new DuplicateEmailError();
+  if (await store.findByEmail(email)) throw new DuplicateEmailError();
 
   const passwordHash = await hashPassword(password);
-  const saved = store.create({ displayName, email, passwordHash });
+  const saved = await store.create({ displayName, email, passwordHash });
   return toPublicUser(saved);
 }

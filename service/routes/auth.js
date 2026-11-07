@@ -40,8 +40,8 @@ export function createAuthRouter({ userStore, sessionStore, sessionAuth, secureC
         verifyPassword: (password, hash) => bcrypt.compare(password, hash),
       });
       // A successful login always rotates the browser's old session token.
-      sessionStore.revoke(readSessionCookie(req.headers.cookie));
-      const token = sessionStore.create(user.id);
+      await sessionStore.revoke(readSessionCookie(req.headers.cookie));
+      const token = await sessionStore.create(user.id);
       res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions({
         secure: secureCookies || req.secure,
       }));
@@ -55,18 +55,26 @@ export function createAuthRouter({ userStore, sessionStore, sessionAuth, secureC
     }
   });
 
-  router.get('/auth/session', (req, res) => {
-    // A logged-out visitor can restore UI state without a 401 exception.
-    res.json({ user: sessionAuth.currentUser(req) });
+  router.get('/auth/session', async (req, res, next) => {
+    try {
+      // A logged-out visitor can restore UI state without a 401 exception.
+      res.json({ user: await sessionAuth.currentUser(req) });
+    } catch (error) {
+      next(error);
+    }
   });
 
-  router.post('/auth/logout', (req, res) => {
-    sessionStore.revoke(readSessionCookie(req.headers.cookie));
-    res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions({
-      secure: secureCookies || req.secure,
-      withExpiry: false,
-    }));
-    res.status(204).end();
+  router.post('/auth/logout', async (req, res, next) => {
+    try {
+      await sessionStore.revoke(readSessionCookie(req.headers.cookie));
+      res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions({
+        secure: secureCookies || req.secure,
+        withExpiry: false,
+      }));
+      res.status(204).end();
+    } catch (error) {
+      next(error);
+    }
   });
 
   router.get('/account/me', sessionAuth.requireUser, (req, res) => {

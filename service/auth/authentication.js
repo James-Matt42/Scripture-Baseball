@@ -24,7 +24,7 @@ export function validateLogin(input) {
 
 export async function authenticateUser(input, { store, verifyPassword }) {
   const { email, password } = validateLogin(input);
-  const user = store.findByEmail(email);
+  const user = await store.findByEmail(email);
   if (!user || !await verifyPassword(password, user.passwordHash)) {
     throw new InvalidCredentialsError();
   }
@@ -33,26 +33,30 @@ export async function authenticateUser(input, { store, verifyPassword }) {
 
 /** Shared guard for auth and future progress endpoints. */
 export function createSessionAuth({ userStore, sessionStore }) {
-  function currentUser(req) {
+  async function currentUser(req) {
     const token = readSessionCookie(req.headers.cookie);
-    const session = sessionStore.lookup(token);
+    const session = await sessionStore.lookup(token);
     if (!session) return null;
-    const user = userStore.findById(session.userId);
+    const user = await userStore.findById(session.userId);
     if (!user) {
-      sessionStore.revoke(token);
+      await sessionStore.revoke(token);
       return null;
     }
     return toPublicUser(user);
   }
 
-  function requireUser(req, res, next) {
-    const user = currentUser(req);
-    if (!user) {
-      res.status(401).json({ error: 'Authentication required' });
-      return;
+  async function requireUser(req, res, next) {
+    try {
+      const user = await currentUser(req);
+      if (!user) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+      req.authUser = user;
+      next();
+    } catch (error) {
+      next(error);
     }
-    req.authUser = user;
-    next();
   }
 
   return { currentUser, requireUser };

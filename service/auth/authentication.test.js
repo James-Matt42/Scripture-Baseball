@@ -57,31 +57,31 @@ test('unknown email and bad password share the same generic 401 error', async ()
   assert.equal(checked, 1); // No hash exists to verify for a missing account.
 });
 
-test('session auth protects endpoints and never exposes the internal user record', () => {
+test('session auth protects endpoints and never exposes the internal user record', async () => {
   const { store, user } = fixture();
   const sessions = createInMemorySessionStore();
   const auth = createSessionAuth({ userStore: store, sessionStore: sessions });
-  assert.equal(auth.currentUser({ headers: {} }), null);
+  assert.equal(await auth.currentUser({ headers: {} }), null);
 
   const token = sessions.create(user.id);
   const req = { headers: { cookie: `${SESSION_COOKIE_NAME}=${token}` } };
-  assert.deepEqual(auth.currentUser(req), {
+  assert.deepEqual(await auth.currentUser(req), {
     id: user.id, displayName: user.displayName, email: user.email, createdAt: user.createdAt,
   });
   let nextCalls = 0;
-  auth.requireUser(req, null, () => { nextCalls += 1; });
+  await auth.requireUser(req, null, () => { nextCalls += 1; });
   assert.equal(nextCalls, 1);
-  assert.deepEqual(req.authUser, auth.currentUser(req));
+  assert.deepEqual(req.authUser, await auth.currentUser(req));
 
   const response = {
     status(code) { this.code = code; return this; },
     json(body) { this.body = body; },
   };
-  auth.requireUser({ headers: {} }, response, () => { nextCalls += 1; });
+  await auth.requireUser({ headers: {} }, response, () => { nextCalls += 1; });
   assert.equal(nextCalls, 1);
   assert.equal(response.code, 401);
   assert.deepEqual(response.body, { error: 'Authentication required' });
 
   sessions.revoke(token);
-  assert.equal(auth.currentUser(req), null);
+  assert.equal(await auth.currentUser(req), null);
 });
