@@ -12,7 +12,8 @@
     "qr:presets:check": "node tools/compile-qr-presets.mjs --check",
     "qr:studio": "node tools/qr-studio/scripts/build.mjs",
     "scriptures:build": "python3 service/scripture/build_corpus.py",
-    "prebuild": "python3 service/scripture/build_corpus.py --if-present"
+    "prebuild": "python3 service/scripture/build_corpus.py --if-present",
+    "scriptures:inspect": "node service/scripture/inspectCorpus.js"
   },
   "repository": {
     "type": "git",
