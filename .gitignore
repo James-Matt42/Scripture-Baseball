@@ -9,3 +9,8 @@ dist/
 build/
 cookies.txt
 docs/
+# Private scripture source files and generated SQLite files are never public.
+/content/local/
+/service/private/
+__pycache__/
+*.pyc

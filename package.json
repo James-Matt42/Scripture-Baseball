@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "qr:presets": "node tools/compile-qr-presets.mjs",
     "qr:presets:check": "node tools/compile-qr-presets.mjs --check",
-    "qr:studio": "node tools/qr-studio/scripts/build.mjs"
+    "qr:studio": "node tools/qr-studio/scripts/build.mjs",
+    "scriptures:build": "python3 service/scripture/build_corpus.py",
+    "prebuild": "python3 service/scripture/build_corpus.py --if-present"
   },
   "repository": {
     "type": "git",
