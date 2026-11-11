@@ -2,9 +2,13 @@
 import express from 'express';
 import { once } from 'node:events';
 import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { frontendDirectory, isClientRoute } from './staticFiles.js';
 import { scriptureRouter } from './routes/scripture.js';
+import { createPracticeRouter } from './routes/practice.js';
+import { createPracticeSessionEngine } from './scripture/practiceSession.js';
+import { openScriptureCorpus, DEFAULT_CORPUS_PATH } from './scripture/corpus.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createInMemoryUserStore } from './auth/userStore.js';
 import { createMongoUserStore } from './auth/mongoUserStore.js';
@@ -21,6 +25,7 @@ export function createApp({
   userStore = createInMemoryUserStore(),
   sessionStore = createInMemorySessionStore(),
   progressStore = createInMemoryProgressStore(),
+  practiceEngine = null,
   // Caddy terminates TLS before proxying to port 4000. Never rely on req.secure
   // alone in the production PM2 process; deployService.sh sets NODE_ENV.
   secureCookies = process.env.NODE_ENV === 'production',
@@ -38,6 +43,7 @@ export function createApp({
   // Share the same auth guard with application routes added in later commits.
   const sessionAuth = createSessionAuth({ userStore, sessionStore });
   app.use('/api', scriptureRouter);
+  app.use('/api', createPracticeRouter({ engine: practiceEngine }));
   app.use('/api', createAuthRouter({ userStore, sessionStore, sessionAuth, secureCookies }));
   app.use('/api', createProgressRouter({ sessionAuth, progressStore }));
 
@@ -90,24 +96,44 @@ export async function startServer({
   port = 4000,
   application,
   mongo = createMongoConnection(mongoConfigFromEnv()),
+  // Only the real entrypoint opens the required corpus automatically. Library
+  // callers and existing service tests can inject an app or corpus explicitly.
+  loadCorpus = false,
+  corpusPath = process.env.SCRIPTURE_SQLITE_PATH || DEFAULT_CORPUS_PATH,
+  scriptureCorpus = null,
 } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
     throw new RangeError('The service port must be an integer between 0 and 65535');
   }
 
   const database = await mongo.connect();
+  let ownedCorpus = null;
   try {
+    // The launched service requires a verified corpus. There is no implicit
+    // fallback to the old question bank if this file is missing or damaged.
+    if (!application && !scriptureCorpus && loadCorpus) {
+      if (!existsSync(corpusPath)) {
+        throw new Error('Private scripture SQLite database is missing');
+      }
+      ownedCorpus = await openScriptureCorpus({ path: corpusPath });
+    }
+    const activeCorpus = scriptureCorpus ?? ownedCorpus;
     // Build the production app only after DB initialization. The exported app
     // remains a standalone in-memory fixture for Service-phase HTTP tests.
     const activeApp = application ?? createApp({
       userStore: database ? createMongoUserStore(database) : createInMemoryUserStore(),
       sessionStore: database ? createMongoSessionStore(database) : createInMemorySessionStore(),
       progressStore: database ? createMongoProgressStore(database) : createInMemoryProgressStore(),
+      practiceEngine: activeCorpus ? createPracticeSessionEngine({ corpus: activeCorpus }) : null,
     });
     const server = activeApp.listen(port);
+    if (ownedCorpus) {
+      server.once('close', () => ownedCorpus.close());
+    }
     await once(server, 'listening');
     return { server, mongo };
   } catch (error) {
+    ownedCorpus?.close();
     await mongo.close();
     throw error;
   }
@@ -127,7 +153,16 @@ if (directlyInvoked || pm2Invoked) {
     console.error('The service port must be an integer between 1 and 65535.');
     process.exitCode = 1;
   } else {
-    startServer({ port }).then(({ server, mongo }) => {
+    // DB-08 introduces a new, optional API while the DB-09 frontend cutover
+    // is pending. Do not take the currently deployed Service-phase site down
+    // merely because the private SQLite artifact has not been provisioned yet.
+    // An explicitly configured path is mandatory and fails closed if missing.
+    const corpusPath = process.env.SCRIPTURE_SQLITE_PATH || DEFAULT_CORPUS_PATH;
+    const loadCorpus = Boolean(process.env.SCRIPTURE_SQLITE_PATH) || existsSync(corpusPath);
+    if (!loadCorpus) {
+      console.warn('Private scripture SQLite corpus not provisioned; new practice API is unavailable');
+    }
+    startServer({ port, loadCorpus, corpusPath }).then(({ server, mongo }) => {
       console.log(`Scripture Baseball service listening on port ${port}`);
       let shuttingDown = false;
       const shutdown = async () => {
