@@ -32,19 +32,7 @@ async function request(path, { method = 'GET', body, signal, fetchImpl = globalT
 }
 
 export const fetchAccountProgress = (options = {}) => request('/api/account/progress', options);
-export const recordAccountAttempt = (attempt, options = {}) => request('/api/account/attempts', { ...options, method: 'POST', body: attempt });
-export const fetchAccountFavorites = (options = {}) => request('/api/account/favorites', options);
-export const saveAccountFavorites = (favorites, options = {}) => request('/api/account/favorites', {
-  ...options, method: 'PUT', body: { favorites },
-});
 export const fetchAccountPreferences = (options = {}) => request('/api/account/preferences', options);
 export const patchAccountPreferences = (preferences, options = {}) => request('/api/account/preferences', {
   ...options, method: 'PATCH', body: preferences,
 });
-export const importAccountPractice = (batch, options = {}) => request('/api/account/import', {
-  ...options, method: 'POST', body: batch,
-});
-export const fetchAccountChallengeQuestions = (challengeId, volume = '', options = {}) => request(
-  `/api/account/challenges/${encodeURIComponent(challengeId)}/questions${volume ? `?volume=${encodeURIComponent(volume)}` : ''}`,
-  options,
-);

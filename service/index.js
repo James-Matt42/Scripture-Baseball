@@ -5,7 +5,6 @@ import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { frontendDirectory, isClientRoute } from './staticFiles.js';
-import { scriptureRouter } from './routes/scripture.js';
 import { createPracticeRouter } from './routes/practice.js';
 import { createPracticeSessionEngine } from './scripture/practiceSession.js';
 import { openScriptureCorpus, DEFAULT_CORPUS_PATH } from './scripture/corpus.js';
@@ -42,7 +41,6 @@ export function createApp({
   // Guest scripture APIs stay public; account endpoints require cookie sessions.
   // Share the same auth guard with application routes added in later commits.
   const sessionAuth = createSessionAuth({ userStore, sessionStore });
-  app.use('/api', scriptureRouter);
   app.use('/api', createPracticeRouter({ engine: practiceEngine, sessionAuth, progressStore }));
   app.use('/api', createAuthRouter({ userStore, sessionStore, sessionAuth, secureCookies }));
   app.use('/api', createProgressRouter({ sessionAuth, progressStore }));
@@ -90,7 +88,7 @@ export const app = createApp();
 /**
  * Open MongoDB (when configured) and verify its indexes BEFORE accepting HTTP.
  * When MongoDB is configured, user accounts, hashed sessions, attempts,
- * favorites, preferences and atomic guest imports all persist across restarts.
+ * favorites, preferences and verified guest-claim receipts persist across restarts.
  */
 export async function startServer({
   port = 4000,
@@ -153,9 +151,8 @@ if (directlyInvoked || pm2Invoked) {
     console.error('The service port must be an integer between 1 and 65535.');
     process.exitCode = 1;
   } else {
-    // DB-08 introduces a new, optional API while the DB-09 frontend cutover
-    // is pending. Do not take the currently deployed Service-phase site down
-    // merely because the private SQLite artifact has not been provisioned yet.
+    // The public site can still start if an unconfigured corpus is absent,
+    // but practice APIs explicitly return 503 until it is provisioned.
     // An explicitly configured path is mandatory and fails closed if missing.
     const corpusPath = process.env.SCRIPTURE_SQLITE_PATH || DEFAULT_CORPUS_PATH;
     const loadCorpus = Boolean(process.env.SCRIPTURE_SQLITE_PATH) || existsSync(corpusPath);

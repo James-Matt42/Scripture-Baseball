@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getInvitationPath } from "../rooms/roomState.js";
+import { Link } from "react-router-dom";
 import { useAccount } from "./AccountContext";
 import { VOLUME_OPTIONS } from "./accountState.js";
 
@@ -11,9 +10,6 @@ const secondaryButton =
 const inputClass = "w-full rounded-lg border border-stone-300 bg-white px-3 py-2";
 
 export function Account() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const returnToRoom = getInvitationPath(searchParams.get("code"));
   const { activeProfile, preferences, isSaved, sessionError, createProfile, signIn, signOut, updatePreferences, preferencesPending, preferencesError, retryPreferences } = useAccount();
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -50,7 +46,6 @@ export function Account() {
       setNewEmail("");
       setNewPassword("");
       setConfirmPassword("");
-      if (returnToRoom) navigate(returnToRoom);
     } catch (error) {
       setAccountError(error.message || "Could not create the account. Try again.");
     } finally {
@@ -69,7 +64,6 @@ export function Account() {
       setAccountMessage("Signed in successfully.");
       setSignInEmail("");
       setSignInPassword("");
-      if (returnToRoom) navigate(returnToRoom);
     } catch (error) {
       setAccountError(error.message || "Could not sign in. Try again.");
     } finally {
@@ -101,30 +95,14 @@ export function Account() {
     setSettingsMessage(activeProfile ? "Practice preferences saved locally; syncing to your account." : "Guest preferences saved on this device.");
   }
 
-  function saveNotificationPreferences(event) {
-    event.preventDefault();
-    updatePreferences({
-      practiceReminders: settings.practiceReminders,
-      gameNotifications: settings.gameNotifications,
-    });
-    setSettingsMessage(activeProfile ? "Notification choices saved locally; syncing to your account." : "Guest notification choices saved on this device.");
-  }
-
   return (
     <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
       <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
         <h1 className="text-3xl font-bold text-green-950">Account</h1>
         <p className="max-w-xl text-stone-700">
-          Sign in to save graded scripture practice, favorites, and preferences to your account. MongoDB-backed accounts and progress persist across server restarts. Guest practice stays on this device until it can be claimed. Demo rooms remain local to this device.
+          Sign in to save graded scripture practice, favorites, and preferences to your account. MongoDB-backed accounts and progress persist across server restarts. Guest practice stays on this device until it can be claimed.
         </p>
       </header>
-
-      {returnToRoom && (
-        <p className="rounded-lg bg-green-50 p-3 text-stone-800">
-          <Link className="font-semibold text-green-800 underline" to={returnToRoom}>Return to room invitation</Link>
-          {" "}after signing in or creating an account. Your existing guest room seat is preserved.
-        </p>
-      )}
 
       {isSaved === false && (
         <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-stone-800" role="alert">
@@ -232,29 +210,12 @@ export function Account() {
               onChange={(event) => setSettings((current) => ({ ...current, preferredVolume: event.target.value }))}>
               {VOLUME_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
-            <p className="text-xs text-stone-600">Choose your practice volume or book on the Play screen. This preference is saved for future personalized lineups.</p>
+            <p className="text-xs text-stone-600">New practice sessions use this volume by default; you can change it at any time on the Play screen.</p>
           </div>
           <div><button className={primaryButton} type="submit">Save Preferences</button></div>
         </form>
       </section>
 
-      <section className="grid gap-4 rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="notifications-heading">
-        <h2 className="text-2xl font-bold text-green-950" id="notifications-heading">Notifications</h2>
-        <p className="text-sm text-stone-600">Preferences sync to the account service when signed in; actual notifications are not sent yet.</p>
-        <form className="grid gap-4" onSubmit={saveNotificationPreferences}>
-          <label className="flex items-start gap-3 font-semibold text-stone-700">
-            <input type="checkbox" className="mt-1 size-4 accent-scripture-green" checked={settings.practiceReminders}
-              onChange={(event) => setSettings((current) => ({ ...current, practiceReminders: event.target.checked }))} />
-            Optional practice reminders
-          </label>
-          <label className="flex items-start gap-3 font-semibold text-stone-700">
-            <input type="checkbox" className="mt-1 size-4 accent-scripture-green" checked={settings.gameNotifications}
-              onChange={(event) => setSettings((current) => ({ ...current, gameNotifications: event.target.checked }))} />
-            Private game alerts
-          </label>
-          <div><button className={primaryButton} type="submit">Save Notification Settings</button></div>
-        </form>
-      </section>
       {settingsMessage && <p className="rounded-lg bg-green-50 p-3 text-green-950" role="status">{settingsMessage}</p>}
       {activeProfile && preferencesPending && !preferencesError && (
         <p className="text-sm text-stone-700" role="status">Saving account preferences…</p>

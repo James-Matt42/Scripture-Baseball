@@ -5,15 +5,11 @@ import logo from './assets/logo-small.png';
 import { BrowserRouter, Link, NavLink, Route, Routes } from "react-router-dom";
 import { Account } from "./account/account";
 import { Challenges } from "./challenges/challenges";
-import { CreateGame } from "./create-game/create-game";
-import { Game } from "./game/game";
 import { Home } from "./home/home";
-import { JoinGame } from "./join-game/join-game";
 import { Play } from "./play/play";
 import { Progress } from "./progress/progress";
 import { CorpusPracticeProvider } from "./play/CorpusPracticeContext.jsx";
 import { AccountProvider, useAccount } from "./account/AccountContext";
-import { RoomProvider } from "./rooms/RoomContext";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -39,11 +35,9 @@ function AppWithAccount() {
     return <main className="mx-auto max-w-3xl p-8" role="status">Restoring your session…</main>;
   }
   return (
-    <RoomProvider>
-      <CorpusPracticeProvider key={activeProfile?.id ?? 'guest'}>
-        <Site />
-      </CorpusPracticeProvider>
-    </RoomProvider>
+    <CorpusPracticeProvider key={activeProfile?.id ?? 'guest'}>
+      <Site />
+    </CorpusPracticeProvider>
   );
 }
 
@@ -87,16 +81,6 @@ function Site() {
                 </NavLink>
               </li>
               <li>
-                <NavLink className={navLinkClass} to="/create-game">
-                  Create Game
-                </NavLink>
-              </li>
-              <li>
-                <NavLink className={navLinkClass} to="/join-game">
-                  Join Game
-                </NavLink>
-              </li>
-              <li>
                 <NavLink className={navLinkClass} to="/progress">
                   Progress
                 </NavLink>
@@ -115,9 +99,6 @@ function Site() {
                 <Route path="/" element={<Home />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/challenges" element={<Challenges />} />
-                <Route path="/create-game" element={<CreateGame />} />
-                <Route path="/game" element={<Game />} />
-                <Route path="/join-game" element={<JoinGame />} />
                 <Route path="/play" element={<Play />} />
                 <Route path="/progress" element={<Progress />} />
             </Routes>

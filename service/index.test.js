@@ -46,11 +46,19 @@ test('Express serves index.html and compiled static assets', async (t) => {
 
 test('direct React Router navigation returns the application shell', async (t) => {
   const baseUrl = await startFixtureServer(t);
-  const response = await fetch(`${baseUrl}/join-game?room=NEPHI7`);
+  const response = await fetch(`${baseUrl}/challenges`);
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type') ?? '', /text\/html/);
   assert.match(await response.text(), /Scripture Baseball/);
+});
+
+test('retired simulated game pages return 404 rather than a broken app shell', async (t) => {
+  const baseUrl = await startFixtureServer(t);
+  for (const path of ['/create-game', '/join-game?code=NEPHI7', '/game']) {
+    const response = await fetch(`${baseUrl}${path}`);
+    assert.equal(response.status, 404, path);
+  }
 });
 
 test('missing API routes return a JSON 404 instead of HTML', async (t) => {

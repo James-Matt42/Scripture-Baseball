@@ -24,8 +24,11 @@ export function CorpusPracticeProvider({ children }) {
   const { activeProfile, preferences } = useAccount();
   const userId = activeProfile?.id ?? null;
   const key = corpusKey(userId);
-  const [state, setState] = useState(() => loadCorpusState(storage(), key,
-    preferences.answerDifficulty === 'exact-verse'));
+  const [state, setState] = useState(() => {
+    const loaded = loadCorpusState(storage(), key, preferences.answerDifficulty === 'exact-verse');
+    return !loaded.pitchId && !loaded.history.length && !loaded.scope.volume && preferences.preferredVolume
+      ? { ...loaded, scope: { volume: preferences.preferredVolume, book: null } } : loaded;
+  });
   const [isSaved, setIsSaved] = useState(null);
   const [pitch, setPitch] = useState(null);
   const [pitchLoading, setPitchLoading] = useState(false);
@@ -165,7 +168,15 @@ export function CorpusPracticeProvider({ children }) {
     setBusy(true);
     setPitchError('');
     try {
-      const result = await createPracticePitch({ scope: state.scope, exactVerse: state.exactVerse });
+      const guestSelection = !userId ? {
+        attempts: state.history.slice(-250).map(({ reference, chapterCorrect, bookCorrect, verseCorrect }) => ({
+          reference, chapterCorrect, ...(bookCorrect === undefined ? {} : { bookCorrect }),
+          ...(verseCorrect === undefined ? {} : { verseCorrect }),
+        })),
+        favorites: state.favorites,
+      } : undefined;
+      const result = await createPracticePitch({ scope: state.scope, exactVerse: state.exactVerse,
+        collection: state.collection, ...(guestSelection ? { guestSelection } : {}) });
       setPitch(result);
       setState((prev) => ({ ...prev, pitchId: result.pitchId, draft: blankDraft(), paused: false }));
       return result;
@@ -176,7 +187,7 @@ export function CorpusPracticeProvider({ children }) {
       actionLock.current = false;
       setBusy(false);
     }
-  }, [state.scope, state.exactVerse]);
+  }, [state.scope, state.exactVerse, state.collection, state.history, state.favorites, userId]);
 
   const answer = useCallback(async (answerBody) => {
     if (!pitch?.pitchId || busy || actionLock.current) return;
@@ -209,14 +220,18 @@ export function CorpusPracticeProvider({ children }) {
     await createPitch();
   }, [pitch, createPitch]);
 
-  const setScope = useCallback((scope) => {
+  const selectPractice = useCallback((scope, collection) => {
     const clean = { volume: scope?.volume || null, book: scope?.book || null };
     setPitch(null);
     setState((prev) => ({ ...prev,
       inning: prev.inning + (prev.attempts.length ? 1 : 0),
-      scope: clean, pitchId: null, attempts: [], draft: blankDraft(), paused: false,
+      scope: clean, collection: collection ?? prev.collection,
+      pitchId: null, attempts: [], draft: blankDraft(), paused: false,
     }));
   }, []);
+  const setScope = useCallback((scope) => selectPractice(scope), [selectPractice]);
+  const setCollection = useCallback((collection) => selectPractice(state.scope, collection),
+    [selectPractice, state.scope]);
   const setExactVerse = useCallback((enabled) => {
     setPitch(null);
     setState((prev) => ({ ...prev, exactVerse: !!enabled,
@@ -244,11 +259,11 @@ export function CorpusPracticeProvider({ children }) {
     isSaved, recordedAttempts, stats: corpusPracticeStats(state.attempts),
     syncStatus: !userId ? 'guest' : syncError ? 'error' : syncReady ? 'connected' : 'syncing',
     syncError, retrySync: () => setSyncRetry((n) => n + 1),
-    createPitch, answer, nextPitch, setScope, setExactVerse, setDraft,
+    createPitch, answer, nextPitch, setScope, setCollection, selectPractice, setExactVerse, setDraft,
     toggleFavorite, finishInning, keepPlaying,
   }), [state, pitch, busy, pitchLoading, pitchError, catalog, catalogError,
     isSaved, recordedAttempts, userId, syncError, syncReady, createPitch, answer,
-    nextPitch, setScope, setExactVerse, setDraft, toggleFavorite, finishInning, keepPlaying]);
+    nextPitch, setScope, setCollection, selectPractice, setExactVerse, setDraft, toggleFavorite, finishInning, keepPlaying]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 

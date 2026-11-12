@@ -16,10 +16,9 @@ export function frontendDirectory(directory = serviceDirectory) {
     : resolve(directory, '..', 'dist');
 }
 
-/** Missing assets should be genuine 404s, not the React app's index.html. */
+/** Only implemented React routes receive the app shell. Retired demo room
+ * links return 404 until real WebSocket multiplayer is available. */
 export function isClientRoute(pathname) {
-  const firstSegment = pathname.split('/')[1];
-  return pathname.startsWith('/') &&
-    !['api', 'assets'].includes(firstSegment) &&
-    !extname(pathname);
+  if (typeof pathname !== 'string' || extname(pathname)) return false;
+  return /^\/(?:|(?:play|challenges|progress|account)\/?)$/u.test(pathname);
 }

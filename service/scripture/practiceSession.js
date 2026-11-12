@@ -7,6 +7,8 @@
  * persists completed, verified results to account or guest progress storage.
  */
 import { randomBytes, randomInt } from 'node:crypto';
+import { PRACTICE_COLLECTIONS, collectionCandidates, validateCollection } from './practiceCollections.js';
+import { partitionScopedPassages } from './scopeDuplicates.js';
 
 export class PracticeError extends Error {
   constructor(status, message) {
@@ -95,13 +97,14 @@ export function createPracticeSessionEngine({
   }
 
   function checkedOptions(options) {
-    if (!object(options) || Object.keys(options).some((key) => !['scope', 'exactVerse'].includes(key))) {
+    if (!object(options) || Object.keys(options).some((key) => !['scope', 'exactVerse', 'collection'].includes(key))) {
       error(400, 'Only scope and exactVerse options are supported');
     }
     if (options.exactVerse !== undefined && typeof options.exactVerse !== 'boolean') {
       error(400, 'exactVerse must be a boolean');
     }
-    return { scope: checkedScope(options.scope ?? {}), exactVerse: options.exactVerse === true };
+    return { scope: checkedScope(options.scope ?? {}), exactVerse: options.exactVerse === true,
+      collection: validateCollection(options.collection, error) };
   }
 
   function booksForScope(scope) {
@@ -139,6 +142,7 @@ export function createPracticeSessionEngine({
       pitchId: record.pitchId,
       passage: record.passage,
       scope: { ...record.scope },
+      collection: record.collection,
       exactVerse: record.exactVerse,
       stage: record.stage,
       choices: record.choices.map((choice) => ({ ...choice })),
@@ -190,22 +194,34 @@ export function createPracticeSessionEngine({
     },
 
     getCatalog() {
-      return { language: catalog.language, volumes: catalog.volumes.map((volume) => ({
+      return { language: catalog.language, collections: PRACTICE_COLLECTIONS.map((item) => ({ ...item })),
+        volumes: catalog.volumes.map((volume) => ({
         id: volume.id, name: volume.name,
         books: volume.books.filter((book) => booksWithVerses.has(book.id)).map((book) => ({ ...book })),
       })) };
     },
 
-    createPitch(options = {}) {
-      const { scope, exactVerse } = checkedOptions(options);
+    createPitch(options = {}, selection = {}) {
+      const { scope, exactVerse, collection } = checkedOptions(options);
       const availableBooks = booksForScope(scope);
       const hasBookStage = !scope.book && availableBooks.length > 1;
       const pool = getPool(scope, exactVerse, hasBookStage);
-      if (!pool.eligible.length) error(422, 'No unambiguous playable verses in this scripture scope');
+      // Personal collections narrow the *question scope*: a verse repeated
+      // outside My Favorites or My Misses is not ambiguous in that collection.
+      // Recheck duplicates after narrowing, always keeping the quality gate.
+      const candidates = collection === 'all' ? pool.eligible : partitionScopedPassages(
+        collectionCandidates([...pool.eligible, ...pool.ambiguous, ...pool.repeatedSameAnswer],
+          collection, selection), {
+          ...scope, testedStages: [...(hasBookStage ? ['book'] : []), 'chapter',
+            ...(exactVerse ? ['verse'] : [])],
+        }).eligible;
+      if (!candidates.length) error(422, collection === 'all'
+        ? 'No unambiguous playable verses in this scripture scope'
+        : `No playable passages in ${collection} for this scope`);
       pruneExpired();
       if (sessions.size >= maxPitches) error(429, 'Too many active pitches; try again later');
 
-      const answer = pool.eligible[random(pool.eligible.length)];
+      const answer = candidates[random(candidates.length)];
       const distractors = availableBooks.filter((book) => book.id !== answer.book);
       const choices = hasBookStage
         ? shuffle([bookById.get(answer.book), ...shuffle(distractors, random).slice(0, 3)], random)
@@ -216,7 +232,7 @@ export function createPracticeSessionEngine({
         throw new Error('Unable to issue a unique practice token');
       }
       const record = {
-        pitchId, scope, exactVerse, answer, passage: answer.text, choices,
+        pitchId, scope, collection, exactVerse, answer, passage: answer.text, choices,
         stage: hasBookStage ? 'book' : 'chapter',
         guesses: {}, replies: {}, submissions: {}, expiresAt: now() + ttlMs,
       };
@@ -270,7 +286,7 @@ export function createPracticeSessionEngine({
       const { volume, book, chapter, verse, reference } = record.answer;
       return {
         reference, volume, book, chapter, verse,
-        scope: { ...record.scope }, exactVerse: record.exactVerse,
+        scope: { ...record.scope }, collection: record.collection, exactVerse: record.exactVerse,
         ...(record.guesses.book !== undefined
           ? { chosenBook: record.guesses.book, bookCorrect: record.guesses.book === book } : {}),
         chosenChapter: record.guesses.chapter,

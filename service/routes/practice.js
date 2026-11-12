@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PracticeError } from '../scripture/practiceSession.js';
 import { ProgressError, MAX_FAVORITES } from '../progress/validation.js';
 import { verifiedAttemptFromPitch } from '../progress/verifiedAttempt.js';
+import { validateGuestSelection } from '../scripture/practiceCollections.js';
 
 /** Corpus-backed gameplay. The browser never chooses a reference or grade. */
 export function createPracticeRouter({ engine = null, sessionAuth = null, progressStore = null } = {}) {
@@ -27,8 +28,22 @@ export function createPracticeRouter({ engine = null, sessionAuth = null, progre
   const requireUser = sessionAuth?.requireUser ?? ((_req, res) => res.status(503).json({ error: 'Account service unavailable' }));
 
   router.get('/practice/catalog', (_req, res, next) => respond(res, next, () => engine.getCatalog()));
-  router.post('/practice/pitches', (req, res, next) => respond(res, next,
-    () => engine.createPitch(req.body), 201));
+  router.post('/practice/pitches', (req, res, next) => respond(res, next, async () => {
+    const body = req.body ?? {};
+    if (typeof body !== 'object' || Array.isArray(body) ||
+        Object.keys(body).some((field) => !['scope', 'exactVerse', 'collection', 'guestSelection'].includes(field))) {
+      throw new PracticeError(400, 'Invalid practice settings');
+    }
+    const user = sessionAuth ? await sessionAuth.currentUser(req) : null;
+    if (user && body.guestSelection !== undefined) {
+      throw new PracticeError(400, 'Authenticated collections use verified account history');
+    }
+    const selection = user && body.collection && body.collection !== 'all'
+      ? { attempts: await progressStore.attempts(user.id), favorites: await progressStore.favorites(user.id) }
+      : validateGuestSelection(body.guestSelection, (status, message) => { throw new PracticeError(status, message); });
+    const { guestSelection: _guestSelection, ...options } = body;
+    return engine.createPitch(options, selection);
+  }, 201));
   router.get('/practice/pitches/:pitchId', (req, res, next) => respond(res, next,
     () => engine.getPitch(req.params.pitchId)));
   router.post('/practice/pitches/:pitchId/answers', (req, res, next) => respond(res, next, async () => {

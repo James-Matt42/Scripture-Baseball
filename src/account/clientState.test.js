@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { CORPUS_GUEST_KEY, corpusKey } from '../play/corpusState.js';
-import { ACCOUNTS_STORAGE_KEY, accountReducer, createInitialAccountState, saveAccountState } from './accountState.js';
 import {
   CLIENT_SETTINGS_KEY, SERVER_USER_ID_PATTERN, acceptServerPreferences, confirmServerPreferences,
   ensureUserPreferences, getClientPreferences, initialClientSettings, loadClientSettings,
@@ -26,13 +25,11 @@ test('verified users have independent, new-corpus-only practice keys', () => {
   assert.equal(corpusKey(null), CORPUS_GUEST_KEY);
 });
 
-test('old browser-only profiles cannot restore authentication in new settings', () => {
+test('old browser-only profiles are not consulted or copied into new settings', () => {
   const store = storage();
-  const legacy = accountReducer(createInitialAccountState(), {
-    type: 'create', displayName: 'Casey', email: 'casey@example.com', createdAt: '2026-11-05T00:00:00Z',
-  });
-  assert.equal(saveAccountState(store, legacy), true);
-  assert.ok(store.getItem(ACCOUNTS_STORAGE_KEY));
+  store.setItem('scripture-baseball.accounts.v1', JSON.stringify({
+    version: 1, activeProfileId: 'account-1', profiles: [{ id: 'account-1', email: 'old@example.com' }],
+  }));
   const prefs = loadClientSettings(store);
   assert.deepEqual(Object.keys(prefs), ['version', 'guestPreferences', 'byUser', 'pendingByUser']);
   assert.deepEqual(prefs.byUser, {});
@@ -47,22 +44,19 @@ test('preferences stay locally scoped by verified user ID; never store passwords
   const forUser = ensureUserPreferences(guest, user, storage());
   assert.equal(getClientPreferences(forUser, user.id).answerDifficulty, 'exact-verse');
   const updated = updateClientPreferences(forUser, user.id, {
-    answerDifficulty: 'book-chapter', preferredVolume: 'old-testament',
+    answerDifficulty: 'book-chapter', preferredVolume: 'ot',
   });
   assert.equal(getClientPreferences(updated, null).answerDifficulty, 'exact-verse');
-  assert.equal(getClientPreferences(updated, user.id).preferredVolume, 'old-testament');
+  assert.equal(getClientPreferences(updated, user.id).preferredVolume, 'ot');
   assert.equal(getClientPreferences(updated, otherId).preferredVolume, '');
-  assert.strictEqual(updateClientPreferences(updated, user.id, { preferredVolume: 'old-testament' }), updated);
+  assert.strictEqual(updateClientPreferences(updated, user.id, { preferredVolume: 'ot' }), updated);
   assert.ok(!JSON.stringify(updated).includes('token'));
   assert.ok(!JSON.stringify(updated).includes('password'));
 });
 
-test('server-verified account inherits guest preferences without old profile lookup', () => {
+test('server-verified account inherits guest preferences without browser-only identity lookup', () => {
   const store = storage();
-  const oldAccount = accountReducer(createInitialAccountState(), {
-    type: 'create', displayName: 'Casey', email: 'CASEY@EXAMPLE.COM', createdAt: '2026-11-05T00:00:00Z',
-  });
-  saveAccountState(store, oldAccount);
+  store.setItem('scripture-baseball.accounts.v1', '{not a valid account object}');
   const guest = updateClientPreferences(initialClientSettings(), null, { answerDifficulty: 'exact-verse' });
   const next = ensureUserPreferences(guest, user, store);
   assert.equal(getClientPreferences(next, user.id).answerDifficulty, 'exact-verse');
@@ -91,21 +85,21 @@ test('unsent signed-in preference edits survive reloads and supersede stale serv
   assert.equal(saveClientSettings(store, state), true);
   state = loadClientSettings(store);
   assert.strictEqual(acceptServerPreferences(state, uuid, { answerDifficulty: 'book-chapter' }), state);
-  state = updateClientPreferences(state, uuid, { preferredVolume: 'new-testament' });
+  state = updateClientPreferences(state, uuid, { preferredVolume: 'nt' });
   assert.strictEqual(confirmServerPreferences(state, uuid, pending, pending), state,
     'an earlier request must not clear a newer edit');
   const final = state.pendingByUser[uuid];
   state = confirmServerPreferences(state, uuid, final, final);
   assert.equal(state.pendingByUser[uuid], undefined);
-  state = acceptServerPreferences(state, uuid, { ...final, preferredVolume: 'old-testament' });
-  assert.equal(state.byUser[uuid].preferredVolume, 'old-testament');
+  state = acceptServerPreferences(state, uuid, { ...final, preferredVolume: 'ot' });
+  assert.equal(state.byUser[uuid].preferredVolume, 'ot');
   assert.equal(state.guestPreferences.preferredVolume, '');
 });
 
 test('malformed pending preference IDs are ignored without leaking across accounts', () => {
   const state = normalizeClientSettings({ version: 1, pendingByUser: {
-    'not-a-user': { answerDifficulty: 'exact-verse' }, [uuid]: { preferredVolume: 'old-testament' },
+    'not-a-user': { answerDifficulty: 'exact-verse' }, [uuid]: { preferredVolume: 'ot' },
   } });
   assert.deepEqual(Object.keys(state.pendingByUser), [uuid]);
-  assert.equal(state.pendingByUser[uuid].preferredVolume, 'old-testament');
+  assert.equal(state.pendingByUser[uuid].preferredVolume, 'ot');
 });

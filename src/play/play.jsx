@@ -6,7 +6,7 @@ export function Play() {
   const {
     state, pitch, catalog, catalogError, retryCatalog, busy, pitchLoading,
     stats, isSaved, syncStatus, syncError, retrySync, createPitch,
-    setScope, setExactVerse, finishInning, keepPlaying,
+    setScope, setCollection, setExactVerse, finishInning, keepPlaying,
   } = useCorpusPractice();
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export function Play() {
     }
     // Start once for the current scope; errors require explicit retry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.scope.volume, state.scope.book, state.exactVerse, state.paused]);
+  }, [state.scope.volume, state.scope.book, state.collection, state.exactVerse, state.paused]);
 
   const volumes = catalog?.volumes ?? [];
   const volume = volumes.find((item) => item.id === state.scope.volume);
@@ -32,7 +32,7 @@ export function Play() {
       {catalogError && <div role="alert" className="mb-3 text-red-800">
         {catalogError} <button type="button" className="underline" onClick={retryCatalog}>Retry</button>
       </div>}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <label className="grid gap-1 font-medium text-green-950">
           Standard Work
           <select className="rounded-lg border border-stone-300 p-3" disabled={busy} value={state.scope.volume ?? ''}
@@ -49,6 +49,14 @@ export function Play() {
             {(volume?.books ?? []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         </label>
+        <label className="grid gap-1 font-medium text-green-950">
+          Collection
+          <select className="rounded-lg border border-stone-300 p-3" disabled={busy} value={state.collection}
+            onChange={(event) => setCollection(event.target.value)}>
+            {(catalog?.collections ?? [{ id: 'all', title: 'Mixed practice' }]).map((item) =>
+              <option key={item.id} value={item.id}>{item.title}</option>)}
+          </select>
+        </label>
         <label className="flex items-center gap-3 font-medium text-green-950">
           <input type="checkbox" checked={state.exactVerse} disabled={busy}
             onChange={(event) => setExactVerse(event.target.checked)}/>
@@ -56,6 +64,7 @@ export function Play() {
         </label>
       </div>
       <p className="mt-3 text-sm text-stone-600">
+        Personal collections use saved account history or this device's guest history. Empty selections display a clear message rather than changing modes.{' '}
         Selecting one book makes book identification unnecessary; chapter remains graded.
         Changing the scope starts a fresh inning.
       </p>

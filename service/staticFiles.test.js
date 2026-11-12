@@ -24,10 +24,17 @@ test('deployed public directory takes precedence over local dist', (t) => {
   assert.equal(frontendDirectory(serviceDir), resolve(serviceDir, 'public'));
 });
 
-test('only extensionless paths qualify for React Router fallback', () => {
+test('only implemented React routes qualify for the app-shell fallback', () => {
   assert.equal(isClientRoute('/'), true);
   assert.equal(isClientRoute('/play'), true);
-  assert.equal(isClientRoute('/join-game/invite'), true);
+  assert.equal(isClientRoute('/challenges'), true);
+  assert.equal(isClientRoute('/progress'), true);
+  assert.equal(isClientRoute('/account'), true);
+  assert.equal(isClientRoute('/join-game/invite'), false);
+  assert.equal(isClientRoute('/join-game'), false);
+  assert.equal(isClientRoute('/create-game'), false);
+  assert.equal(isClientRoute('/game'), false);
+  assert.equal(isClientRoute('/other'), false);
   assert.equal(isClientRoute('/assets/missing.js'), false);
   assert.equal(isClientRoute('/assets/missing'), false);
   assert.equal(isClientRoute('/api/not-found'), false);

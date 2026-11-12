@@ -1,11 +1,9 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { navigateWithGetForm } from '../routing';
+import { Link } from 'react-router-dom';
 import { CorpusQuestion } from '../components/CorpusQuestion.jsx';
 import { useCorpusPractice } from '../play/CorpusPracticeContext.jsx';
 
 export function Home() {
-  const navigate = useNavigate();
   const { state, pitch, busy, pitchLoading, createPitch, recordedAttempts, isSaved } = useCorpusPractice();
 
   useEffect(() => {
@@ -38,14 +36,9 @@ export function Home() {
       {isSaved === false && <p role="alert">Browser storage is unavailable; guest progress may not survive refresh.</p>}
     </section>}
     <section className="rounded-xl bg-green-900 p-6 text-white">
-      <h2 className="text-xl font-semibold">Join a private game</h2>
-      <p className="my-3">Have a room invite? You can join as a guest.</p>
-      <form className="flex flex-wrap gap-3" onSubmit={(event) => navigateWithGetForm(event, navigate, '/join-game')}>
-        <label className="grid gap-1 font-semibold">Room code
-          <input className="rounded-lg p-3 text-stone-900" name="code" placeholder="ABC234" autoComplete="off"/>
-        </label>
-        <button className="self-end rounded-lg bg-scripture-green px-5 py-3 font-bold text-white">Join game</button>
-      </form>
+      <h2 className="text-xl font-semibold">Find your next scripture challenge</h2>
+      <p className="my-3">Choose a book, a volume, or practice passages from your saved progress.</p>
+      <Link to="/challenges" className="inline-block rounded-lg bg-scripture-green px-5 py-3 font-bold text-white">Browse practice collections</Link>
     </section>
     <section className="rounded-xl bg-white p-6">
       <h2 className="text-xl font-semibold text-green-950">Learn with real scripture</h2>

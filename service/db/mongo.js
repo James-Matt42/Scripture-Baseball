@@ -32,7 +32,6 @@ export const MONGO_INDEXES = Object.freeze([
   { collection: 'attempts', keys: { userId: 1, recordedAt: -1 }, options: { name: 'attempts_user_recent' } },
   { collection: 'favorites', keys: { userId: 1 }, options: { name: 'favorites_user_unique', unique: true } },
   { collection: 'preferences', keys: { userId: 1 }, options: { name: 'preferences_user_unique', unique: true } },
-  { collection: 'guestImports', keys: { userId: 1, importId: 1 }, options: { name: 'guest_imports_user_id_unique', unique: true } },
   { collection: 'guestPitches', keys: { pitchId: 1 }, options: { name: 'guest_pitches_token_unique', unique: true } },
   { collection: 'guestPitches', keys: { expiresAt: 1 }, options: { name: 'guest_pitches_expiry_ttl', expireAfterSeconds: 0 } },
 ]);

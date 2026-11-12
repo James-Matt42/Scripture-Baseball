@@ -21,7 +21,8 @@ test('deployment packages frontend and nested backend files without private sour
   const bin = join(sandbox, 'bin');
   const captured = join(sandbox, 'captured');
   await mkdir(join(backend, 'routes'), { recursive: true });
-  await mkdir(join(backend, 'domain'), { recursive: true });
+  await mkdir(join(backend, 'scripture'), { recursive: true });
+  await mkdir(join(backend, 'private'), { recursive: true });
   await mkdir(join(backend, 'auth'), { recursive: true });
   await mkdir(join(backend, 'db'), { recursive: true });
   await mkdir(join(backend, 'progress'), { recursive: true });
@@ -35,7 +36,9 @@ test('deployment packages frontend and nested backend files without private sour
   await writeFile(join(backend, 'index.js'), 'console.log("service")');
   await writeFile(join(backend, 'package.json'), '{"type":"module"}');
   await writeFile(join(backend, 'routes', 'questions.js'), 'export const questions = [];');
-  await writeFile(join(backend, 'domain', 'questions.js'), 'export const sample = true;');
+  await writeFile(join(backend, 'scripture', 'corpus.js'), 'export const corpus = true;');
+  await writeFile(join(backend, 'scripture', 'practiceCollections.js'), 'export const collections = true;');
+  await writeFile(join(backend, 'private', 'scriptures-eng.sqlite'), 'immutable test fixture');
   await writeFile(join(backend, 'auth', 'registration.js'), 'export const registration = true;');
   await writeFile(join(backend, 'db', 'mongo.js'), 'export const database = true;');
   await writeFile(join(backend, 'progress', 'progressStore.js'), 'export const progress = true;');
@@ -74,7 +77,10 @@ exit 4
   assert.match(await readFile(join(captured, 'public', 'assets', 'app.js'), 'utf8'), /frontend/);
   assert.match(await readFile(join(captured, 'index.js'), 'utf8'), /service/);
   assert.match(await readFile(join(captured, 'routes', 'questions.js'), 'utf8'), /questions/);
-  assert.match(await readFile(join(captured, 'domain', 'questions.js'), 'utf8'), /sample/);
+  assert.match(await readFile(join(captured, 'scripture', 'corpus.js'), 'utf8'), /corpus/);
+  assert.match(await readFile(join(captured, 'scripture', 'practiceCollections.js'), 'utf8'), /collections/);
+  assert.match(await readFile(join(captured, 'private', 'scriptures-eng.sqlite'), 'utf8'), /immutable/);
+  await assert.rejects(access(join(captured, 'public', 'scriptures-eng.sqlite')), { code: 'ENOENT' });
   assert.match(await readFile(join(captured, 'auth', 'registration.js'), 'utf8'), /registration/);
   assert.match(await readFile(join(captured, 'db', 'mongo.js'), 'utf8'), /database/);
   assert.match(await readFile(join(captured, 'progress', 'progressStore.js'), 'utf8'), /progress/);

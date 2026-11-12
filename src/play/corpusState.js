@@ -12,7 +12,7 @@ export function corpusKey(userId) {
 
 export function initialCorpusState(exactVerse = false) {
   return {
-    version: 1, inning: 1, scope: { volume: null, book: null }, exactVerse: !!exactVerse,
+    version: 1, inning: 1, scope: { volume: null, book: null }, collection: 'all', exactVerse: !!exactVerse,
     pitchId: null, draft: { bookId: '', chapter: '', verse: '' }, attempts: [], history: [],
     pendingClaims: [], favorites: [], dirtyFavorites: false, paused: false,
   };
@@ -42,7 +42,8 @@ export function normalizeCorpusState(value, defaultExactVerse = false) {
   } : base.draft;
   return {
     ...base, inning: Number.isSafeInteger(value.inning) && value.inning > 0 ? value.inning : 1,
-    scope, exactVerse: value.exactVerse === true,
+    scope, collection: ['all', 'misses', 'favorites', 'weak-areas'].includes(value.collection)
+      ? value.collection : 'all', exactVerse: value.exactVerse === true,
     pitchId: validToken(value.pitchId) ? value.pitchId : null,
     draft, attempts, history,
     pendingClaims: Array.isArray(value.pendingClaims) ? unique(value.pendingClaims.filter(validToken)).slice(-MAX_HISTORY) : [],
