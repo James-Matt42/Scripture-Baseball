@@ -3,16 +3,16 @@
  * remains authoritative for questions, grading, and learning progress.
  * bible-api.com supports direct cross-origin GET requests without credentials.
  */
-import { SCRIPTURE_BOOKS } from '../scripture/questions.js';
+import canon from '../../service/scripture/canon-eng.json' with { type: 'json' };
 
 export const BIBLE_API_HOME = 'https://bible-api.com/';
 export const COMPARISON_TRANSLATION = 'World English Bible (WEB)';
 
 // Identify eligible references only from the already-revealed answer. Never
 // infer a reference from an unanswered question ID or its multiple choices.
-const bibleBookLabels = new Set(SCRIPTURE_BOOKS
-  .filter(({ volume }) => volume === 'old-testament' || volume === 'new-testament')
-  .map(({ label }) => label));
+const bibleBookLabels = new Set(canon.volumes
+  .filter(({ id }) => id === 'ot' || id === 'nt')
+  .flatMap(({ books }) => books.map(({ name }) => name)));
 
 export function eligibleBibleReference(reference) {
   if (typeof reference !== 'string') return null;

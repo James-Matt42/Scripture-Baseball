@@ -7,6 +7,7 @@ import {
   summarizeProgress,
 } from './progressStore.js';
 import { DEFAULT_PREFERENCES, MAX_FAVORITES, ProgressError } from './validation.js';
+import { sameVerifiedAttempt } from './verifiedAttempt.js';
 
 const ATTEMPT_FIELDS = { projection: { _id: 0, userId: 0 } };
 const MAX_IMPORT_TRANSACTION_RETRIES = 3;
@@ -49,6 +50,7 @@ export function createMongoProgressStore(database, { now = Date.now } = {}) {
   const favoriteCollection = database.collection('favorites');
   const preferenceCollection = database.collection('preferences');
   const importCollection = database.collection('guestImports');
+  const guestPitchCollection = database.collection('guestPitches');
 
   async function findAttempt(userId, id) {
     return attemptCollection.findOne({ userId, id }, ATTEMPT_FIELDS);
@@ -81,6 +83,57 @@ export function createMongoProgressStore(database, { now = Date.now } = {}) {
       ensureSameGuess(winner, attempt);
       return { attempt: winner, created: false };
     }
+  }
+
+  async function recordVerifiedAttempt(userId, attempt) {
+    const existing = await findAttempt(userId, attempt.id);
+    if (existing) {
+      if (!sameVerifiedAttempt(existing, attempt)) throw new ProgressError('Conflicting verified pitch', 409);
+      return { attempt: existing, created: false };
+    }
+    if (await attemptCollection.countDocuments({ userId }) >= MAX_ATTEMPTS_PER_USER) {
+      throw new ProgressError('Practice history limit reached for this prototype', 409);
+    }
+    try {
+      await attemptCollection.insertOne({ userId, ...attempt });
+      return { attempt: { ...attempt }, created: true };
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+      const winner = await findAttempt(userId, attempt.id);
+      if (!winner || !sameVerifiedAttempt(winner, attempt)) {
+        throw new ProgressError('Conflicting verified pitch', 409);
+      }
+      return { attempt: winner, created: false };
+    }
+  }
+
+  async function stageGuestPitch(pitchId, attempt) {
+    const existing = await guestPitchCollection.findOne({ pitchId });
+    if (existing) {
+      if (!sameVerifiedAttempt(existing.attempt, attempt)) throw new ProgressError('Conflicting guest pitch', 409);
+      return;
+    }
+    try {
+      await guestPitchCollection.insertOne({ pitchId, attempt,
+        expiresAt: new Date(now() + 30 * 24 * 3600_000) });
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+      const winner = await guestPitchCollection.findOne({ pitchId });
+      if (!winner || !sameVerifiedAttempt(winner.attempt, attempt)) {
+        throw new ProgressError('Conflicting guest pitch', 409);
+      }
+    }
+  }
+
+  async function claimGuestPitch(userId, pitchId) {
+    // The opaque 256-bit pitch token is the guest's bearer claim credential.
+    // Atomic ownership prevents a second account from claiming the same work.
+    const receipt = await guestPitchCollection.findOneAndUpdate({
+      pitchId, expiresAt: { $gt: new Date(now()) },
+      $or: [{ claimedBy: { $exists: false } }, { claimedBy: userId }],
+    }, { $set: { claimedBy: userId } }, { returnDocument: 'after' });
+    if (!receipt) throw new ProgressError('Guest pitch receipt unavailable or already claimed', 404);
+    return recordVerifiedAttempt(userId, receipt.attempt);
   }
 
   async function favorites(userId) {
@@ -221,6 +274,9 @@ export function createMongoProgressStore(database, { now = Date.now } = {}) {
     attempts,
     async summary(userId) { return summarizeProgress(await attempts(userId)); },
     recordAttempt,
+    recordVerifiedAttempt,
+    stageGuestPitch,
+    claimGuestPitch,
     favorites,
     setFavorites,
     preferences,

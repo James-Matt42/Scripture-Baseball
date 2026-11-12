@@ -4,7 +4,6 @@ import { fetchAccountPreferences, patchAccountPreferences } from '../api/progres
 import {
   acceptServerPreferences,
   confirmServerPreferences,
-  copyLocalPracticeOnRegistration,
   ensureUserPreferences,
   getClientPreferences,
   loadClientSettings,
@@ -63,11 +62,11 @@ export function AccountProvider({ children }) {
     } catch {
       throw new AuthRequestError('Account created, but automatic sign-in failed. Sign in with your new password.');
     }
-    const copiedGuestActivity = copyLocalPracticeOnRegistration(browserStorage(), user);
+    // Corpus guest answers are claimed using server-issued tokens after login.
     setSettings((previous) => ensureUserPreferences(previous, user, browserStorage()));
     setPreferencesError('');
     setSession({ user, checking: false, error: '' });
-    return { ok: true, copiedGuestActivity };
+    return { ok: true };
   }, []);
 
   const signIn = useCallback(async (email, password) => {

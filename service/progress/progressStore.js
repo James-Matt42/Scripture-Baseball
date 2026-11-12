@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { getQuestionById, getQuestionVolume, gradeBookAndChapter, gradeExactVerse } from '../domain/questions.js';
 import { DEFAULT_PREFERENCES, MAX_FAVORITES, ProgressError } from './validation.js';
+import { sameVerifiedAttempt } from './verifiedAttempt.js';
 
 export const MAX_ATTEMPTS_PER_USER = 5000;
 export const MAX_IMPORTS_PER_USER = 100;
@@ -51,7 +52,7 @@ export function summarizeProgress(attempts) {
   let verseAttempts = 0;
   let verseCorrect = 0;
   for (const attempt of attempts) {
-    const volume = getQuestionVolume(getQuestionById(attempt.questionId));
+    const volume = attempt.reference ? attempt.volume : getQuestionVolume(getQuestionById(attempt.questionId));
     if (!byVolume.has(volume)) byVolume.set(volume, { volume, attempts: 0, bookCorrect: 0, chapterCorrect: 0 });
     const tally = byVolume.get(volume);
     tally.attempts++;
@@ -64,7 +65,7 @@ export function summarizeProgress(attempts) {
   }
   return {
     totalAttempts: attempts.length,
-    uniquePassages: new Set(attempts.map((attempt) => attempt.questionId)).size,
+    uniquePassages: new Set(attempts.map((attempt) => attempt.reference ?? attempt.questionId)).size,
     bookCorrect,
     chapterCorrect,
     verseAttempts,
@@ -76,6 +77,7 @@ export function summarizeProgress(attempts) {
 /** Per-user ephemeral persistence, isolated behind a minimal adapter for MongoDB. */
 export function createInMemoryProgressStore({ now = Date.now } = {}) {
   const users = new Map();
+  const guestPitches = new Map();
 
   function get(userId) {
     let record = users.get(userId);
@@ -117,6 +119,37 @@ export function createInMemoryProgressStore({ now = Date.now } = {}) {
     },
     summary(userId) {
       return summarizeProgress(get(userId).attempts);
+    },
+    recordVerifiedAttempt(userId, attempt) {
+      const record = get(userId);
+      const existing = record.attemptIndex.get(attempt.id);
+      if (existing) {
+        if (!sameVerifiedAttempt(existing, attempt)) throw new ProgressError('Conflicting verified pitch', 409);
+        return { attempt: { ...existing }, created: false };
+      }
+      ensureSpace(record, 1);
+      const saved = { ...attempt };
+      record.attempts.push(saved);
+      record.attemptIndex.set(saved.id, saved);
+      return { attempt: { ...saved }, created: true };
+    },
+    stageGuestPitch(pitchId, attempt) {
+      const existing = guestPitches.get(pitchId);
+      if (existing) {
+        if (!sameVerifiedAttempt(existing.attempt, attempt)) throw new ProgressError('Conflicting guest pitch', 409);
+        return;
+      }
+      guestPitches.set(pitchId, { attempt: { ...attempt }, expiresAt: now() + 30 * 24 * 3600_000,
+        claimedBy: null });
+    },
+    claimGuestPitch(userId, pitchId) {
+      const receipt = guestPitches.get(pitchId);
+      if (!receipt || receipt.expiresAt <= now()) throw new ProgressError('Guest pitch receipt not found', 404);
+      if (receipt.claimedBy && receipt.claimedBy !== userId) {
+        throw new ProgressError('Guest pitch receipt not found', 404);
+      }
+      receipt.claimedBy = userId;
+      return this.recordVerifiedAttempt(userId, receipt.attempt);
     },
     recordAttempt(userId, attempt) {
       const record = get(userId);

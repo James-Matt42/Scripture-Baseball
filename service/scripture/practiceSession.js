@@ -3,8 +3,8 @@
  * No permanent question ID or answer key is sent to the browser. A random pitch
  * token identifies an in-memory game interaction, not a scripture reference.
  *
- * This deliberately does not write attempts to MongoDB yet: DB-09 will connect
- * completed, server-graded pitches to authenticated and guest progress.
+ * The engine handles only question state and grading; the HTTP service
+ * persists completed, verified results to account or guest progress storage.
  */
 import { randomBytes, randomInt } from 'node:crypto';
 
@@ -182,6 +182,13 @@ export function createPracticeSessionEngine({
   }
 
   return {
+    hasVerseReference(reference) {
+      if (typeof reference !== 'string' ||
+          !/^([a-z]+):([a-z0-9-]+):([1-9]\d{0,3}):([1-9]\d{0,3})$/u.test(reference)) return false;
+      const [volume, book, chapter, verse] = reference.split(':');
+      return Boolean(corpus.getVerse({ volume, book, chapter: Number(chapter), verse: Number(verse) }));
+    },
+
     getCatalog() {
       return { language: catalog.language, volumes: catalog.volumes.map((volume) => ({
         id: volume.id, name: volume.name,
@@ -256,7 +263,7 @@ export function createPracticeSessionEngine({
       return structuredClone(reply);
     },
 
-    /** Server-only hook for DB-09 account persistence; never route directly to clients. */
+    /** Server-only completed result; never expose this hook through a route. */
     getCompletedAttempt(token) {
       const record = requirePitch(token);
       if (record.stage !== 'complete') error(409, 'Pitch is not complete');

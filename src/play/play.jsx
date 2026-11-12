@@ -1,223 +1,87 @@
-import React, { useEffect, useState } from "react";
-import { checkScriptureAnswer, fetchScriptureQuestion } from "../api/scriptureApi.js";
-import { ScriptureQuestion } from "../components/ScriptureQuestion";
-import { getChallengeById } from "../challenges/catalog.js";
-import { getPracticeStats } from "./session";
-import { usePractice } from "./PracticeContext";
-
-const primaryButton =
-  "w-full cursor-pointer rounded-lg bg-scripture-green px-6 py-3 font-semibold text-white transition hover:brightness-90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto";
-const secondaryButton =
-  "w-full cursor-pointer rounded-lg border border-scripture-green bg-white px-6 py-3 font-semibold text-scripture-green transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto";
+import React, { useEffect } from 'react';
+import { CorpusQuestion } from '../components/CorpusQuestion.jsx';
+import { useCorpusPractice } from './CorpusPracticeContext.jsx';
 
 export function Play() {
   const {
-    session: { inning, pitchIndex, attempts, exactVerse, isFinished, draft, challengeId },
-    questions,
-    favorites,
-    toggleFavorite,
-    history,
-    isSaved,
-    syncStatus, syncError, retrySync,
-    saveDraft,
-    setExactVerse,
-    answerPitch,
-    nextPitch,
-    finishInning,
-    keepPlaying,
-    startNewInning,
-  } = usePractice();
-
-  const questionId = questions[pitchIndex]?.id;
-  const [questionState, setQuestionState] = useState({ id: null, data: null, error: "", loading: true });
-  const [retryKey, setRetryKey] = useState(0);
+    state, pitch, catalog, catalogError, retryCatalog, busy, pitchLoading,
+    stats, isSaved, syncStatus, syncError, retrySync, createPitch,
+    setScope, setExactVerse, finishInning, keepPlaying,
+  } = useCorpusPractice();
 
   useEffect(() => {
-    if (!questionId || isFinished) return;
-    const controller = new AbortController();
-    setQuestionState({ id: questionId, data: null, error: "", loading: true });
-    fetchScriptureQuestion(questionId, { signal: controller.signal }).then((question) => {
-      if (!controller.signal.aborted) {
-        setQuestionState({ id: questionId, data: question, error: "", loading: false });
-      }
-    }).catch((error) => {
-      if (!controller.signal.aborted) {
-        setQuestionState({ id: questionId, data: null, error: error.message, loading: false });
-      }
-    });
-    return () => controller.abort();
-  }, [questionId, isFinished, retryKey]);
+    if (!state.pitchId && !state.paused && !busy && !pitchLoading) {
+      void createPitch().catch(() => {});
+    }
+    // Start once for the current scope; errors require explicit retry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.scope.volume, state.scope.book, state.exactVerse, state.paused]);
 
-  // Never show the locally stored answer-bearing question as an API fallback.
-  const currentQuestion = questionState.id === questionId ? questionState.data : null;
-  const challenge = getChallengeById(challengeId);
-  const stats = getPracticeStats(attempts, questions.length, exactVerse);
-  const savedAttempt = attempts.find((attempt) => attempt.questionId === questionId) ?? null;
-  const allAnswered = stats.completed === stats.totalPitches;
+  const volumes = catalog?.volumes ?? [];
+  const volume = volumes.find((item) => item.id === state.scope.volume);
 
-  return (
-    <main className="mx-auto w-full max-w-[1200px] space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
-      <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
-        <div>
-          <h1 className="text-3xl font-bold text-green-950">{challenge?.title ?? "Solo Practice"}</h1>
-          <p className="mt-2 text-stone-700">{questions.length} {questions.length === 1 ? "passage" : "passages"}, one pitch at a time.</p>
-        </div>
-        <p className="mt-3 font-semibold text-green-950 md:mt-0">Inning {inning}</p>
-      </header>
+  return <main className="mx-auto w-full max-w-[1100px] space-y-6 px-4 py-7 sm:px-6">
+    <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+      <h1 className="text-3xl font-bold text-green-950">Locate scripture</h1>
+      <p className="mt-2 text-stone-700">Real passages from the English Standard Works. Practice a pitch at a time and finish whenever you wish.</p>
+      <p className="mt-2 text-sm font-semibold text-green-900">Inning {state.inning}</p>
+    </header>
 
-      <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="practice-heading">
-        <h2 className="text-2xl font-bold text-green-950" id="practice-heading">Current practice</h2>
-        <dl className="mt-4 grid gap-3 md:grid-cols-2 [&>div]:rounded-lg [&>div]:bg-amber-50 [&>div]:p-4 [&_dt]:text-sm [&_dt]:font-semibold [&_dt]:uppercase [&_dt]:tracking-wide [&_dt]:text-stone-500 [&_dd]:mt-1 [&_dd]:font-medium [&_dd]:text-green-900">
-          <div>
-            <dt>Challenge</dt>
-            <dd>{challenge?.title ?? "Custom challenge"} ({stats.totalPitches} pitches)</dd>
-          </div>
-          <div>
-            <dt>Mode</dt>
-            <dd>Solo practice</dd>
-          </div>
-          <div>
-            <dt>Answer format</dt>
-            <dd>Book, then chapter{exactVerse ? ", then verse" : ""}</dd>
-          </div>
-          <div>
-            <dt>Exact verse</dt>
-            <dd>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={exactVerse}
-                  disabled={stats.completed > 0}
-                  onChange={(event) => setExactVerse(event.target.checked)}
-                />
-                <span>{exactVerse ? "On" : "Off"} — optional extra point</span>
-              </label>
-            </dd>
-          </div>
-        </dl>
-        <p className="mt-3 text-sm text-stone-600">
-          One point per correct answer.{stats.completed > 0 && " Mode locked for this inning."}
-        </p>
-      </section>
+    <section className="rounded-xl border border-stone-200 bg-white p-5" aria-label="Practice settings">
+      <h2 className="mb-3 text-lg font-bold text-green-950">Choose your practice scope</h2>
+      {catalogError && <div role="alert" className="mb-3 text-red-800">
+        {catalogError} <button type="button" className="underline" onClick={retryCatalog}>Retry</button>
+      </div>}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <label className="grid gap-1 font-medium text-green-950">
+          Standard Work
+          <select className="rounded-lg border border-stone-300 p-3" disabled={busy} value={state.scope.volume ?? ''}
+            onChange={(event) => setScope({ volume: event.target.value || null })}>
+            <option value="">All Standard Works</option>
+            {volumes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>
+        <label className="grid gap-1 font-medium text-green-950">
+          Book
+          <select className="rounded-lg border border-stone-300 p-3" value={state.scope.book ?? ''}
+            disabled={!volume || busy} onChange={(event) => setScope({ volume: state.scope.volume, book: event.target.value || null })}>
+            <option value="">All books in scope</option>
+            {(volume?.books ?? []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>
+        <label className="flex items-center gap-3 font-medium text-green-950">
+          <input type="checkbox" checked={state.exactVerse} disabled={busy}
+            onChange={(event) => setExactVerse(event.target.checked)}/>
+          Identify exact verse too
+        </label>
+      </div>
+      <p className="mt-3 text-sm text-stone-600">
+        Selecting one book makes book identification unnecessary; chapter remains graded.
+        Changing the scope starts a fresh inning.
+      </p>
+    </section>
 
-      <section className="rounded-xl border border-green-900/20 bg-green-50 p-5 shadow-sm" aria-label="Live inning score" aria-live="polite">
-        <p className="text-lg font-bold text-green-950">Score: {stats.earnedPoints} / {stats.possiblePoints} points</p>
-        <p className="mt-1 text-sm text-green-900">
-          {stats.completed} of {stats.totalPitches} pitches completed ·
-          {" "}{stats.bookCorrect} correct books · {stats.chapterCorrect} correct chapters
-          {exactVerse && <> · {stats.verseCorrect} correct verses</>}
-        </p>
-        {isSaved !== null && (
-          <p className="mt-2 text-xs text-green-900">
-            {isSaved ? "Saved on this device" : "Browser storage unavailable — scores may be lost on refresh"}
-            {history.length > 0 && ` · ${history.length} previous ${history.length === 1 ? "inning" : "innings"}`}
-          </p>
-        )}
-      </section>
+    <section className="rounded-xl border border-green-900/20 bg-green-50 p-5" aria-label="Inning score" aria-live="polite">
+      <h2 className="text-lg font-bold text-green-950">Score: {stats.earnedPoints} / {stats.possiblePoints} earned points</h2>
+      <p className="mt-1 text-sm text-green-950">{stats.count} completed pitches · {stats.bookCorrect}/{stats.bookAttempts} books · {stats.chapterCorrect}/{stats.count} chapters
+        {stats.verseAttempts > 0 && <> · {stats.verseCorrect}/{stats.verseAttempts} verses</>}</p>
+      {isSaved === false && <p role="alert" className="mt-2 text-sm">Local browser storage unavailable; leaving the page may lose guest progress.</p>}
+      {syncStatus === 'syncing' && <p className="mt-2 text-sm">Syncing your account history…</p>}
+      {syncStatus === 'error' && <p className="mt-2 text-sm text-red-900" role="alert">
+        Account sync needs attention: {syncError} <button type="button" className="underline" onClick={retrySync}>Retry</button>
+      </p>}
+    </section>
 
-      {syncStatus === 'syncing' && <p className="text-sm text-stone-600" role="status">Syncing your account practice…</p>}
-      {syncStatus === 'error' && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4" role="alert">
-          <p>Your pitches remain on this device, but could not sync to your account: {syncError}</p>
-          <button type="button" className="mt-2 font-semibold underline" onClick={retrySync}>Retry account sync</button>
-        </div>
-      )}
-
-      {!isFinished ? (
-        <>
-          <article className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-white p-4 shadow-lg sm:p-6" aria-labelledby="pitch-heading">
-            <header className="mb-4 border-b border-stone-200 pb-4">
-              <h2 className="text-xl font-bold text-green-950" id="pitch-heading">
-                Pitch {pitchIndex + 1} of {stats.totalPitches}
-              </h2>
-            </header>
-            <button
-              className="mb-4 rounded-lg border border-green-800 px-4 py-2 text-sm font-semibold text-green-900 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-              type="button"
-              aria-pressed={favorites.includes(questionId)}
-              onClick={() => toggleFavorite(questionId)}
-            >
-              {favorites.includes(questionId) ? "★ Saved to favorites" : "☆ Save to favorites"}
-            </button>
-            {!currentQuestion && (
-              <div className="rounded-xl bg-amber-50 p-5" role="status">
-                {questionState.error && questionState.id === questionId ? (
-                  <>
-                    <p className="text-red-900" role="alert">Couldn't load this pitch: {questionState.error}</p>
-                    <button type="button" className={`mt-4 ${secondaryButton}`} onClick={() => setRetryKey((value) => value + 1)}>Retry loading passage</button>
-                  </>
-                ) : <p>Loading passage from scripture service…</p>}
-              </div>
-            )}
-            {currentQuestion && <ScriptureQuestion
-              key={`${inning}-${challengeId}-${currentQuestion.id}-${exactVerse}`}
-              question={currentQuestion}
-              checkAnswer={checkScriptureAnswer}
-              exactVerse={exactVerse}
-              savedAttempt={savedAttempt}
-              initialDraft={draft}
-              onDraftChange={saveDraft}
-              onAnswered={answerPitch}
-              onNext={nextPitch}
-              nextLabel={pitchIndex === questions.length - 1 ? "See Inning Results" : "Next Pitch"}
-            />}
-          </article>
-
-          <section className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm" aria-labelledby="checkpoint-heading">
-            <h2 className="text-2xl font-bold text-green-950" id="checkpoint-heading">Current inning</h2>
-            <p className="mt-2 text-stone-700">
-              {stats.completed === 0
-                ? "No pitches completed yet."
-                : `${stats.completed} ${stats.completed === 1 ? "pitch" : "pitches"} scored so far.`}
-            </p>
-            <p className="mt-2 text-sm text-stone-600">
-              You can pause and resume this inning later.
-            </p>
-            <button className={`mt-4 ${secondaryButton}`} type="button" onClick={finishInning}>
-              Finish Here
-            </button>
-          </section>
-        </>
-      ) : (
-        <section className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-white p-6 shadow-lg" aria-labelledby="results-heading">
-          <h2 className="text-2xl font-bold text-green-950" id="results-heading">
-            {allAnswered ? "Inning complete!" : "Inning paused"}
-          </h2>
-          <p className="mt-3 text-lg text-stone-800">
-            You earned <strong>{stats.earnedPoints} of {stats.possiblePoints} possible points</strong> across
-            {" "}{stats.completed} completed {stats.completed === 1 ? "pitch" : "pitches"}.
-          </p>
-          <dl className="mt-5 grid gap-3 sm:grid-cols-2 [&>div]:rounded-xl [&>div]:bg-amber-50 [&>div]:p-4">
-            <div>
-              <dt className="font-semibold text-green-950">Books</dt>
-              <dd>{stats.bookCorrect} / {stats.completed} correct</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-green-950">Chapters</dt>
-              <dd>{stats.chapterCorrect} / {stats.completed} correct</dd>
-            </div>
-            {exactVerse && (
-              <div>
-                <dt className="font-semibold text-green-950">Exact verses</dt>
-                <dd>{stats.verseCorrect} / {stats.completed} correct</dd>
-              </div>
-            )}
-          </dl>
-          <p className="mt-4 text-sm text-stone-600">
-            {allAnswered ? "Keep playing to start another inning." : "Keep playing to resume where you left off."}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button className={primaryButton} type="button" onClick={keepPlaying}>
-              Keep Playing
-            </button>
-            {!allAnswered && (
-              <button className={secondaryButton} type="button" onClick={startNewInning}>
-                Start New Inning
-              </button>
-            )}
-          </div>
-        </section>
-      )}
-    </main>
-  );
+    {state.paused ? <section className="rounded-xl border border-amber-200 bg-white p-6">
+      <h2 className="text-xl font-bold text-green-950">Inning paused</h2>
+      <p className="my-3">Your completed pitches are saved. Resume when you're ready.</p>
+      <button className="rounded-lg bg-scripture-green px-5 py-3 font-bold text-white" onClick={keepPlaying}>Keep playing</button>
+    </section> : <section className="rounded-xl border border-amber-200 bg-white p-6 shadow-md">
+      <h2 className="mb-4 text-xl font-bold text-green-950">Pitch {stats.count + (pitch?.stage === 'complete' ? 0 : 1)}</h2>
+      <CorpusQuestion/>
+      <button type="button" className="mt-6 rounded-lg border border-green-800 px-4 py-2 font-semibold text-green-900 hover:bg-green-50" onClick={finishInning}>
+        Finish here
+      </button>
+    </section>}
+  </main>;
 }

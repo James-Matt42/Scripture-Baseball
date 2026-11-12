@@ -11,8 +11,7 @@ import { Home } from "./home/home";
 import { JoinGame } from "./join-game/join-game";
 import { Play } from "./play/play";
 import { Progress } from "./progress/progress";
-import { PracticeProvider } from "./play/PracticeContext";
-import { getPracticeStorageKey } from "./play/practiceState.js";
+import { CorpusPracticeProvider } from "./play/CorpusPracticeContext.jsx";
 import { AccountProvider, useAccount } from "./account/AccountContext";
 import { RoomProvider } from "./rooms/RoomContext";
 
@@ -33,22 +32,17 @@ export default function App() {
 }
 
 function AppWithAccount() {
-  const { activeProfile, preferences, isRestoringSession } = useAccount();
+  const { activeProfile, isRestoringSession } = useAccount();
   // Do not mount local account/room practice stores until the cookie session
   // is resolved: it avoids briefly writing guest state into the wrong slot.
   if (isRestoringSession) {
     return <main className="mx-auto max-w-3xl p-8" role="status">Restoring your session…</main>;
   }
-  const storageKey = getPracticeStorageKey(activeProfile?.id);
   return (
     <RoomProvider>
-      <PracticeProvider
-        key={storageKey}
-        storageKey={storageKey}
-        defaultExactVerse={preferences.answerDifficulty === "exact-verse"}
-      >
+      <CorpusPracticeProvider key={activeProfile?.id ?? 'guest'}>
         <Site />
-      </PracticeProvider>
+      </CorpusPracticeProvider>
     </RoomProvider>
   );
 }

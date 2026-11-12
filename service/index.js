@@ -43,7 +43,7 @@ export function createApp({
   // Share the same auth guard with application routes added in later commits.
   const sessionAuth = createSessionAuth({ userStore, sessionStore });
   app.use('/api', scriptureRouter);
-  app.use('/api', createPracticeRouter({ engine: practiceEngine }));
+  app.use('/api', createPracticeRouter({ engine: practiceEngine, sessionAuth, progressStore }));
   app.use('/api', createAuthRouter({ userStore, sessionStore, sessionAuth, secureCookies }));
   app.use('/api', createProgressRouter({ sessionAuth, progressStore }));
 

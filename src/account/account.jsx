@@ -44,10 +44,8 @@ export function Account() {
     setAccountError("");
     setAccountMessage("");
     try {
-      const result = await createProfile({ displayName: newName, email: newEmail, password: newPassword });
-      setAccountMessage(result.copiedGuestActivity
-        ? "Account created and signed in. Your local practice was preserved on this device."
-        : "Account created and signed in.");
+      await createProfile({ displayName: newName, email: newEmail, password: newPassword });
+      setAccountMessage("Account created and signed in. Guest results will sync when available.");
       setNewName("");
       setNewEmail("");
       setNewPassword("");
@@ -117,7 +115,7 @@ export function Account() {
       <header className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm md:flex md:items-start md:justify-between md:gap-8">
         <h1 className="text-3xl font-bold text-green-950">Account</h1>
         <p className="max-w-xl text-stone-700">
-          Real account registration and sign-in. Accounts and sessions are temporary until the database phase; signed-in attempts, favorites, and preferences use account services; temporary server data still resets on restart. Demo rooms remain on this device.
+          Sign in to save graded scripture practice, favorites, and preferences to your account. MongoDB-backed accounts and progress persist across server restarts. Guest practice stays on this device until it can be claimed. Demo rooms remain local to this device.
         </p>
       </header>
 
@@ -234,7 +232,7 @@ export function Account() {
               onChange={(event) => setSettings((current) => ({ ...current, preferredVolume: event.target.value }))}>
               {VOLUME_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
-            <p className="text-xs text-stone-600">The starter lineup currently uses Book of Mormon passages.</p>
+            <p className="text-xs text-stone-600">Choose your practice volume or book on the Play screen. This preference is saved for future personalized lineups.</p>
           </div>
           <div><button className={primaryButton} type="submit">Save Preferences</button></div>
         </form>

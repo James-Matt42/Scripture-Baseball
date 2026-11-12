@@ -1,13 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { SAMPLE_QUESTIONS, gradeBookAndChapter } from '../scripture/questions.js';
-import {
-  createInitialPracticeState, getPracticeStorageKey, loadPracticeState, practiceReducer, savePracticeState,
-} from '../play/practiceState.js';
+import { CORPUS_GUEST_KEY, corpusKey } from '../play/corpusState.js';
 import { ACCOUNTS_STORAGE_KEY, accountReducer, createInitialAccountState, saveAccountState } from './accountState.js';
 import {
-  CLIENT_SETTINGS_KEY, SERVER_USER_ID_PATTERN, acceptServerPreferences, confirmServerPreferences, copyLocalPracticeOnRegistration,
-  ensureUserPreferences, getMatchingLegacyProfile, getClientPreferences, initialClientSettings, loadClientSettings,
+  CLIENT_SETTINGS_KEY, SERVER_USER_ID_PATTERN, acceptServerPreferences, confirmServerPreferences,
+  ensureUserPreferences, getClientPreferences, initialClientSettings, loadClientSettings,
   normalizeClientSettings, saveClientSettings, updateClientPreferences,
 } from './clientState.js';
 
@@ -22,19 +19,11 @@ function storage() {
     setItem: (key, value) => data.set(key, value),
   };
 }
-function guestWithAnswer() {
-  const question = SAMPLE_QUESTIONS[0];
-  return practiceReducer(createInitialPracticeState(), {
-    type: 'answer', attempt: gradeBookAndChapter(question, question.bookId, question.chapter),
-  });
-}
-
-test('authenticated identities use distinct practice keys without touching the guest key', () => {
+test('verified users have independent, new-corpus-only practice keys', () => {
   assert.equal(SERVER_USER_ID_PATTERN.test(uuid), true);
-  assert.equal(getPracticeStorageKey(uuid), `scripture-baseball.practice.v1.user-${uuid}`);
-  assert.notEqual(getPracticeStorageKey(uuid), getPracticeStorageKey(otherId));
-  assert.notEqual(getPracticeStorageKey(uuid), getPracticeStorageKey(null));
-  assert.equal(getPracticeStorageKey('bad-identifier'), getPracticeStorageKey(null));
+  assert.notEqual(corpusKey(uuid), CORPUS_GUEST_KEY);
+  assert.notEqual(corpusKey(uuid), corpusKey(otherId));
+  assert.equal(corpusKey(null), CORPUS_GUEST_KEY);
 });
 
 test('old browser-only profiles cannot restore authentication in new settings', () => {
@@ -68,39 +57,16 @@ test('preferences stay locally scoped by verified user ID; never store passwords
   assert.ok(!JSON.stringify(updated).includes('password'));
 });
 
-test('matching legacy profile preferences are carried forward only after a verified login', () => {
+test('server-verified account inherits guest preferences without old profile lookup', () => {
   const store = storage();
-  let legacy = accountReducer(createInitialAccountState(), {
+  const oldAccount = accountReducer(createInitialAccountState(), {
     type: 'create', displayName: 'Casey', email: 'CASEY@EXAMPLE.COM', createdAt: '2026-11-05T00:00:00Z',
   });
-  legacy = accountReducer(legacy, { type: 'update-preferences', changes: { preferredVolume: 'new-testament' } });
-  saveAccountState(store, legacy);
-  const next = ensureUserPreferences(initialClientSettings(), user, store);
-  assert.equal(getClientPreferences(next, user.id).preferredVolume, 'new-testament');
+  saveAccountState(store, oldAccount);
+  const guest = updateClientPreferences(initialClientSettings(), null, { answerDifficulty: 'exact-verse' });
+  const next = ensureUserPreferences(guest, user, store);
+  assert.equal(getClientPreferences(next, user.id).answerDifficulty, 'exact-verse');
   assert.strictEqual(ensureUserPreferences(next, user, store), next);
-});
-
-test('new account adopts guest attempts locally without deleting or overwriting originals', () => {
-  const store = storage();
-  const guestPractice = guestWithAnswer();
-  assert.equal(savePracticeState(store, guestPractice), true);
-  assert.equal(copyLocalPracticeOnRegistration(store, user), true);
-  assert.equal(loadPracticeState(store, getPracticeStorageKey(uuid)).session.attempts.length, 1);
-  assert.deepEqual(loadPracticeState(store), guestPractice);
-  assert.equal(copyLocalPracticeOnRegistration(store, user), false);
-});
-
-test('matching legacy profile history is chosen over unrelated guest history', () => {
-  const store = storage();
-  const legacy = accountReducer(createInitialAccountState(), {
-    type: 'create', displayName: 'Casey', email: 'casey@example.com', createdAt: '2026-11-05T00:00:00Z',
-  });
-  saveAccountState(store, legacy);
-  savePracticeState(store, createInitialPracticeState());
-  const oldPractice = guestWithAnswer();
-  savePracticeState(store, oldPractice, getPracticeStorageKey('account-1'));
-  assert.equal(copyLocalPracticeOnRegistration(store, user), true);
-  assert.deepEqual(loadPracticeState(store, getPracticeStorageKey(uuid)), oldPractice);
 });
 
 test('empty, invalid, or tampered preference storage fails safely', () => {
@@ -114,19 +80,6 @@ test('empty, invalid, or tampered preference storage fails safely', () => {
   const store = storage();
   store.setItem(CLIENT_SETTINGS_KEY, '{invalid json');
   assert.deepEqual(loadClientSettings(store), initialClientSettings());
-  assert.equal(copyLocalPracticeOnRegistration(store, { id: 'not-a-uuid', email: user.email }), false);
-  assert.equal(copyLocalPracticeOnRegistration(store, user), false);
-});
-
-test('legacy account matching requires a validated server ID and an exact normalized email', () => {
-  const store = storage();
-  const legacy = accountReducer(createInitialAccountState(), {
-    type: 'create', displayName: 'Casey', email: 'CASEY@example.com', createdAt: '2026-11-05T00:00:00Z',
-  });
-  saveAccountState(store, legacy);
-  assert.equal(getMatchingLegacyProfile(store, user).id, 'account-1');
-  assert.equal(getMatchingLegacyProfile(store, { ...user, id: 'fake-id' }), null);
-  assert.equal(getMatchingLegacyProfile(store, { ...user, email: 'other@example.com' }), null);
 });
 
 test('unsent signed-in preference edits survive reloads and supersede stale server settings', () => {

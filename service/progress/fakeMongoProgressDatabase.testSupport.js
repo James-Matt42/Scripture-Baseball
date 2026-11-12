@@ -8,6 +8,7 @@ export function fakeMongoProgressDatabase() {
     favorites: new Map(),
     preferences: new Map(),
     guestImports: new Map(),
+    guestPitches: new Map(),
   };
   const calls = [];
   const collectionCache = new Map();
@@ -16,12 +17,18 @@ export function fakeMongoProgressDatabase() {
   let transactionQueue = Promise.resolve();
 
   const copy = (value) => value === undefined ? undefined : structuredClone(value);
-  const matches = (document, query) => Object.entries(query)
-    .every(([key, value]) => document[key] === value);
+  const matches = (document, query) => Object.entries(query).every(([key, value]) => {
+    if (key === '$or') return value.some((condition) => matches(document, condition));
+    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      if (Object.hasOwn(value, '$gt')) return document[key] > value.$gt;
+      if (Object.hasOwn(value, '$exists')) return (document[key] !== undefined) === value.$exists;
+    }
+    return document[key] === value;
+  });
   const rowKey = (name, record) => name === 'attempts'
     ? JSON.stringify([record.userId, record.id])
     : name === 'guestImports' ? JSON.stringify([record.userId, record.importId])
-      : record.userId;
+      : name === 'guestPitches' ? record.pitchId : record.userId;
 
   function project(document, options) {
     if (!document) return null;
@@ -107,6 +114,15 @@ export function fakeMongoProgressDatabase() {
           ids.push(result.insertedId);
         }
         return { insertedCount: ids.length };
+      },
+      async findOneAndUpdate(filter, update, options = {}) {
+        calls.push(['findOneAndUpdate', name, copy(filter)]);
+        ensureWritable(name, 'findOneAndUpdate');
+        const existing = [...map.values()].find((doc) => matches(doc, filter));
+        if (!existing) return null;
+        const changed = { ...copy(existing), ...copy(update.$set ?? {}) };
+        map.set(rowKey(name, existing), changed);
+        return project(options.returnDocument === 'before' ? existing : changed, options);
       },
       async replaceOne(filter, document, options = {}) {
         calls.push(['replaceOne', name, copy(document)]);
