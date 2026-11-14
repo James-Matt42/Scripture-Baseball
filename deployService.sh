@@ -71,6 +71,16 @@ printf '\n----> Uploading staged startup release to %s\n' "$hostname"
 ssh -i "$key" "ubuntu@$hostname" "mkdir -p '$remote_stage'"
 scp -r -i "$key" "$build_dir"/. "ubuntu@$hostname:$remote_stage/"
 
+# The deployable archive deliberately excludes secrets. Send the local backend
+# .env separately over encrypted SSH, with umask 077 on the server so it is
+# never briefly world-readable. If absent, the remote installer can reuse the
+# existing deployed .env (but will fail clearly if neither file exists).
+if [[ -f "$project_root/service/.env" ]]; then
+  printf '\n----> Uploading service/.env securely (not included in the public build)\n'
+  ssh -i "$key" "ubuntu@$hostname" \
+    "umask 077; cat > '$remote_stage/.env'" < "$project_root/service/.env"
+fi
+
 printf '\n----> Installing dependencies and activating staged release\n'
 ssh -i "$key" "ubuntu@$hostname" \
   "bash -se -- '$remote_stage' '$remote_backup' '$service'" < "$project_root/tools/deploy-remote-startup.sh"

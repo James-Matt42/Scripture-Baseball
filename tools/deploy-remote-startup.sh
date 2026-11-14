@@ -7,6 +7,13 @@ backup=$2
 service=$3
 target="services/$service"
 
+# Always remove any unactivated staging release, including a partially uploaded
+# credential file, if dependency installation or configuration validation fails.
+cleanup_stage() {
+  if [[ -d "$stage" ]]; then rm -rf -- "$stage"; fi
+}
+trap cleanup_stage EXIT
+
 # Keep the existing private corpus/credentials if this build did not ship them.
 # Neither belongs under public/ and neither may be overwritten with stale data.
 if [[ -d "$target/private" ]]; then
@@ -14,12 +21,39 @@ if [[ -d "$target/private" ]]; then
   cp -an "$target/private/." "$stage/private/"
 fi
 if [[ -f "$target/.env" && ! -e "$stage/.env" ]]; then
-  cp -p "$target/.env" "$stage/.env"
+  install -m 600 "$target/.env" "$stage/.env"
 fi
+if [[ ! -f "$stage/.env" ]]; then
+  echo 'Missing MongoDB configuration: create service/.env locally or provision the existing services/startup/.env on the server' >&2
+  exit 1
+fi
+chmod 600 "$stage/.env"
 
 # Install *before* switching from the running release. Failure leaves the
 # existing deployment intact and saves nothing to the public web directory.
 bash -ic "set -e; cd '$stage'; npm ci --omit=dev"
+
+# The deployment owns the MongoDB environment: do not silently inherit stale
+# credentials exported in the remote login shell. Node >=22 parses the .env
+# file using its built-in --env-file support; no `source`/shell evaluation.
+bash -ic "set -e; cd '$stage'; env -u MONGODB_URI -u MONGODB_DB_NAME -u MONGODB_REQUIRED node --env-file=.env -e '
+  if (!process.env.MONGODB_URI) {
+    console.error(\"Missing MONGODB_URI in service/.env\");
+    process.exit(1);
+  }
+'"
+
+# PM2 gets a *real* environment (not merely an .env file on disk). The
+# temporary Node process reads the file, then spawns PM2 with those variables
+# inherited. No secrets appear in shell arguments, stdout, or git-tracked files.
+restart_pm2() {
+  local release_path=$1
+  bash -ic "set -e; cd '$release_path'; env -u MONGODB_URI -u MONGODB_DB_NAME -u MONGODB_REQUIRED NODE_ENV=production node --env-file=.env -e '
+    const { spawnSync } = require(\"node:child_process\");
+    const result = spawnSync(\"pm2\", [\"restart\", \"$service\", \"--update-env\"], { stdio: \"inherit\" });
+    process.exit(result.status ?? 1);
+  '"
+}
 
 if [[ -e "$backup" ]]; then
   echo 'Refusing deployment: stale backup path exists' >&2
@@ -38,7 +72,7 @@ fi
 # documented local port before discarding the previous release. This catches
 # a missing MongoDB config as well as a missing private SQLite corpus.
 healthy=false
-if bash -ic "set -e; cd '$target'; NODE_ENV=production pm2 restart '$service' --update-env"; then
+if restart_pm2 "$target"; then
   for _ in {1..10}; do
     if curl --silent --fail --max-time 2 http://127.0.0.1:4000/api/health >/dev/null &&
        curl --silent --fail --max-time 2 http://127.0.0.1:4000/api/practice/catalog >/dev/null; then
@@ -53,7 +87,7 @@ if [[ "$healthy" != true ]]; then
   rm -rf "$target"
   if [[ -d "$backup" ]]; then
     mv "$backup" "$target"
-    bash -ic "set -e; cd '$target'; NODE_ENV=production pm2 restart '$service' --update-env" || true
+    restart_pm2 "$target" || true
   fi
   exit 1
 fi

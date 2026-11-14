@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,7 +34,8 @@ test('deployment packages frontend and nested backend files without private sour
     join(project, 'tools', 'deploy-remote-startup.sh'));
   const script = await readFile(join(project, 'deployService.sh'), 'utf8');
   const remoteScript = await readFile(join(projectRoot, 'tools', 'deploy-remote-startup.sh'), 'utf8');
-  assert.match(remoteScript, /NODE_ENV=production pm2 restart.*--update-env/u);
+  assert.match(remoteScript, /NODE_ENV=production node --env-file=\.env/u);
+  assert.match(remoteScript, /--update-env/u);
   assert.ok(remoteScript.includes('cp -an "$target/private/." "$stage/private/"'));
   assert.ok(remoteScript.includes('mv "$stage" "$target"'));
   assert.ok(!script.includes('rm -rf services/${service}'),
@@ -64,7 +65,12 @@ if [ "$1" = run ] && [ "$2" = build ]; then
 fi
 exit 3
 `);
-  await executable(join(bin, 'ssh'), '#!/bin/sh\ncat >/dev/null\n');
+  await executable(join(bin, 'ssh'), `#!/bin/sh
+case "$*" in
+  *'umask 077; cat >'*) umask 077; cat > "$MOCK_DEPLOY_DEST/.env" ;;
+  *) cat >/dev/null ;;
+esac
+`);
   await executable(join(bin, 'scp'), `#!/bin/sh
 for arg in "$@"; do
   case "$arg" in */.) cp -R "$arg" "$MOCK_DEPLOY_DEST"; exit $? ;; esac
@@ -92,8 +98,13 @@ exit 4
   assert.match(await readFile(join(captured, 'auth', 'registration.js'), 'utf8'), /registration/);
   assert.match(await readFile(join(captured, 'db', 'mongo.js'), 'utf8'), /database/);
   assert.match(await readFile(join(captured, 'progress', 'progressStore.js'), 'utf8'), /progress/);
+  assert.equal(await readFile(join(captured, '.env'), 'utf8'), 'PRIVATE_KEY=do-not-deploy');
+  assert.equal((await stat(join(captured, '.env'))).mode & 0o777, 0o600,
+    'the streamed .env must be private even when local source permissions are broad');
+  await assert.rejects(access(join(captured, 'public', '.env')), { code: 'ENOENT' });
+  assert.ok(!result.stdout.includes('PRIVATE_KEY'), 'never print secret content');
 
-  for (const excluded of ['.env', 'index.test.js', 'content/local/scriptures.json']) {
+  for (const excluded of ['index.test.js', 'content/local/scriptures.json']) {
     await assert.rejects(access(join(captured, excluded)), { code: 'ENOENT' });
   }
 });
@@ -112,30 +123,35 @@ test('staged deployment retains private data and rolls back on install/restart f
   await mkdir(bin);
   await mkdir(home);
   await executable(join(bin, 'npm'), '#!/bin/sh\n[ "${MOCK_NPM_FAIL:-0}" != 1 ]\n');
-  await executable(join(bin, 'pm2'), '#!/bin/sh\n[ "${MOCK_PM2_FAIL:-0}" != 1 ]\n');
+  await executable(join(bin, 'pm2'), `#!/bin/sh
+printf '%s|%s|%s|%s\n' "$MONGODB_URI" "$MONGODB_DB_NAME" "$MONGODB_REQUIRED" "$NODE_ENV" >> "$MOCK_PM2_ENV_LOG"
+[ "\${MOCK_PM2_FAIL:-0}" != 1 ]
+`);
   await executable(join(bin, 'curl'), '#!/bin/sh\n[ "${MOCK_HEALTH_FAIL:-0}" != 1 ]\n');
   await executable(join(bin, 'sleep'), '#!/bin/sh\nexit 0\n');
   // Remote deployment launches interactive shells to resolve ubuntu's PM2
   // environment; give them a deterministic fake npm/PM2 binary search path.
   await writeFile(join(home, '.bashrc'), `export PATH="${bin}:$PATH"\n`);
   await writeFile(join(target, 'index.js'), 'old server');
-  await writeFile(join(target, '.env'), 'MONGODB_URI=secret-do-not-ship');
+  await writeFile(join(target, '.env'), 'MONGODB_URI=mongodb://old:secret@localhost\nMONGODB_DB_NAME=old_database\nMONGODB_REQUIRED=true\n', { mode: 0o644 });
+  const pm2Log = join(sandbox, 'pm2-env.log');
   await writeFile(join(target, 'private', 'scriptures-eng.sqlite'), 'previous corpus');
   const remoteScript = await readFile(join(projectRoot, 'tools', 'deploy-remote-startup.sh'), 'utf8');
 
-  async function staged(code = 'new server', includeNewCorpus = false) {
+  async function staged(code = 'new server', includeNewCorpus = false, newEnv = null) {
     await mkdir(stage, { recursive: true });
     await writeFile(join(stage, 'index.js'), code);
     if (includeNewCorpus) {
       await mkdir(join(stage, 'private'), { recursive: true });
       await writeFile(join(stage, 'private', 'scriptures-eng.sqlite'), 'new corpus');
     }
+    if (newEnv !== null) await writeFile(join(stage, '.env'), newEnv, { mode: 0o644 });
   }
   function deploy(flags = {}) {
     return spawnSync('bash', ['-se', '--', stage, backup, 'startup'], {
       cwd: sandbox, input: remoteScript, encoding: 'utf8',
       env: { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`,
-        ...flags },
+        MOCK_PM2_ENV_LOG: pm2Log, ...flags },
     });
   }
 
@@ -144,22 +160,40 @@ test('staged deployment retains private data and rolls back on install/restart f
   assert.equal(first.status, 0, first.stderr);
   assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'new server');
   assert.equal(await readFile(join(target, 'private', 'scriptures-eng.sqlite'), 'utf8'), 'previous corpus');
-  assert.equal(await readFile(join(target, '.env'), 'utf8'), 'MONGODB_URI=secret-do-not-ship');
+  assert.equal(await readFile(join(target, '.env'), 'utf8'),
+    'MONGODB_URI=mongodb://old:secret@localhost\nMONGODB_DB_NAME=old_database\nMONGODB_REQUIRED=true\n');
+  assert.equal((await stat(join(target, '.env'))).mode & 0o777, 0o600);
+  assert.match(await readFile(pm2Log, 'utf8'), /mongodb:\/\/old:secret@localhost\|old_database\|true\|production/u);
   await assert.rejects(access(backup), { code: 'ENOENT' });
 
   await staged('second server');
   const failedInstall = deploy({ MOCK_NPM_FAIL: '1' });
   assert.notEqual(failedInstall.status, 0);
   assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'new server');
-  // Cleanup the unsuccessful staging directory before trying another release.
-  await rm(stage, { force: true, recursive: true });
+  await assert.rejects(access(stage), { code: 'ENOENT' },
+    'failed installs should not leave a staged copy of the credentials');
 
-  await staged('third server', true);
-  const failedRestart = deploy({ MOCK_PM2_FAIL: '1' });
+  await staged('third server', true,
+    'MONGODB_URI="mongodb+srv://new:password@new.mongo.example/newdb?retryWrites=true"\nMONGODB_DB_NAME=new_database\nMONGODB_REQUIRED=true\n');
+  const failedRestart = deploy({ MOCK_PM2_FAIL: '1', MONGODB_URI: 'mongodb://stale-remote-env' });
   assert.notEqual(failedRestart.status, 0);
   assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'new server');
   assert.equal(await readFile(join(target, 'private', 'scriptures-eng.sqlite'), 'utf8'), 'previous corpus');
+  assert.match(await readFile(join(target, '.env'), 'utf8'), /mongodb:\/\/old:secret/u,
+    'failed restart must restore the previous credentials');
+  assert.match(await readFile(pm2Log, 'utf8'), /mongodb\+srv:\/\/new:password@new\.mongo\.example\/newdb\?retryWrites=true\|new_database\|true\|production/u,
+    'new MongoDB credentials must reach the PM2 process, not just disk');
+  assert.doesNotMatch(failedRestart.stdout + failedRestart.stderr, /new:password/u,
+    'deployment output must not expose the new MongoDB password');
   await assert.rejects(access(backup), { code: 'ENOENT' });
+
+  await staged('invalid environment', false, 'MONGODB_DB_NAME=missing_uri\n');
+  const noMongo = deploy();
+  assert.notEqual(noMongo.status, 0);
+  assert.match(noMongo.stderr, /Missing MONGODB_URI/u);
+  assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'new server');
+  await assert.rejects(access(stage), { code: 'ENOENT' },
+    'invalid settings must not leave a staged copy of the credentials');
 
   await staged('unhealthy server');
   const failedHealth = deploy({ MOCK_HEALTH_FAIL: '1' });
@@ -167,8 +201,23 @@ test('staged deployment retains private data and rolls back on install/restart f
   assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'new server');
   await assert.rejects(access(backup), { code: 'ENOENT' });
 
-  await staged('fourth server', true);
-  const deployedNewCorpus = deploy();
+  await staged('fourth server', true,
+    'MONGODB_URI="mongodb+srv://new:password@new.mongo.example/newdb?retryWrites=true"\nMONGODB_DB_NAME=new_database\nMONGODB_REQUIRED=true\n');
+  const deployedNewCorpus = deploy({ MONGODB_URI: 'mongodb://stale-remote-env' });
   assert.equal(deployedNewCorpus.status, 0, deployedNewCorpus.stderr);
   assert.equal(await readFile(join(target, 'private', 'scriptures-eng.sqlite'), 'utf8'), 'new corpus');
+  assert.match(await readFile(join(target, '.env'), 'utf8'), /mongodb\+srv:\/\/new:password/u);
+  assert.equal((await stat(join(target, '.env'))).mode & 0o777, 0o600);
+  assert.match(await readFile(pm2Log, 'utf8'), /mongodb\+srv:\/\/new:password@new\.mongo\.example\/newdb\?retryWrites=true\|new_database\|true\|production/u);
+  assert.doesNotMatch(deployedNewCorpus.stdout + deployedNewCorpus.stderr, /new:password/u);
+
+  // A first deployment without local or pre-existing credentials should
+  // leave the running release untouched rather than silently use memory.
+  await rm(join(target, '.env'));
+  await staged('missing config server');
+  const missingFile = deploy();
+  assert.notEqual(missingFile.status, 0);
+  assert.match(missingFile.stderr, /Missing MongoDB configuration/u);
+  assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'fourth server');
+  await assert.rejects(access(stage), { code: 'ENOENT' });
 });
