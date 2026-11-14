@@ -127,7 +127,18 @@ test('staged deployment retains private data and rolls back on install/restart f
 printf '%s|%s|%s|%s\n' "$MONGODB_URI" "$MONGODB_DB_NAME" "$MONGODB_REQUIRED" "$NODE_ENV" >> "$MOCK_PM2_ENV_LOG"
 [ "\${MOCK_PM2_FAIL:-0}" != 1 ]
 `);
-  await executable(join(bin, 'curl'), '#!/bin/sh\n[ "${MOCK_HEALTH_FAIL:-0}" != 1 ]\n');
+  await executable(join(bin, 'curl'), `#!/bin/sh
+case "$*" in
+  *--write-out*)
+    case "$*" in
+      */api/health*) printf '200' ;;
+      */api/practice/catalog*) printf '503' ;;
+    esac
+    exit 0
+    ;;
+esac
+[ "\${MOCK_HEALTH_FAIL:-0}" != 1 ]
+`);
   await executable(join(bin, 'sleep'), '#!/bin/sh\nexit 0\n');
   // Remote deployment launches interactive shells to resolve ubuntu's PM2
   // environment; give them a deterministic fake npm/PM2 binary search path.
@@ -165,6 +176,26 @@ printf '%s|%s|%s|%s\n' "$MONGODB_URI" "$MONGODB_DB_NAME" "$MONGODB_REQUIRED" "$N
   assert.equal((await stat(join(target, '.env'))).mode & 0o777, 0o600);
   assert.match(await readFile(pm2Log, 'utf8'), /mongodb:\/\/old:secret@localhost\|old_database\|true\|production/u);
   await assert.rejects(access(backup), { code: 'ENOENT' });
+
+  // DB12's first deployment may replace a pre-.env release. If the new app
+  // fails readiness, rollback must restart that old release without trying to
+  // read a .env file that it never had.
+  await rm(join(target, '.env'));
+  await staged('failed new server', false,
+    'MONGODB_URI=mongodb://new:secret@localhost\nMONGODB_DB_NAME=new_database\nMONGODB_REQUIRED=true\n');
+  const legacyRollback = deploy({ MOCK_HEALTH_FAIL: '1' });
+  assert.notEqual(legacyRollback.status, 0);
+  assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'new server');
+  await assert.rejects(access(join(target, '.env')), { code: 'ENOENT' });
+  assert.match(legacyRollback.stderr, /Previous release has no \.env/u);
+  assert.match(legacyRollback.stderr, /Endpoint results before rollback/u);
+  assert.match(legacyRollback.stderr, /\/api\/health: HTTP 200/u);
+  assert.match(legacyRollback.stderr, /\/api\/practice\/catalog: HTTP 503/u);
+  assert.doesNotMatch(legacyRollback.stderr, /node: \.env: not found/u);
+  await assert.rejects(access(backup), { code: 'ENOENT' });
+  await writeFile(join(target, '.env'),
+    'MONGODB_URI=mongodb://old:secret@localhost\nMONGODB_DB_NAME=old_database\nMONGODB_REQUIRED=true\n',
+    { mode: 0o600 });
 
   await staged('second server');
   const failedInstall = deploy({ MOCK_NPM_FAIL: '1' });
@@ -218,6 +249,17 @@ printf '%s|%s|%s|%s\n' "$MONGODB_URI" "$MONGODB_DB_NAME" "$MONGODB_REQUIRED" "$N
   const missingFile = deploy();
   assert.notEqual(missingFile.status, 0);
   assert.match(missingFile.stderr, /Missing MongoDB configuration/u);
+  assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'fourth server');
+  await assert.rejects(access(stage), { code: 'ENOENT' });
+
+  // Refuse a release missing the corpus *before* replacing a running app;
+  // otherwise /api/practice/catalog cannot pass the readiness check.
+  await rm(join(target, 'private'), { recursive: true, force: true });
+  await staged('missing corpus server', false,
+    'MONGODB_URI=mongodb://new:secret@localhost\nMONGODB_REQUIRED=true\n');
+  const missingCorpus = deploy();
+  assert.notEqual(missingCorpus.status, 0);
+  assert.match(missingCorpus.stderr, /Missing private scripture SQLite corpus/u);
   assert.equal(await readFile(join(target, 'index.js'), 'utf8'), 'fourth server');
   await assert.rejects(access(stage), { code: 'ENOENT' });
 });

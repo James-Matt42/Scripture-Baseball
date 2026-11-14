@@ -41,6 +41,12 @@ bash -ic "set -e; cd '$stage'; env -u MONGODB_URI -u MONGODB_DB_NAME -u MONGODB_
     console.error(\"Missing MONGODB_URI in service/.env\");
     process.exit(1);
   }
+  const { existsSync } = require(\"node:fs\");
+  const corpusPath = process.env.SCRIPTURE_SQLITE_PATH || \"private/scriptures-eng.sqlite\";
+  if (!existsSync(corpusPath)) {
+    console.error(\"Missing private scripture SQLite corpus (\" + corpusPath + \"), required by /api/practice/catalog. Build it before deploying or configure SCRIPTURE_SQLITE_PATH.\");
+    process.exit(1);
+  }
 '"
 
 # PM2 gets a *real* environment (not merely an .env file on disk). The
@@ -48,11 +54,25 @@ bash -ic "set -e; cd '$stage'; env -u MONGODB_URI -u MONGODB_DB_NAME -u MONGODB_
 # inherited. No secrets appear in shell arguments, stdout, or git-tracked files.
 restart_pm2() {
   local release_path=$1
-  bash -ic "set -e; cd '$release_path'; env -u MONGODB_URI -u MONGODB_DB_NAME -u MONGODB_REQUIRED NODE_ENV=production node --env-file=.env -e '
-    const { spawnSync } = require(\"node:child_process\");
-    const result = spawnSync(\"pm2\", [\"restart\", \"$service\", \"--update-env\"], { stdio: \"inherit\" });
-    process.exit(result.status ?? 1);
-  '"
+  if [[ -f "$release_path/.env" ]]; then
+    bash -ic "set -e; cd '$release_path'; env -u MONGODB_URI -u MONGODB_DB_NAME -u MONGODB_REQUIRED NODE_ENV=production node --env-file=.env -e '
+      const { spawnSync } = require(\"node:child_process\");
+      const result = spawnSync(\"pm2\", [\"restart\", \"$service\", \"--update-env\"], { stdio: \"inherit\" });
+      process.exit(result.status ?? 1);
+    '"
+  else
+    # DB12 may be the first release to use service/.env. A failed deployment
+    # must still be able to restart its older, pre-.env PM2 application.
+    echo 'Previous release has no .env; restarting its legacy PM2 process without --env-file' >&2
+    bash -ic "set -e; cd '$release_path'; NODE_ENV=production pm2 restart '$service'"
+  fi
+}
+
+check_status() {
+  local url=$1
+  local status
+  status=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 2 "$url" 2>/dev/null) || status=unreachable
+  printf '%s: HTTP %s\n' "$url" "${status:-unreachable}" >&2
 }
 
 if [[ -e "$backup" ]]; then
@@ -83,7 +103,11 @@ if restart_pm2 "$target"; then
   done
 fi
 if [[ "$healthy" != true ]]; then
-  echo 'New startup release failed its restart/health check; restoring the previous release' >&2
+  echo 'New startup release failed its restart/health check. Endpoint results before rollback:' >&2
+  check_status 'http://127.0.0.1:4000/api/health'
+  check_status 'http://127.0.0.1:4000/api/practice/catalog'
+  echo 'Check PM2 logs for MongoDB connection errors; HTTP 503 from the catalog indicates a missing/unavailable scripture corpus.' >&2
+  echo 'Restoring the previous release.' >&2
   rm -rf "$target"
   if [[ -d "$backup" ]]; then
     mv "$backup" "$target"
