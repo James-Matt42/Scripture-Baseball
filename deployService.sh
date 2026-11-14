@@ -54,23 +54,25 @@ tar -C service \
   --exclude='./node_modules' \
   --exclude='./.env' \
   --exclude='./.env.*' \
+  --exclude='./.npmrc' \
   --exclude='./content/local' \
   --exclude='./local' \
   --exclude='*.pem' \
   --exclude='*.test.js' \
   -cf - . | tar -C "$build_dir" -xf -
 
-printf '\n----> Replacing deployed startup files on %s\n' "$hostname"
-ssh -i "$key" "ubuntu@$hostname" <<ENDSSH
-rm -rf services/${service}
-mkdir -p services/${service}
-ENDSSH
+# Never delete the running service before the replacement is uploaded and
+# installed. Keep the prior release until PM2 successfully restarts the new one.
+release_id=${build_dir##*/}
+remote_stage="services/.${service}-stage-${release_id}"
+remote_backup="services/.${service}-backup-${release_id}"
 
-scp -r -i "$key" "$build_dir"/. "ubuntu@$hostname:services/$service/"
+printf '\n----> Uploading staged startup release to %s\n' "$hostname"
+ssh -i "$key" "ubuntu@$hostname" "mkdir -p '$remote_stage'"
+scp -r -i "$key" "$build_dir"/. "ubuntu@$hostname:$remote_stage/"
 
-printf '\n----> Installing server dependencies and restarting PM2\n'
-ssh -i "$key" "ubuntu@$hostname" <<ENDSSH
-bash -ic 'set -e; cd services/${service}; npm install --omit=dev; NODE_ENV=production pm2 restart ${service} --update-env'
-ENDSSH
+printf '\n----> Installing dependencies and activating staged release\n'
+ssh -i "$key" "ubuntu@$hostname" \
+  "bash -se -- '$remote_stage' '$remote_backup' '$service'" < "$project_root/tools/deploy-remote-startup.sh"
 
 printf '\n----> Deployment complete: https://startup.%s\n' "$hostname"

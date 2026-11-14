@@ -17,7 +17,9 @@ export function mongoConfigFromEnv(env = process.env) {
   return {
     uri: env.MONGODB_URI ?? '',
     databaseName: env.MONGODB_DB_NAME || DEFAULT_MONGO_DATABASE,
-    required: requiredValue === '1' || requiredValue === 'true',
+    // Production must not silently fall back to volatile in-memory stores.
+    // Development and tests may explicitly opt out with MONGODB_REQUIRED=false.
+    required: requiredValue === '1' || (requiredValue === '' && env.NODE_ENV === 'production') || requiredValue === 'true',
   };
 }
 

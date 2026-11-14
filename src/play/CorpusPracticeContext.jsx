@@ -7,7 +7,8 @@ import {
 } from '../api/practiceApi.js';
 import {
   CORPUS_GUEST_KEY, addCompletedPitch, completedLocalResult, corpusKey,
-  corpusPracticeStats, loadCorpusState, saveCorpusState, uniqueAttemptHistory,
+  corpusPracticeStats, finalStageSubmission, loadCorpusState, resumeCorpusInning,
+  saveCorpusState, uniqueAttemptHistory,
 } from './corpusState.js';
 
 const Context = createContext(null);
@@ -43,6 +44,15 @@ export function CorpusPracticeProvider({ children }) {
   const [syncRetry, setSyncRetry] = useState(0);
   const actionLock = useRef(false);
   const favoriteQueue = useRef(Promise.resolve());
+  // Abort outstanding account writes only when this per-user provider unmounts.
+  // Aborting each prior PUT when favorites change can leave older server writes
+  // racing the most recent PUT, despite the serialized client promise chain.
+  const favoriteAbort = useRef(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    favoriteAbort.current = controller;
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => setIsSaved(saveCorpusState(storage(), key, state)), [key, state]);
 
@@ -60,25 +70,46 @@ export function CorpusPracticeProvider({ children }) {
   useEffect(() => {
     if (!state.pitchId) { setPitch(null); return; }
     const id = state.pitchId;
+    // A newly created pitch is already in memory. Refetching it here can race
+    // with the player's first answer and overwrite a newer stage with a stale one.
+    if (pitch?.pitchId === id) return;
     const controller = new AbortController();
     setPitchLoading(true);
     setPitchError('');
-    fetchPracticePitch(id, { signal: controller.signal }).then((result) => {
-      if (controller.signal.aborted) return;
-      setPitch(result);
-      if (result.stage === 'complete') {
-        const final = result.verseFeedback ?? result.chapterFeedback;
-        if (final?.reference) setState((prev) => addCompletedPitch(prev,
-          completedLocalResult(result, final), { guest: !userId }));
+    async function restore() {
+      try {
+        const result = await fetchPracticePitch(id, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        setPitch(result);
+        if (result.stage === 'complete') {
+          // GET feedback alone does not prove that the last POST committed to
+          // MongoDB. Replay that exact final guess to make the write durable.
+          const submission = finalStageSubmission(result);
+          if (!submission) throw new Error('Completed pitch cannot be verified; start a new pitch');
+          const confirmed = await answerPracticeStage(id, submission, { signal: controller.signal });
+          if (controller.signal.aborted) return;
+          setState((prev) => addCompletedPitch(prev,
+            completedLocalResult(result, confirmed), { guest: !confirmed.savedToAccount }));
+          if (confirmed.savedToAccount && userId) {
+            const { attempts } = await fetchAccountProgress({ signal: controller.signal });
+            if (!controller.signal.aborted) setRemoteAttempts(attempts);
+          }
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setPitchError(error.message);
+        if (error.status === 404 || error.status === 410) {
+          setState((prev) => prev.pitchId === id ? { ...prev, pitchId: null, draft: blankDraft() } : prev);
+        }
+      } finally {
+        if (!controller.signal.aborted) setPitchLoading(false);
       }
-    }).catch((error) => {
-      if (controller.signal.aborted) return;
-      setPitchError(error.message);
-      if (error.status === 404 || error.status === 410) {
-        setState((prev) => prev.pitchId === id ? { ...prev, pitchId: null, draft: blankDraft() } : prev);
-      }
-    }).finally(() => { if (!controller.signal.aborted) setPitchLoading(false); });
+    }
+    void restore();
     return () => controller.abort();
+  // The pitch ID is the restoration boundary; pitch updates during answering
+  // must not abort an in-flight persistence confirmation.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.pitchId, userId]);
 
   const refreshAccountHistory = useCallback(async () => {
@@ -151,15 +182,17 @@ export function CorpusPracticeProvider({ children }) {
     if (!userId || !syncReady || !state.dirtyFavorites) return;
     const values = [...state.favorites];
     let active = true;
-    const controller = new AbortController();
-    const queued = favoriteQueue.current.then(() => active ? putPracticeFavorites(values, { signal: controller.signal }) : null);
+    const queued = favoriteQueue.current.then(() => active
+      ? putPracticeFavorites(values, { signal: favoriteAbort.current?.signal }) : null);
     favoriteQueue.current = queued.catch(() => {});
     queued.then(() => {
       if (!active) return;
       setState((prev) => equal(prev.favorites, values) ? { ...prev, dirtyFavorites: false } : prev);
       setSyncError('');
     }).catch((error) => { if (active) setSyncError(error.message); });
-    return () => { active = false; controller.abort(); };
+    // Do not abort an already-sent PUT when preferences change. A later update
+    // waits for it to finish, so the newest favorites always win on the server.
+    return () => { active = false; };
   }, [userId, syncReady, state.favorites, state.dirtyFavorites, syncRetry]);
 
   const createPitch = useCallback(async () => {
@@ -216,9 +249,9 @@ export function CorpusPracticeProvider({ children }) {
   }, [pitch, busy, refreshAccountHistory, userId]);
 
   const nextPitch = useCallback(async () => {
-    if (pitch?.stage !== 'complete') return;
+    if (pitch?.stage !== 'complete' || pitchLoading || pitchError) return;
     await createPitch();
-  }, [pitch, createPitch]);
+  }, [pitch, createPitch, pitchLoading, pitchError]);
 
   const selectPractice = useCallback((scope, collection) => {
     const clean = { volume: scope?.volume || null, book: scope?.book || null };
@@ -248,8 +281,11 @@ export function CorpusPracticeProvider({ children }) {
     return { ...prev, favorites, dirtyFavorites: true };
   }), []);
   const finishInning = useCallback(() => setState((prev) => ({ ...prev, paused: true })), []);
-  const keepPlaying = useCallback(() => setState((prev) => ({ ...prev, paused: false,
-    inning: prev.attempts.length ? prev.inning + 1 : prev.inning, attempts: [] })), []);
+  const keepPlaying = useCallback(() => {
+    const completed = pitch?.stage === 'complete';
+    if (completed) setPitch(null);
+    setState((prev) => resumeCorpusInning(prev, completed));
+  }, [pitch?.stage]);
 
   const recordedAttempts = useMemo(() => uniqueAttemptHistory(remoteAttempts, state.history),
     [remoteAttempts, state.history]);

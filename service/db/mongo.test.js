@@ -47,6 +47,12 @@ test('MongoDB configuration only comes from environment values', () => {
   assert.deepEqual(mongoConfigFromEnv({}), {
     uri: '', databaseName: 'scripture_baseball', required: false,
   });
+  assert.deepEqual(mongoConfigFromEnv({ NODE_ENV: 'production' }), {
+    uri: '', databaseName: 'scripture_baseball', required: true,
+  });
+  assert.deepEqual(mongoConfigFromEnv({ NODE_ENV: 'production', MONGODB_REQUIRED: 'false' }), {
+    uri: '', databaseName: 'scripture_baseball', required: false,
+  });
   assert.deepEqual(mongoConfigFromEnv({
     MONGODB_URI: 'mongodb+srv://user:private@example.invalid/',
     MONGODB_DB_NAME: 'scripture_baseball_test',

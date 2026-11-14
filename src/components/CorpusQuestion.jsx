@@ -1,6 +1,7 @@
 import React from 'react';
 import { BibleTranslationComparison } from '../translation/BibleTranslationComparison.jsx';
 import { useCorpusPractice } from '../play/CorpusPracticeContext.jsx';
+import { finalStageSubmission } from '../play/corpusState.js';
 
 const button = 'rounded-lg bg-scripture-green px-5 py-3 font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50';
 const secondary = 'rounded-lg border border-green-800 px-5 py-3 font-semibold text-green-900 hover:bg-green-50 disabled:opacity-50';
@@ -13,6 +14,7 @@ export function CorpusQuestion({ compact = false }) {
   const feedback = pitch?.verseFeedback ?? pitch?.chapterFeedback;
   const completed = pitch?.stage === 'complete' && feedback?.reference;
   const chosenReference = completed ? feedback.reference : null;
+  const pendingConfirmation = completed && pitchError && finalStageSubmission(pitch);
 
   function submit(event, field) {
     event.preventDefault();
@@ -105,7 +107,9 @@ export function CorpusQuestion({ compact = false }) {
           onClick={() => toggleFavorite(chosenReference)}>
           {state.favorites.includes(chosenReference) ? '★ Saved to favorites' : '☆ Save passage'}
         </button>
-        <button className={button} type="button" disabled={busy}
+        {pendingConfirmation && <button className={secondary} type="button" disabled={busy || pitchLoading}
+          onClick={() => void answer(pendingConfirmation).catch(() => {})}>Retry saving pitch</button>}
+        <button className={button} type="button" disabled={busy || pitchLoading || !!pendingConfirmation}
           onClick={() => void nextPitch().catch(() => {})}>Next pitch</button>
       </div>
       <BibleTranslationComparison reference={feedback.correctReference}/>

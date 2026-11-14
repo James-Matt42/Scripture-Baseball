@@ -83,7 +83,7 @@ export function createPracticeRouter({ engine = null, sessionAuth = null, progre
     }
     const favorites = [...new Set(values)];
     return { favorites: await progressStore.setFavorites(req.authUser.id, favorites) };
-  }));
+  }, 200, true));
 
   return router;
 }

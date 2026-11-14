@@ -97,6 +97,27 @@ export function AccountProvider({ children }) {
     }
   }, []);
 
+  // A verified session can begin on a different device or browser. Hydrate
+  // its preferences from MongoDB, not just this browser's localStorage. The
+  // merge deliberately leaves any pending local edits untouched.
+  useEffect(() => {
+    const userId = session.user?.id;
+    if (!userId) return;
+    const controller = new AbortController();
+    let active = true;
+    fetchAccountPreferences({ signal: controller.signal }).then(({ preferences }) => {
+      if (!active) return;
+      setSettings((previous) => acceptServerPreferences(previous, userId, preferences));
+      setPreferencesError('');
+    }).catch((error) => {
+      if (active && error?.name !== 'AbortError') setPreferencesError(error.message);
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [session.user?.id]);
+
   const updatePreferences = useCallback((changes) => {
     setSettings((previous) => updateClientPreferences(previous, session.user?.id, changes));
     setPreferencesError('');

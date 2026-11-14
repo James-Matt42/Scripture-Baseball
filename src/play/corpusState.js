@@ -84,12 +84,47 @@ export function completedLocalResult(pitch, feedback, answeredAt = new Date().to
 
 export function addCompletedPitch(state, result, { guest = false } = {}) {
   if (!isResult(result)) throw new TypeError('Invalid server-graded result');
-  if (state.history.some((item) => item.id === result.id)) return state;
+  const pendingClaims = guest ? unique([...state.pendingClaims, result.id])
+    : state.pendingClaims.filter((id) => id !== result.id);
+  if (state.history.some((item) => item.id === result.id)) {
+    // A previously staged guest result can become account-confirmed on retry;
+    // clear its pending claim even when its local display record is unchanged.
+    return pendingClaims.length === state.pendingClaims.length &&
+      pendingClaims.every((id, index) => id === state.pendingClaims[index])
+      ? state : { ...state, pendingClaims };
+  }
   return {
     ...state,
     attempts: [...state.attempts, result].slice(-200),
     history: [...state.history, result].slice(-MAX_HISTORY),
-    pendingClaims: guest ? unique([...state.pendingClaims, result.id]) : state.pendingClaims,
+    pendingClaims,
+  };
+}
+
+/** A completed pitch is retried using the SERVER-reported final guess only.
+ * Repeating a final-stage POST is idempotent and confirms MongoDB/guest-receipt
+ * persistence after a lost HTTP response or page reload.
+ */
+export function finalStageSubmission(pitch) {
+  if (pitch?.stage !== 'complete') return null;
+  const feedback = pitch.verseFeedback ?? pitch.chapterFeedback;
+  if (feedback?.nextStage !== 'complete' || !validReference(feedback.reference)) return null;
+  if (feedback.stage === 'verse' && Number.isSafeInteger(feedback.verse) && feedback.verse > 0) {
+    return { stage: 'verse', verse: feedback.verse };
+  }
+  if (feedback.stage === 'chapter' && Number.isSafeInteger(feedback.chapter) && feedback.chapter > 0) {
+    return { stage: 'chapter', chapter: feedback.chapter };
+  }
+  return null;
+}
+
+/** Continuing a completed inning must not redisplay the already graded pitch. */
+export function resumeCorpusInning(state, completed = false) {
+  return {
+    ...state, paused: false,
+    inning: state.attempts.length ? state.inning + 1 : state.inning,
+    attempts: [],
+    ...(completed ? { pitchId: null, draft: { bookId: '', chapter: '', verse: '' } } : {}),
   };
 }
 

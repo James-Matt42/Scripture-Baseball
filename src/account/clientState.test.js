@@ -96,6 +96,20 @@ test('unsent signed-in preference edits survive reloads and supersede stale serv
   assert.equal(state.guestPreferences.preferredVolume, '');
 });
 
+test('server preferences replace stale browser values after a verified login', () => {
+  const store = storage();
+  let state = ensureUserPreferences(initialClientSettings(), user, store);
+  state = updateClientPreferences(state, null, { preferredVolume: 'nt' });
+  state = acceptServerPreferences(state, user.id, {
+    answerDifficulty: 'exact-verse', preferredVolume: 'ot',
+  });
+  assert.equal(getClientPreferences(state, user.id).answerDifficulty, 'exact-verse');
+  assert.equal(getClientPreferences(state, user.id).preferredVolume, 'ot');
+  assert.equal(getClientPreferences(state, null).preferredVolume, 'nt',
+    'hydrating server account settings must not overwrite guest preferences');
+  assert.equal(state.pendingByUser[user.id], undefined);
+});
+
 test('malformed pending preference IDs are ignored without leaking across accounts', () => {
   const state = normalizeClientSettings({ version: 1, pendingByUser: {
     'not-a-user': { answerDifficulty: 'exact-verse' }, [uuid]: { preferredVolume: 'ot' },

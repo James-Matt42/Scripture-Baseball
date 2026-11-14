@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   CORPUS_GUEST_KEY, addCompletedPitch, completedLocalResult, corpusKey, corpusPracticeStats,
-  initialCorpusState, loadCorpusState, saveCorpusState, uniqueAttemptHistory,
+  finalStageSubmission, initialCorpusState, loadCorpusState, resumeCorpusInning,
+  saveCorpusState, uniqueAttemptHistory,
 } from './corpusState.js';
 
 const id = 'x'.repeat(43);
@@ -55,6 +56,11 @@ test('completed guest pitch is stored once and its opaque token remains claimabl
   state = addCompletedPitch(state, result, { guest: true });
   assert.equal(state.history.length, 1);
   assert.deepEqual(state.pendingClaims, [id]);
+  state = addCompletedPitch(state, result, { guest: false });
+  assert.deepEqual(state.pendingClaims, [], 'account confirmation clears a stale guest claim');
+  assert.equal(state.history.length, 1);
+  state = addCompletedPitch(state, result, { guest: true });
+  assert.deepEqual(state.pendingClaims, [id], 'a later guest receipt can still be claimed');
   assert.equal(corpusPracticeStats(state.attempts).earnedPoints, 1);
   assert.equal(corpusPracticeStats(state.attempts).possiblePoints, 1);
 });
@@ -78,4 +84,34 @@ test('account records take precedence over local copies, and graded stages are i
 test('incomplete or forged feedback is not accepted as a local completed pitch', () => {
   assert.throws(() => completedLocalResult(pitch, { ...final, reference: undefined }), TypeError);
   assert.throws(() => addCompletedPitch(initialCorpusState(), { ...result, chapterCorrect: 'yes' }), TypeError);
+});
+
+
+test('a completed pitch can be replayed after a lost server response without fabricating a grade', () => {
+  assert.deepEqual(finalStageSubmission({ stage: 'complete', chapterFeedback: {
+    ...final, stage: 'chapter', chapter: 9,
+  } }), { stage: 'chapter', chapter: 9 });
+  assert.deepEqual(finalStageSubmission({ stage: 'complete', chapterFeedback: {
+    stage: 'chapter', chapter: 9, nextStage: 'verse',
+  }, verseFeedback: { ...final, stage: 'verse', verse: 2 } }), { stage: 'verse', verse: 2 });
+  assert.equal(finalStageSubmission({ stage: 'chapter' }), null);
+  assert.equal(finalStageSubmission({ stage: 'complete', chapterFeedback: final }), null);
+  assert.equal(finalStageSubmission({ stage: 'complete', chapterFeedback: {
+    ...final, stage: 'chapter', chapter: -1,
+  } }), null);
+});
+
+test('resume after a completed inning starts a new pitch; unfinished pitches remain resumable', () => {
+  const paused = { ...initialCorpusState(), inning: 4, paused: true, pitchId: id,
+    draft: { bookId: '1-ne', chapter: '7', verse: '' }, attempts: [result], history: [result] };
+  const completed = resumeCorpusInning(paused, true);
+  assert.equal(completed.paused, false);
+  assert.equal(completed.inning, 5);
+  assert.equal(completed.pitchId, null);
+  assert.deepEqual(completed.draft, { bookId: '', chapter: '', verse: '' });
+  assert.deepEqual(completed.attempts, []);
+  assert.deepEqual(completed.history, [result]);
+  const unfinished = resumeCorpusInning(paused, false);
+  assert.equal(unfinished.pitchId, id);
+  assert.deepEqual(unfinished.draft, paused.draft);
 });

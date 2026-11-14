@@ -89,3 +89,18 @@ test('HTTP validation forbids forged book choices and untrusted answer fields', 
   const wrongShape = await json(`${base}/api/practice/pitches`, { scope: ['bom'] });
   assert.equal(wrongShape.status, 400);
 });
+
+
+test('favorites updates return 503 instead of a 500 when the corpus is absent', async (t) => {
+  const base = await start(t);
+  const fields = { displayName: 'Reader', email: 'reader@example.com', password: 'Long-Example-Password-123' };
+  assert.equal((await json(`${base}/api/auth/register`, fields)).status, 201);
+  const loggedIn = await json(`${base}/api/auth/login`, fields);
+  const cookie = loggedIn.headers.get('set-cookie').split(';')[0];
+  const response = await fetch(`${base}/api/practice/favorites`, {
+    method: 'PUT', headers: { cookie, 'content-type': 'application/json' },
+    body: JSON.stringify({ favorites: ['bom:2-ne:9:1'] }),
+  });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: 'Scripture corpus is not configured' });
+});
